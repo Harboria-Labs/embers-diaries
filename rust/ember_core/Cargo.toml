@@ -1,0 +1,13 @@
+[package]
+name = "ember_core"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "_native"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.24", features = ["extension-module"] }
+sha2 = "0.10"
+

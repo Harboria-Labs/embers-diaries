@@ -13,6 +13,7 @@ import uuid
 from .types import RecordType, DeprecationReason
 from .edge import EdgeRef
 from .annotation import Annotation
+from .integrity import RecordIntegrityError, content_hash
 
 
 @dataclass
@@ -34,6 +35,9 @@ class EmberRecord:
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     namespace: str = "default"
     record_type: RecordType = RecordType.DOCUMENT
+    version: int = 1
+    parent_hash: str | None = None
+    content_hash: str | None = None
 
     # ── Payload — stores anything ─────────────────────────────────────────────
     data: Any = None  # dict | list | str | bytes | float | None
@@ -117,6 +121,56 @@ class EmberRecord:
     def age_seconds(self) -> float:
         return (datetime.now(timezone.utc) - self.created_at).total_seconds()
 
+    def canonical_hash_payload(self) -> dict:
+        """Return immutable state covered by the record's SHA-256 identity."""
+        return {
+            "record_id": self.id,
+            "version": self.version,
+            "parent_hash": self.parent_hash,
+            "namespace": self.namespace,
+            "record_type": self.record_type.value,
+            "data": self.data,
+            "created_at": self.created_at.isoformat(),
+            "valid_from": self.valid_from.isoformat() if self.valid_from else None,
+            "valid_until": self.valid_until.isoformat() if self.valid_until else None,
+            "supersedes": self.supersedes,
+            "connections": [edge.to_dict() for edge in self.connections],
+            "parent_id": self.parent_id,
+            "embedding": self.embedding,
+            "confidence": self.confidence,
+            "decay_rate": self.decay_rate,
+            "written_by": self.written_by,
+            "origin": self.origin,
+            "tags": self.tags,
+            "schema_version": self.schema_version,
+            "training_candidate": self.training_candidate,
+            "retrieval_candidate": self.retrieval_candidate,
+        }
+
+    def compute_content_hash(self) -> str:
+        return content_hash(self.canonical_hash_payload())
+
+    def seal(self) -> str:
+        """Compute and attach the immutable content identity."""
+        computed = self.compute_content_hash()
+        if self.content_hash is not None and self.content_hash != computed:
+            raise RecordIntegrityError(
+                f"Record {self.id} content does not match its existing hash"
+            )
+        self.content_hash = computed
+        return computed
+
+    def verify_integrity(self) -> bool:
+        if self.content_hash is None:
+            return False
+        computed = self.compute_content_hash()
+        if computed != self.content_hash:
+            raise RecordIntegrityError(
+                f"Record {self.id} failed integrity verification: "
+                f"expected {self.content_hash}, computed {computed}"
+            )
+        return True
+
     # ── Serialization ─────────────────────────────────────────────────────────
 
     def to_dict(self) -> dict:
@@ -125,6 +179,9 @@ class EmberRecord:
             "id":               self.id,
             "namespace":        self.namespace,
             "record_type":      self.record_type.value,
+            "version":          self.version,
+            "parent_hash":      self.parent_hash,
+            "content_hash":     self.content_hash,
             "data":             self.data,
             "created_at":       self.created_at.isoformat(),
             "valid_from":       self.valid_from.isoformat() if self.valid_from else None,
@@ -160,6 +217,9 @@ class EmberRecord:
             id             = d["id"],
             namespace      = d.get("namespace", "default"),
             record_type    = RecordType(d["record_type"]),
+            version        = d.get("version", 1),
+            parent_hash    = d.get("parent_hash"),
+            content_hash   = d.get("content_hash"),
             data           = d.get("data"),
             created_at     = datetime.fromisoformat(d["created_at"]),
             valid_from     = datetime.fromisoformat(d["valid_from"]) if d.get("valid_from") else None,

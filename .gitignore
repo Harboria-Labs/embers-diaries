@@ -11,6 +11,7 @@ build/
 .venv
 venv/
 env/
+diaries/          # this project's virtualenv (also self-ignores via venv's own .gitignore)
 
 # Test stores
 *.ember
@@ -29,3 +30,10 @@ htmlcov/
 .pytest_cache/
 __pycache__/
 *.egg-info/
+
+# Rust / PyO3 build output
+# NOTE: the crate lives at rust/ember_core/, so its build dir is
+# rust/ember_core/target/ (112 MB of artifacts) — a bare `rust/target/`
+# pattern would NOT match it. Match target/ at any depth under rust/.
+rust/target/
+rust/**/target/

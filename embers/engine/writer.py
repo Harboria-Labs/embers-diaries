@@ -44,6 +44,7 @@ class WriteEngine:
         Raises ValueError if a record with this ID already exists.
         """
         with self._lock:
+            record.seal()
             if self._store.exists(record.id):
                 raise ValueError(
                     f"Record {record.id} already exists. "
@@ -82,6 +83,8 @@ class WriteEngine:
                 namespace   = old.namespace,
                 record_type = old.record_type,
                 data        = new_data,
+                version     = old.version + 1,
+                parent_hash = old.content_hash or old.compute_content_hash(),
                 supersedes  = old_record_id,
                 written_by  = written_by,
                 tags        = old.tags.copy(),
@@ -91,6 +94,19 @@ class WriteEngine:
                 training_candidate  = old.training_candidate,
                 retrieval_candidate = old.retrieval_candidate,
             )
+
+            # Seal the new version BEFORE persistence, exactly as a first-class
+            # write does. This is essential, not cosmetic:
+            #   • Without it the *head* of an updated chain is unsealed
+            #     (content_hash is None), so store.read() skips
+            #     verify_integrity() and on-disk tampering of the CURRENT
+            #     version of a memory — the one recall() returns — goes
+            #     undetected. Sealing closes that hole.
+            #   • It also makes the version chain cryptographically sound: the
+            #     next update binds its parent_hash to this persisted hash
+            #     (see the `parent_hash=` line above), which only works if the
+            #     parent actually stored a hash of its own.
+            new_record.seal()
 
             # Write the new record first
             self._store.write(new_record)

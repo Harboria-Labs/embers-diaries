@@ -18,6 +18,7 @@ from pathlib import Path
 from ..storage.format import encode, decode
 from ..engine.wal import WriteAheadLog
 from ..core.record import EmberRecord
+from ..core.integrity import RecordIntegrityError
 
 
 class PhysicalStore:
@@ -119,7 +120,12 @@ class PhysicalStore:
             return None
         try:
             raw = record_file.read_bytes()
-            return EmberRecord.from_dict(decode(raw))
+            record = EmberRecord.from_dict(decode(raw))
+            if record.content_hash is not None:
+                record.verify_integrity()
+            return record
+        except RecordIntegrityError:
+            raise
         except Exception as e:
             print(f"[EmberStore] Failed to read {record_id}: {e}")
             return None

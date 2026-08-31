@@ -10,6 +10,7 @@ Usage:
     record = db.get(record_id)
 """
 
+import sys
 from pathlib import Path
 from datetime import datetime
 
@@ -27,6 +28,23 @@ from .index.vector import VectorIndex
 from .index.fulltext import FullTextIndex
 from .query.engine import QueryEngine
 from .namespace.manager import NamespaceManager
+
+
+def _safe_print(text: str) -> None:
+    """Print a decorative banner line without ever crashing the host process.
+
+    The connection banner contains a 🔥 emoji and a "→" arrow. On consoles
+    whose encoding cannot represent those glyphs (notably Windows' legacy
+    cp1252 code page), a plain print() raises UnicodeEncodeError and takes down
+    whatever called EmberDB.connect(). A DB library must never crash a program
+    over cosmetic output, so we fall back to a lossy-but-safe rendering that
+    keeps the banner readable wherever full Unicode isn't available.
+    """
+    try:
+        print(text)
+    except UnicodeEncodeError:
+        enc = getattr(sys.stdout, "encoding", None) or "ascii"
+        print(text.encode(enc, errors="replace").decode(enc, errors="replace"))
 
 
 class EmberDB:
@@ -71,9 +89,9 @@ class EmberDB:
         # Rebuild indexes from existing records if needed
         self._rebuild_indexes_if_needed()
 
-        print(f"🔥 Ember's Diaries connected → {self._path}")
+        _safe_print(f"🔥 Ember's Diaries connected → {self._path}")
         stats = self._store.stats()
-        print(f"   Records: {stats['record_count']} | WAL: {stats['wal_size_bytes']} bytes")
+        _safe_print(f"   Records: {stats['record_count']} | WAL: {stats['wal_size_bytes']} bytes")
 
     @classmethod
     def connect(cls, store_path: str | Path) -> "EmberDB":

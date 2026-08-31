@@ -27,6 +27,7 @@ from .db import EmberDB
 from .core.record import EmberRecord
 from .core.annotation import Annotation, ReflectiveAnnotation
 from .core.edge import EdgeRef
+from .core.integrity import HASH_BACKEND, RecordIntegrityError
 from .core.types import (
     RecordType, MemoryType, MemoryScope,
     AccessLevel, VerifyStatus, DeprecationReason, EdgeType,
@@ -39,4 +40,5 @@ __all__ = [
     "EmberDB", "EmberRecord", "Annotation", "ReflectiveAnnotation",
     "EdgeRef", "RecordType", "MemoryType", "MemoryScope",
     "AccessLevel", "VerifyStatus", "DeprecationReason", "EdgeType",
+    "HASH_BACKEND", "RecordIntegrityError",
 ]
