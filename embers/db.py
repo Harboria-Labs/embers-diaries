@@ -16,7 +16,7 @@ from datetime import datetime
 
 from .core.record import EmberRecord
 from .core.annotation import Annotation
-from .core.types import RecordType, DeprecationReason, AccessLevel
+from .core.types import RecordType, DeprecationReason, AccessLevel, EdgeType
 from .core.edge import EdgeRef
 from .storage.store import PhysicalStore
 from .engine.writer import WriteEngine
@@ -122,7 +122,8 @@ class EmberDB:
             record.created_at.isoformat(), record.tags,
             written_by=record.written_by,
             agent_id=record.agent_id,
-            session_id=record.session_id)
+            session_id=record.session_id,
+            supersedes=record.supersedes)
 
         # Timeline index
         self._timeline_index.add(
@@ -142,6 +143,19 @@ class EmberDB:
             self._graph_index.add_edge(
                 record.id, edge.target_id,
                 edge.edge_type.value, edge.weight, edge.edge_id)
+
+        # Causal-derivation edges (Features #2/#3): make each record's
+        # `derived_from` provenance a first-class edge in the graph, so
+        # derivation is queryable in BOTH directions — "what did this derive
+        # from?" (outgoing) and "what was derived from this?" (incoming). The
+        # edge points from the new record to its source, matching the
+        # backward-in-time convention of `supersedes`. The edge_id is
+        # deterministic per (child, source) so the link is identifiable; edges
+        # are created once per write (rebuild only runs against an empty graph).
+        for target_id in record.derived_from:
+            self._graph_index.add_edge(
+                record.id, target_id, EdgeType.DERIVED_FROM.value,
+                edge_id=f"df:{record.id}:{target_id}", label="derived_from")
 
     # ── Write ─────────────────────────────────────────────────────────────────
 
@@ -267,6 +281,110 @@ class EmberDB:
             if r is not None:
                 out.append(r)
         return out
+
+    # ── Versioning + Causal Graph (Feature #2) ─────────────────────────────────
+    # The append-only store keeps every version, so a record can be superseded
+    # in more than one direction (V1 → {V2-A, V2-B}). The linear get_current() /
+    # get_history() / get_at() above follow a single line of descent and are
+    # preserved unchanged; the methods here expose the FULL branching version
+    # graph plus the typed causal edges between memories, answering the spec's
+    # §2 questions. Version methods resolve with include_superseded=True because
+    # intermediate versions are, by definition, superseded — they must still be
+    # retrievable for lineage and audit.
+
+    def version_children(self, record_id: str) -> list[EmberRecord]:
+        """Direct next versions of a record. Two or more means the version
+        history BRANCHES here — each child is an independent successor."""
+        return self._resolve_ids(
+            self._master_index.get_version_children(record_id), True, True)
+
+    def version_parent(self, record_id: str) -> EmberRecord | None:
+        """The immediate prior version (the record this one superseded), or
+        None if this is an original."""
+        pid = self._master_index.get_version_parent(record_id)
+        return self._reader.get(pid, True, True) if pid else None
+
+    def version_ancestors(self, record_id: str) -> list[EmberRecord]:
+        """Every prior version, nearest first, back to the original."""
+        out = []
+        for i in self._master_index.get_version_ancestors(record_id):
+            r = self._reader.get(i, True, True)
+            if r is not None:
+                out.append(r)
+        return out
+
+    def version_descendants(self, record_id: str) -> list[EmberRecord]:
+        """Every later version across all branches of this lineage."""
+        return self._resolve_ids(
+            self._master_index.get_version_descendants(record_id), True, True)
+
+    def current_versions(self, record_id: str) -> list[EmberRecord]:
+        """The live head(s) of the lineage — leaves with no successor. More than
+        one means the history forked into branches that were never reunited.
+        (get_current() returns only the single head of the linear chain.)"""
+        return self._resolve_ids(
+            self._master_index.get_version_heads(record_id), True, True)
+
+    def branch_points(self, record_id: str) -> list[EmberRecord]:
+        """The records in this lineage where the version history forks (were
+        superseded in more than one direction)."""
+        return self._resolve_ids(
+            self._master_index.get_branch_points(record_id), True, True)
+
+    def version_tree(self, record_id: str) -> dict[str, list[str]]:
+        """The whole lineage as an adjacency map ``{record_id: [child ids]}``,
+        rooted at the original version — the raw branch structure."""
+        return self._master_index.get_version_tree(record_id)
+
+    def what_came_before(self, record_id: str) -> list[EmberRecord]:
+        """Predecessors of a memory: its prior VERSIONS plus the memories it was
+        explicitly DERIVED FROM (provenance `derived_from`). Answers §2's 'what
+        came before this memory?' across both the version and derivation axes."""
+        ids = set(self._master_index.get_version_ancestors(record_id))
+        ids.update(self._graph_index.connected(
+            record_id, EdgeType.DERIVED_FROM.value))
+        ids.discard(record_id)
+        return self._resolve_ids(ids, True, True)
+
+    def what_was_derived_from(self, record_id: str) -> list[EmberRecord]:
+        """The inverse of what_came_before: later VERSIONS of this memory plus
+        memories that cite it as a derivation source (incoming `derived_from`).
+        Answers §2's 'what memories were derived from it?'"""
+        ids = set(self._master_index.get_version_descendants(record_id))
+        for e in self._graph_index.get_edges(record_id, direction="incoming"):
+            if e["edge_type"] == EdgeType.DERIVED_FROM.value:
+                ids.add(e["target"])
+        ids.discard(record_id)
+        return self._resolve_ids(ids, True, True)
+
+    def caused_by(self, record_id: str) -> list[EmberRecord]:
+        """Memories recorded as causes of this one — outgoing `caused_by` edges,
+        created via ``link(effect, cause, 'caused_by')``. Answers half of §2's
+        'which memory caused another?'"""
+        return self._resolve_ids(
+            self._graph_index.connected(record_id, EdgeType.CAUSED_BY.value),
+            True, True)
+
+    def led_to(self, record_id: str) -> list[EmberRecord]:
+        """Memories this one caused or contributed to — outgoing `led_to` edges,
+        created via ``link(cause, effect, 'led_to')``. The forward-in-time
+        counterpart to caused_by()."""
+        return self._resolve_ids(
+            self._graph_index.connected(record_id, EdgeType.LED_TO.value),
+            True, True)
+
+    def conflicts(self, record_id: str) -> list[EmberRecord]:
+        """Memories that contradict this one, in EITHER direction — conflict is
+        symmetric. Supports the 'map both competing claims, never overwrite'
+        model: record X=true and X=false, ``link`` them `contradicts`, and let
+        the conflict engine reconcile later without destroying either."""
+        ids = set(self._graph_index.connected(
+            record_id, EdgeType.CONTRADICTS.value))
+        for e in self._graph_index.get_edges(record_id, direction="incoming"):
+            if e["edge_type"] == EdgeType.CONTRADICTS.value:
+                ids.add(e["target"])
+        ids.discard(record_id)
+        return self._resolve_ids(ids, True, True)
 
     # ── Query (Index-accelerated) ─────────────────────────────────────────────
 
