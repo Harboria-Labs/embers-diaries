@@ -37,3 +37,10 @@ __pycache__/
 # pattern would NOT match it. Match target/ at any depth under rust/.
 rust/target/
 rust/**/target/
+
+# Local working docs — intentionally NOT committed.
+# Implementation records and the raw feature spec are kept locally as working
+# notes only; the repo stays code + tests. (The records live on disk under
+# implementation_records/ and are git-ignored here.)
+implementation_records/
+/features update
