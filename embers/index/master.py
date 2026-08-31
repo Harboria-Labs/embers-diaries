@@ -38,6 +38,8 @@ class MasterIndex:
         self._supersedes: dict[str, str] = {}          # new_id → old_id
         self._deprecated: set[str] = set()
         self._written_by: dict[str, set] = defaultdict(set)  # author → {ids}
+        self._by_agent: dict[str, set] = defaultdict(set)    # agent_id → {ids}   (Feature #3)
+        self._by_session: dict[str, set] = defaultdict(set)  # session_id → {ids} (Feature #3)
 
         self._load()
 
@@ -55,6 +57,13 @@ class MasterIndex:
                     self._tags[tag].add(rid)
                 if meta.get("written_by"):
                     self._written_by[meta["written_by"]].add(rid)
+                # Provenance indexes (Feature #3). Rebuilt from each record's
+                # meta, so an index persisted before provenance existed simply
+                # has no agent_id/session_id keys and contributes nothing here.
+                if meta.get("agent_id"):
+                    self._by_agent[meta["agent_id"]].add(rid)
+                if meta.get("session_id"):
+                    self._by_session[meta["session_id"]].add(rid)
             for old_id, new_id in data.get("superseded", {}).items():
                 self._superseded[old_id] = new_id
                 self._supersedes[new_id] = old_id
@@ -78,8 +87,14 @@ class MasterIndex:
 
     def index_record(self, record_id: str, namespace: str, record_type: str,
                      created_at: str, tags: list[str], written_by: str = "system",
+                     agent_id: str | None = None, session_id: str | None = None,
                      **extra):
-        """Add a record to all indexes."""
+        """Add a record to all indexes.
+
+        agent_id / session_id (Feature #3 provenance) are stored in the record's
+        meta and mirrored into dedicated lookup indexes so 'which agent wrote
+        this?' and 'what came out of this session?' are O(1) set lookups.
+        """
         with self._lock:
             meta = {
                 "namespace": namespace,
@@ -87,6 +102,8 @@ class MasterIndex:
                 "created_at": created_at,
                 "tags": tags,
                 "written_by": written_by,
+                "agent_id": agent_id,
+                "session_id": session_id,
                 **extra,
             }
             self._records[record_id] = meta
@@ -95,6 +112,10 @@ class MasterIndex:
                 self._tags[tag].add(record_id)
             if written_by:
                 self._written_by[written_by].add(record_id)
+            if agent_id:
+                self._by_agent[agent_id].add(record_id)
+            if session_id:
+                self._by_session[session_id].add(record_id)
 
     def mark_superseded(self, old_id: str, new_id: str):
         with self._lock:
@@ -136,6 +157,14 @@ class MasterIndex:
 
     def get_by_author(self, written_by: str) -> set[str]:
         return self._written_by.get(written_by, set()).copy()
+
+    def get_by_agent(self, agent_id: str) -> set[str]:
+        """All record IDs written by a specific agent identity (Feature #3)."""
+        return self._by_agent.get(agent_id, set()).copy()
+
+    def get_by_session(self, session_id: str) -> set[str]:
+        """All record IDs written during a specific session (Feature #3)."""
+        return self._by_session.get(session_id, set()).copy()
 
     def is_superseded(self, record_id: str) -> bool:
         return record_id in self._superseded

@@ -77,6 +77,23 @@ class EmberRecord:
     written_by: str = "system"           # system | agent_id | "sammie"
     origin: str | None = None            # Where the data came from
 
+    # ── Provenance (Feature #3 — WHO / WHEN / WHERE / WHY) ─────────────────────
+    # These make every durable write self-describing. Three of the six spec
+    # fields are already served by existing columns and are NOT duplicated here:
+    #     author    → written_by        who/what performed the write
+    #     source    → origin            where the data came from
+    #     timestamp → created_at        when it was written
+    # The remaining structured fields are added below. They are immutable facts
+    # about the write act, so they are folded into the content hash (see
+    # canonical_hash_payload) — provenance cannot be silently rewritten after a
+    # record is sealed. They default to "unset" so a record that carries no
+    # provenance hashes byte-for-byte identically to a pre-provenance record
+    # (spec §15: never silently invalidate existing .ember records).
+    agent_id: str | None = None          # specific agent identity, e.g. "research-agent-03"
+    session_id: str | None = None        # session during which this memory was written
+    creation_reason: str | None = None   # WHY it was written (concise, structured — not chain-of-thought)
+    derived_from: list = field(default_factory=list)  # IDs of prior memories/evidence this was derived from
+
     # ── Tags ─────────────────────────────────────────────────────────────────
     tags: list = field(default_factory=list)
     schema_version: str = "1.0"
@@ -123,7 +140,7 @@ class EmberRecord:
 
     def canonical_hash_payload(self) -> dict:
         """Return immutable state covered by the record's SHA-256 identity."""
-        return {
+        payload = {
             "record_id": self.id,
             "version": self.version,
             "parent_hash": self.parent_hash,
@@ -145,6 +162,43 @@ class EmberRecord:
             "schema_version": self.schema_version,
             "training_candidate": self.training_candidate,
             "retrieval_candidate": self.retrieval_candidate,
+        }
+        # Provenance (Feature #3): immutable per-write facts, so they belong to
+        # the record's cryptographic identity — tampering with WHO/WHY after the
+        # fact is then caught by verify_integrity() like any other mutation.
+        #
+        # BACKWARDS COMPATIBILITY (spec §15): each field is added ONLY when it
+        # departs from its default. A record with no provenance therefore yields
+        # the exact same payload — and hence the exact same hash — as it did
+        # before these fields existed, so historical .ember records are never
+        # silently invalidated. (canonical_bytes sorts keys, so append order is
+        # irrelevant to the resulting hash.)
+        if self.agent_id is not None:
+            payload["agent_id"] = self.agent_id
+        if self.session_id is not None:
+            payload["session_id"] = self.session_id
+        if self.creation_reason is not None:
+            payload["creation_reason"] = self.creation_reason
+        if self.derived_from:
+            payload["derived_from"] = list(self.derived_from)
+        return payload
+
+    def provenance(self) -> dict:
+        """Structured provenance for this write — the WHO / WHEN / WHERE / WHY.
+
+        Spec §3. Answers, in order: who wrote this? which agent? during which
+        session? when? why? where did it come from? what led to it? Fields map
+        onto storage columns as: author→written_by, source→origin,
+        timestamp→created_at; the rest are dedicated provenance columns.
+        """
+        return {
+            "author": self.written_by,
+            "agent_id": self.agent_id,
+            "session_id": self.session_id,
+            "timestamp": self.created_at.isoformat(),
+            "creation_reason": self.creation_reason,
+            "source": self.origin,
+            "derived_from": list(self.derived_from),
         }
 
     def compute_content_hash(self) -> str:
@@ -202,6 +256,10 @@ class EmberRecord:
             "last_accessed":    self.last_accessed.isoformat() if self.last_accessed else None,
             "written_by":       self.written_by,
             "origin":           self.origin,
+            "agent_id":         self.agent_id,
+            "session_id":       self.session_id,
+            "creation_reason":  self.creation_reason,
+            "derived_from":     list(self.derived_from),
             "tags":             self.tags,
             "schema_version":   self.schema_version,
             "training_candidate":  self.training_candidate,
@@ -240,6 +298,10 @@ class EmberRecord:
             last_accessed  = datetime.fromisoformat(d["last_accessed"]) if d.get("last_accessed") else None,
             written_by     = d.get("written_by", "system"),
             origin         = d.get("origin"),
+            agent_id        = d.get("agent_id"),
+            session_id      = d.get("session_id"),
+            creation_reason = d.get("creation_reason"),
+            derived_from    = d.get("derived_from", []),
             tags           = d.get("tags", []),
             schema_version = d.get("schema_version", "1.0"),
             training_candidate  = d.get("training_candidate", False),

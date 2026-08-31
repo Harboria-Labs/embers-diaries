@@ -57,7 +57,11 @@ class WriteEngine:
     # ── Update (supersession) ─────────────────────────────────────────────────
 
     def update(self, old_record_id: str, new_data: dict,
-               written_by: str = "system") -> tuple[str, str]:
+               written_by: str = "system",
+               agent_id: str | None = None,
+               session_id: str | None = None,
+               creation_reason: str | None = None,
+               derived_from: list | None = None) -> tuple[str, str]:
         """
         Create a new version of an existing record.
         The old record is marked as superseded — never deleted.
@@ -66,6 +70,13 @@ class WriteEngine:
         This is how UPDATE works in Ember's Diaries:
           old record → superseded_by = new record id
           new record → supersedes = old record id
+
+        Provenance (Feature #3) describes *this write act*, so it is NOT
+        inherited from the old version — a new version may be written by a
+        different agent, in a different session, for its own reason. Callers
+        that want attribution pass it explicitly; otherwise it stays unset.
+        The supersession link (parent_hash / supersedes) already captures the
+        lineage independently of derived_from.
         """
         with self._lock:
             old = self._store.read(old_record_id)
@@ -87,6 +98,10 @@ class WriteEngine:
                 parent_hash = old.content_hash or old.compute_content_hash(),
                 supersedes  = old_record_id,
                 written_by  = written_by,
+                agent_id        = agent_id,
+                session_id      = session_id,
+                creation_reason = creation_reason,
+                derived_from    = list(derived_from) if derived_from else [],
                 tags        = old.tags.copy(),
                 confidence  = old.confidence,
                 decay_rate  = old.decay_rate,

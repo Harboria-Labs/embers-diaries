@@ -74,7 +74,11 @@ class MemoryProtocol:
                  written_by: str = "llm",
                  memory_type: str = "episodic",
                  verify_status: str = "hypothesis",
-                 namespace: str | None = None) -> str:
+                 namespace: str | None = None,
+                 agent_id: str | None = None,
+                 session_id: str | None = None,
+                 creation_reason: str | None = None,
+                 derived_from: list | None = None) -> str:
         """
         Store a new memory. Auto-generates embedding and checks for conflicts.
         Returns the record ID.
@@ -82,6 +86,11 @@ class MemoryProtocol:
         The embedding is set on the record before write. The db.write()
         callback handles all indexing (master, timeline, fulltext, vector,
         graph) automatically — no manual index calls needed here.
+
+        Provenance (Feature #3): agent_id / session_id / creation_reason /
+        derived_from are recorded on the memory and folded into its content
+        hash, so every durable write can answer WHO wrote it, in WHICH session,
+        WHY, and from WHAT prior memories it was derived.
         """
         ns = namespace or self.namespace
 
@@ -100,6 +109,10 @@ class MemoryProtocol:
             confidence=confidence,
             decay_rate=decay_rate,
             written_by=written_by,
+            agent_id=agent_id,
+            session_id=session_id,
+            creation_reason=creation_reason,
+            derived_from=list(derived_from) if derived_from else [],
         )
 
         # Generate embedding — set on record so db.write()'s callback
@@ -209,13 +222,23 @@ class MemoryProtocol:
         return True
 
     def update(self, record_id: str, new_content: Any,
-               written_by: str = "llm") -> tuple[str, str]:
+               written_by: str = "llm",
+               agent_id: str | None = None,
+               session_id: str | None = None,
+               creation_reason: str | None = None,
+               derived_from: list | None = None) -> tuple[str, str]:
         """
         Update a memory (creates new version, preserves old).
         Returns (new_id, old_id).
+
+        Provenance is attributed to this new version (see remember()); it is
+        not inherited from the prior version.
         """
         data = new_content if isinstance(new_content, dict) else {"content": str(new_content)}
-        return self.db.update(record_id, data, written_by)
+        return self.db.update(record_id, data, written_by,
+                              agent_id=agent_id, session_id=session_id,
+                              creation_reason=creation_reason,
+                              derived_from=derived_from)
 
     def forget(self, record_id: str, reason: str = "",
                written_by: str = "llm") -> bool:

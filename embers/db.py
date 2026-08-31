@@ -120,7 +120,9 @@ class EmberDB:
         self._master_index.index_record(
             record.id, record.namespace, record.record_type.value,
             record.created_at.isoformat(), record.tags,
-            written_by=record.written_by)
+            written_by=record.written_by,
+            agent_id=record.agent_id,
+            session_id=record.session_id)
 
         # Timeline index
         self._timeline_index.add(
@@ -151,13 +153,24 @@ class EmberDB:
         return self._writer.write(record)
 
     def update(self, record_id: str, new_data: dict,
-               written_by: str = "system") -> tuple[str, str]:
+               written_by: str = "system",
+               agent_id: str | None = None,
+               session_id: str | None = None,
+               creation_reason: str | None = None,
+               derived_from: list | None = None) -> tuple[str, str]:
         """
         Create a new version of an existing record.
         Old record is preserved (superseded, never deleted).
         Returns (new_id, old_id).
+
+        Provenance (Feature #3) — agent_id / session_id / creation_reason /
+        derived_from — attributes THIS version to its author; it is recorded on
+        the new record and folded into its content hash.
         """
-        result = self._writer.update(record_id, new_data, written_by)
+        result = self._writer.update(
+            record_id, new_data, written_by,
+            agent_id=agent_id, session_id=session_id,
+            creation_reason=creation_reason, derived_from=derived_from)
         self._master_index.mark_superseded(record_id, result[0])
         return result
 
@@ -209,6 +222,51 @@ class EmberDB:
 
     def exists(self, record_id: str) -> bool:
         return self._reader.exists(record_id)
+
+    # ── Provenance (Feature #3 — WHO / WHEN / WHERE / WHY) ─────────────────────
+
+    def get_by_agent(self, agent_id: str,
+                     include_deprecated: bool = False,
+                     include_superseded: bool = True) -> list[EmberRecord]:
+        """Every record written by a specific agent identity.
+
+        Answers the spec's 'which agent wrote it?' as an audit query, so
+        superseded versions are included by default — the full trail of what
+        that agent contributed, not just the current heads.
+        """
+        return self._resolve_ids(
+            self._master_index.get_by_agent(agent_id),
+            include_deprecated, include_superseded)
+
+    def get_by_session(self, session_id: str,
+                       include_deprecated: bool = False,
+                       include_superseded: bool = True) -> list[EmberRecord]:
+        """Every record written during a specific session (session → memories).
+
+        Superseded versions are included by default for the same audit reason
+        as get_by_agent().
+        """
+        return self._resolve_ids(
+            self._master_index.get_by_session(session_id),
+            include_deprecated, include_superseded)
+
+    def get_provenance(self, record_id: str) -> dict | None:
+        """Structured provenance (author/agent/session/timestamp/reason/source/
+        derived_from) for a record, or None if it does not exist."""
+        record = self._reader.get(record_id, include_deprecated=True,
+                                  include_superseded=True)
+        return record.provenance() if record else None
+
+    def _resolve_ids(self, ids, include_deprecated: bool,
+                     include_superseded: bool) -> list[EmberRecord]:
+        """Resolve record IDs to records, honoring the visibility filters and
+        skipping any that resolve to None (filtered out or missing)."""
+        out = []
+        for rid in ids:
+            r = self._reader.get(rid, include_deprecated, include_superseded)
+            if r is not None:
+                out.append(r)
+        return out
 
     # ── Query (Index-accelerated) ─────────────────────────────────────────────
 
