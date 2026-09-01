@@ -30,6 +30,7 @@ from .core.edge import EdgeRef
 from .core.evidence import Evidence
 from .core.proposal import MemoryProposal
 from .core.integrity import HASH_BACKEND, RecordIntegrityError
+from .core.errors import ConcurrentModificationError
 from .core.types import (
     RecordType, MemoryType, MemoryScope,
     AccessLevel, VerifyStatus, DeprecationReason, EdgeType,
@@ -45,5 +46,5 @@ __all__ = [
     "RecordType", "MemoryType", "MemoryScope",
     "AccessLevel", "VerifyStatus", "DeprecationReason", "EdgeType",
     "SourceType", "ProposalStatus",
-    "HASH_BACKEND", "RecordIntegrityError",
+    "HASH_BACKEND", "RecordIntegrityError", "ConcurrentModificationError",
 ]

@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from ..core.record import EmberRecord
 from ..core.annotation import Annotation
 from ..core.types import DeprecationReason
+from ..core.errors import ConcurrentModificationError
 from ..storage.store import PhysicalStore
 
 
@@ -61,7 +62,8 @@ class WriteEngine:
                agent_id: str | None = None,
                session_id: str | None = None,
                creation_reason: str | None = None,
-               derived_from: list | None = None) -> tuple[str, str]:
+               derived_from: list | None = None,
+               expected_hash: str | None = None) -> tuple[str, str]:
         """
         Create a new version of an existing record.
         The old record is marked as superseded — never deleted.
@@ -77,8 +79,45 @@ class WriteEngine:
         that want attribution pass it explicitly; otherwise it stays unset.
         The supersession link (parent_hash / supersedes) already captures the
         lineage independently of derived_from.
+
+        OPTIMISTIC CONCURRENCY (Feature #6). When `expected_hash` is given, it
+        is a precondition: the caller asserts it is basing this new version on a
+        specific state it read. The check is against the CURRENT HEAD of the
+        lineage — if another writer has since committed a newer version, the
+        head's hash no longer matches and the write is REFUSED with a structured
+        ConcurrentModificationError instead of silently forking a branch. The
+        check-and-supersede happens under the write lock, so two racing writers
+        are serialized: the first wins and advances the head; the second finds
+        its expected_hash stale and conflicts (no silent lost update).
+
+        Omitting `expected_hash` preserves the original behavior, including the
+        deliberate branching of Feature #2 (supersede any version, even a
+        non-head, to fork the lineage).
         """
         with self._lock:
+            # ── Optimistic-concurrency precondition (§6) ─────────────────────
+            if expected_hash is not None:
+                # Resolve to the current head of this lineage. If old_record_id
+                # was already superseded, the head is a later version and its
+                # hash cannot match expected_hash → conflict.
+                head_id = self.get_supersession_chain(old_record_id)[-1]
+                head = self._store.read(head_id)
+                if head is None:
+                    raise KeyError(f"Record {old_record_id} not found.")
+                actual_hash = head.content_hash or head.compute_content_hash()
+                if actual_hash != expected_hash:
+                    raise ConcurrentModificationError(
+                        record_id=old_record_id,
+                        expected_hash=expected_hash,
+                        actual_hash=actual_hash,
+                        current_version=head.version,
+                        attempted_version=head.version + 1,
+                        current_id=head_id,
+                    )
+                # Precondition holds: base the new version on the head itself,
+                # giving strict linear CAS semantics (never an accidental fork).
+                old_record_id = head_id
+
             old = self._store.read(old_record_id)
             if old is None:
                 raise KeyError(f"Record {old_record_id} not found.")

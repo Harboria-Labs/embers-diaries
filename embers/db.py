@@ -175,7 +175,8 @@ class EmberDB:
                agent_id: str | None = None,
                session_id: str | None = None,
                creation_reason: str | None = None,
-               derived_from: list | None = None) -> tuple[str, str]:
+               derived_from: list | None = None,
+               expected_hash: str | None = None) -> tuple[str, str]:
         """
         Create a new version of an existing record.
         Old record is preserved (superseded, never deleted).
@@ -184,12 +185,22 @@ class EmberDB:
         Provenance (Feature #3) — agent_id / session_id / creation_reason /
         derived_from — attributes THIS version to its author; it is recorded on
         the new record and folded into its content hash.
+
+        Optimistic concurrency (Feature #6) — pass `expected_hash` (the content
+        hash of the version you read) to make this a compare-and-set: if another
+        writer has advanced the lineage head in the meantime, the write is
+        refused with a ConcurrentModificationError instead of silently forking.
+        The returned old_id is the version actually superseded (the resolved
+        head), which may differ from the record_id you passed.
         """
         result = self._writer.update(
             record_id, new_data, written_by,
             agent_id=agent_id, session_id=session_id,
-            creation_reason=creation_reason, derived_from=derived_from)
-        self._master_index.mark_superseded(record_id, result[0])
+            creation_reason=creation_reason, derived_from=derived_from,
+            expected_hash=expected_hash)
+        # result = (new_id, superseded_id); under CAS the superseded id is the
+        # resolved head, so index the link off result[1], not the raw argument.
+        self._master_index.mark_superseded(result[1], result[0])
         return result
 
     def annotate(self, record_id: str, annotation: Annotation) -> str:
