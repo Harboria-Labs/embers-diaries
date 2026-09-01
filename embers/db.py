@@ -16,8 +16,12 @@ from datetime import datetime
 
 from .core.record import EmberRecord
 from .core.annotation import Annotation
-from .core.types import RecordType, DeprecationReason, AccessLevel, EdgeType
+from .core.types import (
+    RecordType, DeprecationReason, AccessLevel, EdgeType, ProposalStatus,
+)
 from .core.edge import EdgeRef
+from .core.evidence import Evidence
+from .core.proposal import MemoryProposal
 from .storage.store import PhysicalStore
 from .engine.writer import WriteEngine
 from .engine.reader import ReadEngine
@@ -385,6 +389,240 @@ class EmberDB:
                 ids.add(e["target"])
         ids.discard(record_id)
         return self._resolve_ids(ids, True, True)
+
+    # ── Discovery, Evidence & Promotion (Features #4 / #5) ─────────────────────
+    # The path research → discovery → evidence → PROPOSAL → validation → durable
+    # memory. A proposal is a first-class, hashed, append-only PROPOSAL record;
+    # its evidence rides inside the record's `data` (so it is covered by the
+    # content hash and cannot be swapped after sealing). Validation is an
+    # append-only status transition: promote() writes the durable memory and
+    # supersedes the proposal with a PROMOTED copy that points at the memory;
+    # reject() supersedes it with a REJECTED copy. Nothing is ever deleted, so a
+    # rejected proposal stays permanently distinguishable from a committed one.
+
+    def propose(self, proposal: MemoryProposal) -> str:
+        """Record a memory proposal (a discovery awaiting validation, §4).
+
+        The proposal is sealed and stored as a PROPOSAL record — NOT yet a
+        durable memory. Its evidence is sealed too, so each piece keeps the
+        identity/hash it will carry if the proposal is promoted. Returns the
+        proposal record id (== proposal.proposal_id)."""
+        proposal.seal_evidence()
+        proposal.status = ProposalStatus.PENDING
+        record = EmberRecord(
+            id=proposal.proposal_id,
+            namespace=proposal.namespace,
+            record_type=RecordType.PROPOSAL,
+            data=proposal.to_record_payload(),
+            written_by=proposal.written_by,
+            agent_id=proposal.agent_id,
+            session_id=proposal.session_id,
+            creation_reason=proposal.reason,
+            derived_from=list(proposal.derivation),
+            confidence=proposal.confidence,
+            tags=list(proposal.tags) + ["proposal"],
+        )
+        return self._writer.write(record)
+
+    def get_proposal(self, proposal_id: str) -> MemoryProposal | None:
+        """Reconstruct a MemoryProposal from its stored record (any status).
+
+        Follows supersession to the CURRENT proposal record, so the status
+        reflects the latest transition (pending → promoted/rejected)."""
+        rec = self._reader.get_current(proposal_id)
+        if rec is None:
+            rec = self._reader.get(proposal_id, include_deprecated=True,
+                                   include_superseded=True)
+        if rec is None or rec.record_type != RecordType.PROPOSAL:
+            return None
+        return self._proposal_from_record(rec)
+
+    def _proposal_from_record(self, rec: EmberRecord) -> MemoryProposal:
+        """Rebuild a MemoryProposal from a PROPOSAL record's payload."""
+        data = dict(rec.data or {})
+        return MemoryProposal(
+            proposal_id=data.get("proposal_id", rec.id),
+            namespace=rec.namespace,
+            discovery=data.get("discovery"),
+            reason=data.get("reason", rec.creation_reason or ""),
+            evidence=[Evidence.from_dict(e) for e in data.get("evidence", [])],
+            sources=data.get("sources", []),
+            confidence=data.get("confidence", rec.confidence),
+            derivation=data.get("derivation", list(rec.derived_from)),
+            written_by=rec.written_by,
+            agent_id=rec.agent_id,
+            session_id=rec.session_id,
+            created_at=rec.created_at,
+            status=ProposalStatus(data.get("status", "pending")),
+            tags=[t for t in rec.tags if t != "proposal"],
+        )
+
+    def promote(self, proposal_id: str,
+                validated_by: str = "system") -> tuple[str, str]:
+        """Validate a proposal into a durable memory (§4 validation step).
+
+        Writes a NEW durable memory (record_type NODE) carrying the discovery as
+        its data and the proposal's justification as provenance: reason →
+        creation_reason, derivation → derived_from, confidence → confidence.
+        Each piece of evidence is written as its own hashed EVIDENCE record and
+        linked to the memory with a SUPPORTS edge, so the memory's grounding is
+        traceable and other agents can attach further evidence later without
+        touching it. The proposal record is then superseded by a PROMOTED copy
+        that records which memory it became.
+
+        Returns (memory_id, proposal_id). Raises if the proposal does not exist
+        or is not currently pending.
+        """
+        proposal = self.get_proposal(proposal_id)
+        if proposal is None:
+            raise KeyError(f"Proposal {proposal_id} not found.")
+        if proposal.status != ProposalStatus.PENDING:
+            raise ValueError(
+                f"Proposal {proposal_id} is {proposal.status.value}, "
+                "only a pending proposal can be promoted.")
+
+        # 1. The durable memory — the discovery, now first-class.
+        memory = EmberRecord(
+            namespace=proposal.namespace,
+            record_type=RecordType.NODE,
+            data=proposal.discovery,
+            written_by=validated_by,
+            agent_id=proposal.agent_id,
+            session_id=proposal.session_id,
+            creation_reason=proposal.reason,
+            derived_from=list(proposal.derivation),
+            confidence=proposal.confidence,
+            tags=[t for t in proposal.tags if t != "proposal"],
+        )
+        memory_id = self._writer.write(memory)
+
+        # 2. Each piece of evidence → its own EVIDENCE record + SUPPORTS edge.
+        for ev in proposal.evidence:
+            self._write_evidence_record(ev, memory_id)
+
+        # 3. Supersede the proposal with a PROMOTED copy pointing at the memory.
+        payload = proposal.to_record_payload()
+        payload["status"] = ProposalStatus.PROMOTED.value
+        payload["promoted_to"] = memory_id
+        self.update(proposal_id, payload, written_by=validated_by,
+                    creation_reason="proposal promoted to durable memory")
+        return memory_id, proposal_id
+
+    def reject(self, proposal_id: str, reason: str = "",
+               rejected_by: str = "system") -> str:
+        """Reject a proposal (§16 → Promotion: rejected proposals remain
+        distinguishable from committed memories).
+
+        Append-only: the proposal is superseded by a REJECTED copy. It is never
+        deleted and never becomes a memory — it stays permanently queryable as a
+        rejected proposal. Returns the new (rejected) proposal record id."""
+        proposal = self.get_proposal(proposal_id)
+        if proposal is None:
+            raise KeyError(f"Proposal {proposal_id} not found.")
+        if proposal.status != ProposalStatus.PENDING:
+            raise ValueError(
+                f"Proposal {proposal_id} is {proposal.status.value}, "
+                "only a pending proposal can be rejected.")
+        payload = proposal.to_record_payload()
+        payload["status"] = ProposalStatus.REJECTED.value
+        payload["rejection_reason"] = reason
+        new_id, _ = self.update(proposal_id, payload, written_by=rejected_by,
+                                creation_reason=f"proposal rejected: {reason}")
+        return new_id
+
+    def _write_evidence_record(self, ev: Evidence, supports_id: str) -> str:
+        """Write one Evidence as an EVIDENCE record and link it to the memory
+        it supports with a SUPPORTS edge carried ON the evidence record.
+
+        The edge lives on the record (not just in the graph index) so it is part
+        of the evidence's content hash and is rebuilt from the store on reconnect
+        — the memory ← evidence grounding survives without a checkpoint. The
+        evidence's own content_hash is preserved in the record data."""
+        if ev.content_hash is None:
+            ev.seal()
+        edge = EdgeRef(
+            edge_id=f"supports:{ev.evidence_id}:{supports_id}",
+            target_id=supports_id,
+            edge_type=EdgeType.SUPPORTS,
+            label="supports",
+        )
+        supported = self._reader.get(supports_id, True, True)
+        rec = EmberRecord(
+            id=ev.evidence_id,
+            namespace=supported.namespace if supported else "default",
+            record_type=RecordType.EVIDENCE,
+            data=ev.to_dict(),
+            connections=[edge],
+            written_by=ev.agent_id or "system",
+            agent_id=ev.agent_id,
+            session_id=ev.session_id,
+            origin=ev.source,
+        )
+        # Idempotent: the same evidence may already back another memory.
+        if self._reader.exists(ev.evidence_id):
+            # Already stored — just ensure the SUPPORTS edge exists in the graph.
+            self._graph_index.add_edge(
+                ev.evidence_id, supports_id, EdgeType.SUPPORTS.value,
+                edge_id=edge.edge_id, label="supports")
+            return ev.evidence_id
+        return self._writer.write(rec)
+
+    def attach_evidence(self, memory_id: str, ev: Evidence) -> str:
+        """Attach a new piece of evidence to an EXISTING durable memory.
+
+        This is the multi-agent confirmation path: any agent can add independent
+        evidence to a memory over time WITHOUT modifying (superseding) it —
+        append a new EVIDENCE record with a SUPPORTS edge. Append-only, so the
+        memory's hash is untouched and its confirmation trail only grows.
+        Returns the evidence record id."""
+        if not self._reader.exists(memory_id):
+            raise KeyError(f"Memory {memory_id} not found.")
+        return self._write_evidence_record(ev, memory_id)
+
+    def evidence_for(self, memory_id: str) -> list[EmberRecord]:
+        """Every EVIDENCE record supporting a memory (incoming SUPPORTS edges).
+
+        The chain CLAIM → EVIDENCE → SOURCE: each returned record carries the
+        source/source_type/observed_at identity of the observation that grounds
+        the claim. An empty list means the memory rests on a bare agent
+        assertion, not on evidence."""
+        ids = set()
+        for e in self._graph_index.get_edges(memory_id, direction="incoming"):
+            if e["edge_type"] == EdgeType.SUPPORTS.value:
+                ids.add(e["target"])
+        return self._resolve_ids(ids, True, True)
+
+    def get_evidence(self, evidence_id: str) -> Evidence | None:
+        """Reconstruct a structured Evidence object from its stored record."""
+        rec = self._reader.get(evidence_id, include_deprecated=True,
+                               include_superseded=True)
+        if rec is None or rec.record_type != RecordType.EVIDENCE:
+            return None
+        return Evidence.from_dict(rec.data)
+
+    def proposals(self, namespace: str,
+                  status: ProposalStatus | None = None) -> list[MemoryProposal]:
+        """All proposals in a namespace, optionally filtered by status.
+
+        Resolves to the CURRENT version of each proposal so status is accurate,
+        and includes superseded/deprecated so rejected and promoted proposals
+        remain visible (they are, by construction, superseded records)."""
+        out, seen = [], set()
+        records = self._reader.get_namespace(
+            namespace, include_deprecated=True, limit=None)
+        # get_namespace returns heads; also sweep superseded proposal lineages
+        # by resolving each to its current version.
+        for rec in records:
+            if rec.record_type != RecordType.PROPOSAL:
+                continue
+            current = self._reader.get_current(rec.id) or rec
+            if current.id in seen:
+                continue
+            seen.add(current.id)
+            prop = self._proposal_from_record(current)
+            if status is None or prop.status == status:
+                out.append(prop)
+        return out
 
     # ── Query (Index-accelerated) ─────────────────────────────────────────────
 

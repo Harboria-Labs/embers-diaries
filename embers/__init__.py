@@ -27,10 +27,13 @@ from .db import EmberDB
 from .core.record import EmberRecord
 from .core.annotation import Annotation, ReflectiveAnnotation
 from .core.edge import EdgeRef
+from .core.evidence import Evidence
+from .core.proposal import MemoryProposal
 from .core.integrity import HASH_BACKEND, RecordIntegrityError
 from .core.types import (
     RecordType, MemoryType, MemoryScope,
     AccessLevel, VerifyStatus, DeprecationReason, EdgeType,
+    SourceType, ProposalStatus,
 )
 
 __version__ = "0.2.0"
@@ -38,7 +41,9 @@ __author__  = "Sammie — ticketguy"
 
 __all__ = [
     "EmberDB", "EmberRecord", "Annotation", "ReflectiveAnnotation",
-    "EdgeRef", "RecordType", "MemoryType", "MemoryScope",
+    "EdgeRef", "Evidence", "MemoryProposal",
+    "RecordType", "MemoryType", "MemoryScope",
     "AccessLevel", "VerifyStatus", "DeprecationReason", "EdgeType",
+    "SourceType", "ProposalStatus",
     "HASH_BACKEND", "RecordIntegrityError",
 ]
