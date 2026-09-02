@@ -31,10 +31,14 @@ from .core.evidence import Evidence
 from .core.proposal import MemoryProposal
 from .core.integrity import HASH_BACKEND, RecordIntegrityError
 from .core.errors import ConcurrentModificationError
+from .engine.promotion import (
+    PromotionEngine, PromotionPolicy, PromotionDecision, PromotionResult,
+    PromotionOutcome,
+)
 from .core.types import (
     RecordType, MemoryType, MemoryScope,
     AccessLevel, VerifyStatus, DeprecationReason, EdgeType,
-    SourceType, ProposalStatus,
+    SourceType, ProposalStatus, MemoryStatus, PromotionMethod, PromotionMode,
 )
 
 __version__ = "0.2.0"
@@ -45,6 +49,9 @@ __all__ = [
     "EdgeRef", "Evidence", "MemoryProposal",
     "RecordType", "MemoryType", "MemoryScope",
     "AccessLevel", "VerifyStatus", "DeprecationReason", "EdgeType",
-    "SourceType", "ProposalStatus",
+    "SourceType", "ProposalStatus", "MemoryStatus", "PromotionMethod",
+    "PromotionMode",
+    "PromotionEngine", "PromotionPolicy", "PromotionDecision",
+    "PromotionResult", "PromotionOutcome",
     "HASH_BACKEND", "RecordIntegrityError", "ConcurrentModificationError",
 ]

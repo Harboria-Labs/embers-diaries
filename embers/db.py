@@ -18,6 +18,7 @@ from .core.record import EmberRecord
 from .core.annotation import Annotation
 from .core.types import (
     RecordType, DeprecationReason, AccessLevel, EdgeType, ProposalStatus,
+    MemoryStatus, PromotionMethod, PromotionMode,
 )
 from .core.edge import EdgeRef
 from .core.evidence import Evidence
@@ -25,6 +26,7 @@ from .core.proposal import MemoryProposal
 from .storage.store import PhysicalStore
 from .engine.writer import WriteEngine
 from .engine.reader import ReadEngine
+from .engine.promotion import PromotionEngine, PromotionPolicy
 from .index.master import MasterIndex
 from .index.graph import GraphIndex
 from .index.timeline import TimelineIndex
@@ -64,7 +66,9 @@ class EmberDB:
     - Namespace manager (logical partitions)
     """
 
-    def __init__(self, store_path: str | Path):
+    def __init__(self, store_path: str | Path,
+                 promotion_mode: PromotionMode = PromotionMode.AUTOMATIC,
+                 promotion_policy: PromotionPolicy | None = None):
         self._path = Path(store_path)
         self._store = PhysicalStore(self._path)
         self._writer = WriteEngine(self._store)
@@ -87,6 +91,11 @@ class EmberDB:
         # Namespace manager
         self._ns_manager = NamespaceManager(self._path)
 
+        # Promotion Engine (§10–§12) — the configurable policy that decides
+        # whether/how a proposal becomes durable memory. Mechanism lives in
+        # promote()/reject(); this is the routing in front of it.
+        self._promotion = PromotionEngine(self, promotion_mode, promotion_policy)
+
         # Register write callbacks to keep indexes updated
         self._writer.register_callback(self._on_write)
 
@@ -98,9 +107,16 @@ class EmberDB:
         _safe_print(f"   Records: {stats['record_count']} | WAL: {stats['wal_size_bytes']} bytes")
 
     @classmethod
-    def connect(cls, store_path: str | Path) -> "EmberDB":
-        """Connect to (or create) an Ember's Diaries store."""
-        return cls(store_path)
+    def connect(cls, store_path: str | Path,
+                promotion_mode: PromotionMode = PromotionMode.AUTOMATIC,
+                promotion_policy: PromotionPolicy | None = None) -> "EmberDB":
+        """Connect to (or create) an Ember's Diaries store.
+
+        `promotion_mode` selects how the Promotion Engine decides whether a
+        proposal becomes durable memory (AUTOMATIC by default). `promotion_policy`
+        tunes the gates (confidence thresholds, consensus size, trusted agents)."""
+        return cls(store_path, promotion_mode=promotion_mode,
+                   promotion_policy=promotion_policy)
 
     def _rebuild_indexes_if_needed(self):
         """On startup, rebuild indexes from store if they're empty."""
@@ -469,7 +485,10 @@ class EmberDB:
         )
 
     def promote(self, proposal_id: str,
-                validated_by: str = "system") -> tuple[str, str]:
+                validated_by: str = "system",
+                status: "MemoryStatus | None" = None,
+                promotion_method: "PromotionMethod | None" = None,
+                ) -> tuple[str, str]:
         """Validate a proposal into a durable memory (§4 validation step).
 
         Writes a NEW durable memory (record_type NODE) carrying the discovery as
@@ -481,9 +500,26 @@ class EmberDB:
         touching it. The proposal record is then superseded by a PROMOTED copy
         that records which memory it became.
 
+        EPISTEMIC STATE (spec §12). A promoted memory does NOT assert "this is
+        true" — only "this met the criteria to enter durable memory". So it
+        carries two explicit fields, stored under reserved `_status` /
+        `_promotion_method` keys INSIDE the memory's data (hence inside the
+        content hash and versioned — a status change is a new version):
+          • status           VERIFIED (default) / PROVISIONAL / DISPUTED
+          • promotion_method HOW it was admitted — HUMAN by default, because a
+                             bare promote() call is an explicit caller decision;
+                             the Promotion Engine passes AUTOMATIC / CONSENSUS.
+        Backwards-compat: the keys are added only when set, and read back with a
+        VERIFIED / HUMAN default, so pre-existing promoted memories hash and read
+        exactly as before (§15).
+
         Returns (memory_id, proposal_id). Raises if the proposal does not exist
         or is not currently pending.
         """
+        from .core.types import MemoryStatus, PromotionMethod
+        status = status or MemoryStatus.VERIFIED
+        promotion_method = promotion_method or PromotionMethod.HUMAN
+
         proposal = self.get_proposal(proposal_id)
         if proposal is None:
             raise KeyError(f"Proposal {proposal_id} not found.")
@@ -496,7 +532,7 @@ class EmberDB:
         memory = EmberRecord(
             namespace=proposal.namespace,
             record_type=RecordType.NODE,
-            data=proposal.discovery,
+            data=self._with_status(proposal.discovery, status, promotion_method),
             written_by=validated_by,
             agent_id=proposal.agent_id,
             session_id=proposal.session_id,
@@ -540,6 +576,101 @@ class EmberDB:
         new_id, _ = self.update(proposal_id, payload, written_by=rejected_by,
                                 creation_reason=f"proposal rejected: {reason}")
         return new_id
+
+    # ── Promotion Engine (§10–§12) — configurable routing to durable memory ────
+
+    @property
+    def promotion_mode(self) -> PromotionMode:
+        """The store's configured promotion mode (AUTOMATIC / CONSENSUS / HUMAN /
+        HYBRID)."""
+        return self._promotion.mode
+
+    def submit(self, proposal_id: str,
+               validated_by: str = "promotion-engine") -> "PromotionResult":
+        """Run a pending proposal through the Promotion Engine.
+
+        The engine DECIDES (per the configured mode + policy) whether the
+        proposal meets the criteria to enter durable memory, and if so promotes
+        it with the appropriate method + status. On a HOLD nothing is written and
+        the proposal stays PENDING. Returns a PromotionResult (decision +
+        memory_id when promoted)."""
+        return self._promotion.submit(proposal_id, validated_by=validated_by)
+
+    def promotion_route(self, proposal_id: str) -> "PromotionDecision":
+        """Dry-run: what WOULD the Promotion Engine do with this proposal? Returns
+        the decision without writing anything."""
+        return self._promotion.route(proposal_id)
+
+    # ── Epistemic status of a durable memory (§12) ─────────────────────────────
+
+    @staticmethod
+    def _with_status(discovery, status, promotion_method) -> dict:
+        """Fold the memory's epistemic status + promotion method into its data.
+
+        The discovery is normally a dict; we add reserved `_status` /
+        `_promotion_method` keys alongside it. A non-dict discovery (str, list,
+        number) is wrapped as {"value": <discovery>, ...} so the status still has
+        somewhere to live without losing the original payload — `memory_status`
+        / `get` unwrap it symmetrically."""
+        meta = {
+            "_status": status.value,
+            "_promotion_method": promotion_method.value,
+        }
+        if isinstance(discovery, dict):
+            merged = dict(discovery)
+            merged.update(meta)
+            return merged
+        return {"value": discovery, **meta}
+
+    def memory_status(self, memory_id: str) -> "MemoryStatus":
+        """The current epistemic status of a durable memory.
+
+        Reads the CURRENT version (status changes are new versions). Defaults to
+        VERIFIED when the key is absent, so a memory written before this feature
+        — or by a plain db.write() — reads as VERIFIED without any migration."""
+        from .core.types import MemoryStatus
+        rec = self._reader.get_current(memory_id) or self._reader.get(
+            memory_id, include_deprecated=True, include_superseded=True)
+        if rec is None:
+            raise KeyError(f"Memory {memory_id} not found.")
+        data = rec.data if isinstance(rec.data, dict) else {}
+        return MemoryStatus(data.get("_status", MemoryStatus.VERIFIED.value))
+
+    def promotion_method(self, memory_id: str) -> "PromotionMethod | None":
+        """How a durable memory was admitted (AUTOMATIC / CONSENSUS / HUMAN).
+
+        None when unknown — e.g. a memory created by a plain db.write() that
+        never went through promotion."""
+        from .core.types import PromotionMethod
+        rec = self._reader.get_current(memory_id) or self._reader.get(
+            memory_id, include_deprecated=True, include_superseded=True)
+        if rec is None:
+            raise KeyError(f"Memory {memory_id} not found.")
+        data = rec.data if isinstance(rec.data, dict) else {}
+        val = data.get("_promotion_method")
+        return PromotionMethod(val) if val else None
+
+    def set_status(self, memory_id: str, status: "MemoryStatus",
+                   changed_by: str = "system",
+                   reason: str | None = None) -> tuple[str, str]:
+        """Change a memory's epistemic status — as a NEW version (append-only).
+
+        A status transition (e.g. VERIFIED → DISPUTED when conflicting evidence
+        appears) never overwrites: it supersedes the memory with a new version
+        carrying the new `_status`, so the history verified→disputed is fully
+        preserved and auditable. The promotion_method is carried forward
+        unchanged. Returns (new_id, old_id)."""
+        from .core.types import MemoryStatus, PromotionMethod
+        rec = self._reader.get_current(memory_id)
+        if rec is None:
+            raise KeyError(f"Memory {memory_id} not found.")
+        data = dict(rec.data) if isinstance(rec.data, dict) else {"value": rec.data}
+        method = data.get("_promotion_method", PromotionMethod.HUMAN.value)
+        data["_status"] = MemoryStatus(status).value
+        data["_promotion_method"] = method
+        return self.update(
+            rec.id, data, written_by=changed_by,
+            creation_reason=reason or f"status → {MemoryStatus(status).value}")
 
     def _write_evidence_record(self, ev: Evidence, supports_id: str) -> str:
         """Write one Evidence as an EVIDENCE record and link it to the memory

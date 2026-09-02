@@ -80,10 +80,79 @@ class ProposalStatus(str, Enum):
     PENDING once proposed; PROMOTED when validated into a durable memory (the
     proposal record itself is preserved and points to the memory it became);
     REJECTED when validation fails. A rejected proposal is NEVER deleted — it
-    stays in the store, permanently distinguishable from a committed memory."""
+    stays in the store, permanently distinguishable from a committed memory.
+
+    HELD is a routing outcome, NOT a stored proposal state: the Promotion Engine
+    uses it to say "this proposal did not meet the criteria to auto-promote and
+    is awaiting more evidence or a human decision." A held proposal stays
+    PENDING on disk (append-only: nothing is written for a hold)."""
     PENDING  = "pending"
     PROMOTED = "promoted"
     REJECTED = "rejected"
+
+
+class MemoryStatus(str, Enum):
+    """The epistemic state a DURABLE memory carries after promotion (spec §12).
+
+    Crucial semantic (the whole point of the Promotion Engine): promotion does
+    NOT assert a memory is definitely true. It asserts the proposal met the
+    criteria to enter durable memory. The memory therefore still carries an
+    explicit status, decoupled from the fact that it was stored at all:
+
+      VERIFIED     grounded and confident enough to rely on
+      PROVISIONAL  admitted to memory but not yet strongly confirmed
+      DISPUTED     conflicting evidence exists; mapped, not resolved (§7)
+      SUPERSEDED   a newer version has replaced it (mirrors the version chain)
+
+    Status is an immutable per-version fact (folded into the content hash), so a
+    status change is a new version — the history verified→disputed is preserved,
+    never overwritten."""
+    VERIFIED    = "verified"
+    PROVISIONAL = "provisional"
+    DISPUTED    = "disputed"
+    SUPERSEDED  = "superseded"
+
+
+class PromotionMethod(str, Enum):
+    """HOW a memory came to be durable (spec §12 + the configurable engine).
+
+    Recorded on the promoted memory so a later reader can weigh it by the
+    process that admitted it, not just its confidence number:
+
+      AUTOMATIC  policy gates passed (evidence valid, confidence high enough,
+                 agent trusted, no known conflict) — no human in the loop
+      CONSENSUS  enough independent agents corroborated it (multi-agent evidence)
+      HUMAN      a human explicitly approved it
+      DIRECT     written straight to memory without the proposal pipeline
+                 (an ordinary db.write, tagged so it is distinguishable)"""
+    AUTOMATIC = "automatic"
+    CONSENSUS = "consensus"
+    HUMAN     = "human"
+    DIRECT    = "direct"
+
+
+class PromotionMode(str, Enum):
+    """How the Promotion Engine decides whether a proposal enters durable memory.
+
+    This is the configurable knob the user asked for — conceptually the
+    `[promotion] mode = "..."` setting. It selects the ROUTING policy that sits
+    between a proposal and a durable memory:
+
+      AUTOMATIC  promote as soon as policy gates pass (evidence valid, confidence
+                 high enough, agent trusted, no conflicting memory) — no human
+      CONSENSUS  promote once enough independent agents have corroborated the
+                 discovery (distinct evidence authors ≥ threshold)
+      HUMAN      never auto-promote; a human must explicitly approve
+      HYBRID     route by risk: high-risk proposals (low confidence / conflict /
+                 untrusted agent) go to the human gate, the rest auto-promote
+
+    A mode governs only the DECISION. It never changes the append-only,
+    hash-versioned nature of what promotion writes, and it never asserts a
+    memory is true — a promoted memory still carries its own [[MemoryStatus]]."""
+    AUTOMATIC = "automatic"
+    CONSENSUS = "consensus"
+    HUMAN     = "human"
+    HYBRID    = "hybrid"
 
 
 class DeprecationReason(str, Enum):
