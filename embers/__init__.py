@@ -30,6 +30,7 @@ from .core.edge import EdgeRef
 from .core.evidence import Evidence
 from .core.proposal import MemoryProposal
 from .core.conflict import Conflict
+from .core.session import Session
 from .core.integrity import HASH_BACKEND, RecordIntegrityError
 from .core.errors import ConcurrentModificationError
 from .engine.promotion import (
@@ -40,7 +41,7 @@ from .core.types import (
     RecordType, MemoryType, MemoryScope,
     AccessLevel, VerifyStatus, DeprecationReason, EdgeType,
     SourceType, ProposalStatus, MemoryStatus, PromotionMethod, PromotionMode,
-    ConflictType, ConflictStatus,
+    ConflictType, ConflictStatus, SessionStatus,
 )
 
 __version__ = "0.2.0"
@@ -48,11 +49,11 @@ __author__  = "Sammie — ticketguy"
 
 __all__ = [
     "EmberDB", "EmberRecord", "Annotation", "ReflectiveAnnotation",
-    "EdgeRef", "Evidence", "MemoryProposal", "Conflict",
+    "EdgeRef", "Evidence", "MemoryProposal", "Conflict", "Session",
     "RecordType", "MemoryType", "MemoryScope",
     "AccessLevel", "VerifyStatus", "DeprecationReason", "EdgeType",
     "SourceType", "ProposalStatus", "MemoryStatus", "PromotionMethod",
-    "PromotionMode", "ConflictType", "ConflictStatus",
+    "PromotionMode", "ConflictType", "ConflictStatus", "SessionStatus",
     "PromotionEngine", "PromotionPolicy", "PromotionDecision",
     "PromotionResult", "PromotionOutcome",
     "HASH_BACKEND", "RecordIntegrityError", "ConcurrentModificationError",

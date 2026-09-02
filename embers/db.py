@@ -24,7 +24,8 @@ from .core.edge import EdgeRef
 from .core.evidence import Evidence
 from .core.proposal import MemoryProposal
 from .core.conflict import Conflict
-from .core.types import ConflictType, ConflictStatus
+from .core.session import Session
+from .core.types import ConflictType, ConflictStatus, SessionStatus
 from .storage.store import PhysicalStore
 from .engine.writer import WriteEngine
 from .engine.reader import ReadEngine
@@ -591,6 +592,159 @@ class EmberDB:
             if rec is not None:
                 namespaces.add(rec.namespace)
         return list(namespaces)
+
+    # ── Sessions (Feature #9) ──────────────────────────────────────────────────
+    # Provenance (#3) already stamps `session_id` on every memory a session
+    # produced, so get_by_session() answers "which memories came from session X?"
+    # mechanically. Feature #9 makes the SESSION itself first-class: a bounded
+    # period of agent activity with its own identity, lifecycle, task, and a
+    # curated account of what it produced (discoveries / failures / memory_writes).
+    #
+    # The session record is append-only like everything else: ending a session,
+    # or logging a discovery/failure/write against it, supersedes it with a new
+    # version, so the session's history is preserved and auditable.
+
+    def start_session(self, agent_id: str, task: str = "",
+                      namespace: str = "default",
+                      session_id: str | None = None) -> str:
+        """Open a first-class session (status ACTIVE) and return its id.
+
+        The returned id is what callers pass as `session_id` to write/propose so
+        the session's memories are attributable to it (provenance, #3)."""
+        session = Session(agent_id=agent_id, task=task, namespace=namespace,
+                          **({"session_id": session_id} if session_id else {}))
+        record = EmberRecord(
+            id=session.session_id,
+            namespace=namespace,
+            record_type=RecordType.SESSION,
+            data=session.to_record_payload(),
+            written_by=agent_id,
+            agent_id=agent_id,
+            session_id=session.session_id,
+            creation_reason="session started",
+            tags=list(session.tags) + ["session"],
+        )
+        return self._writer.write(record)
+
+    def get_session(self, session_id: str) -> Session | None:
+        """Reconstruct a Session from its CURRENT version, so status/summary and
+        the produced-ids lists reflect the latest transition."""
+        rec = self._reader.get_current(session_id)
+        if rec is None:
+            rec = self._reader.get(session_id, include_deprecated=True,
+                                   include_superseded=True)
+        if rec is None or rec.record_type != RecordType.SESSION:
+            return None
+        return self._session_from_record(rec)
+
+    def _session_from_record(self, rec: EmberRecord) -> Session:
+        data = dict(rec.data or {})
+        return Session.from_dict({**data, "namespace": rec.namespace,
+                                  "tags": [t for t in rec.tags if t != "session"]})
+
+    def _update_session(self, session: Session, changed_by: str,
+                        reason: str) -> str:
+        """Supersede a session with a new version (append-only). Returns the new
+        record id; get_session() continues to resolve by the original id."""
+        head = self._reader.get_current(session.session_id)
+        if head is None or head.record_type != RecordType.SESSION:
+            raise KeyError(f"Session {session.session_id} not found.")
+        new_id, _ = self.update(head.id, session.to_record_payload(),
+                                written_by=changed_by, creation_reason=reason)
+        return new_id
+
+    def record_discovery(self, session_id: str, discovery_id: str,
+                         changed_by: str = "system") -> str:
+        """Log a discovery/proposal id against a session's curated account."""
+        session = self._require_session(session_id)
+        if discovery_id not in session.discoveries:
+            session.discoveries.append(discovery_id)
+        return self._update_session(session, changed_by, "session discovery logged")
+
+    def record_failure(self, session_id: str, failure_id: str,
+                       changed_by: str = "system") -> str:
+        """Log a failure id (§13) against a session's curated account."""
+        session = self._require_session(session_id)
+        if failure_id not in session.failures:
+            session.failures.append(failure_id)
+        return self._update_session(session, changed_by, "session failure logged")
+
+    def record_memory_write(self, session_id: str, memory_id: str,
+                            changed_by: str = "system") -> str:
+        """Log a durable memory id against a session's curated account."""
+        session = self._require_session(session_id)
+        if memory_id not in session.memory_writes:
+            session.memory_writes.append(memory_id)
+        return self._update_session(session, changed_by, "session memory write logged")
+
+    def end_session(self, session_id: str, summary: str = "",
+                    status: SessionStatus = SessionStatus.COMPLETED,
+                    changed_by: str = "system") -> str:
+        """Close a session (COMPLETED or ABANDONED) with a summary and an
+        `ended_at` timestamp — as a new append-only version."""
+        session = self._require_session(session_id)
+        session.status = SessionStatus(status)
+        session.ended_at = datetime.utcnow()
+        if summary:
+            session.summary = summary
+        return self._update_session(
+            session, changed_by, f"session → {SessionStatus(status).value}")
+
+    def _require_session(self, session_id: str) -> Session:
+        session = self.get_session(session_id)
+        if session is None:
+            raise KeyError(f"Session {session_id} not found.")
+        return session
+
+    def sessions(self, agent_id: str | None = None,
+                 namespace: str | None = None,
+                 status: SessionStatus | None = None) -> list[Session]:
+        """All sessions, optionally filtered by agent / namespace / status.
+        Resolves each session lineage to its current version."""
+        out, seen = [], set()
+        namespaces = ([namespace] if namespace is not None
+                      else self._all_namespaces())
+        for ns in namespaces:
+            for rec in self._reader.get_namespace(ns, include_deprecated=True,
+                                                  limit=None):
+                if rec.record_type != RecordType.SESSION:
+                    continue
+                current = self._reader.get_current(rec.id) or rec
+                if current.id in seen:
+                    continue
+                seen.add(current.id)
+                s = self._session_from_record(current)
+                if agent_id is not None and s.agent_id != agent_id:
+                    continue
+                if status is not None and s.status != status:
+                    continue
+                out.append(s)
+        return out
+
+    def session_discoveries(self, session_id: str) -> list[EmberRecord]:
+        """> What did this agent discover during session X?
+
+        The proposals/discoveries the session recorded, resolved to records."""
+        session = self._require_session(session_id)
+        return self._resolve_ids(session.discoveries, True, True)
+
+    def session_memories(self, session_id: str) -> list[EmberRecord]:
+        """> Which memories were created during session X?
+
+        Combines the session's own curated memory_writes list with the
+        provenance view (every record stamped with this session_id), so a memory
+        is found whether or not it was explicitly logged on the session."""
+        ids = set(self.get_session(session_id).memory_writes)
+        for rec in self.get_by_session(session_id, include_superseded=True):
+            if rec.record_type not in (RecordType.SESSION,):
+                ids.add(rec.id)
+        return self._resolve_ids(ids, True, True)
+
+    def session_failures(self, session_id: str) -> list[EmberRecord]:
+        """> What failures occurred [during / before memory Y was created in]
+        session X? — the failure records the session logged (§13)."""
+        session = self._require_session(session_id)
+        return self._resolve_ids(session.failures, True, True)
 
     # ── Discovery, Evidence & Promotion (Features #4 / #5) ─────────────────────
     # The path research → discovery → evidence → PROPOSAL → validation → durable

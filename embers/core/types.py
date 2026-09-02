@@ -24,6 +24,7 @@ class RecordType(str, Enum):
     EVIDENCE   = "evidence"    # A hashed observation supporting a claim (§5)
     PROPOSAL   = "proposal"    # A discovery awaiting validation (§4)
     CONFLICT   = "conflict"    # A mapped contradiction between two memories (§7)
+    SESSION    = "session"     # A bounded period of agent activity (§9)
 
 
 class MemoryType(str, Enum):
@@ -187,6 +188,19 @@ class ConflictStatus(str, Enum):
     RESOLVED      = "resolved"
     ACCEPTED_BOTH = "accepted_both"
     SUPERSEDED    = "superseded"
+
+
+class SessionStatus(str, Enum):
+    """Lifecycle of a first-class session (spec §9).
+
+    A session is a bounded period of agent activity. It opens ACTIVE, and ends
+    either COMPLETED (the task finished) or ABANDONED (the agent stopped without
+    completing). Like every other lifecycle in Ember's Diaries, a status change
+    is an append-only new version of the SESSION record — the history
+    active → completed is preserved, never overwritten."""
+    ACTIVE    = "active"
+    COMPLETED = "completed"
+    ABANDONED = "abandoned"
 
 
 class DeprecationReason(str, Enum):
