@@ -25,6 +25,7 @@ from .core.evidence import Evidence
 from .core.proposal import MemoryProposal
 from .core.conflict import Conflict
 from .core.session import Session
+from .core.failure import Failure
 from .core.types import ConflictType, ConflictStatus, SessionStatus
 from .storage.store import PhysicalStore
 from .engine.writer import WriteEngine
@@ -745,6 +746,179 @@ class EmberDB:
         session X? — the failure records the session logged (§13)."""
         session = self._require_session(session_id)
         return self._resolve_ids(session.failures, True, True)
+
+    # ── Failures as First-Class Information (Feature #13) ──────────────────────
+    # A failure is information other agents need, not noise to discard. The point
+    # is to break this waste cycle:
+    #
+    #     Agent A tries X → fails
+    #     Agent B unknowingly tries X → fails
+    #     Agent C unknowingly tries X → fails
+    #
+    # So a failure is stored with an `approach` — the key a LATER agent searches
+    # on ("has this been tried?") — via has_failed() / failures_for_approach().
+    #
+    # SCOPE NOTE: §13 frames sharing through the lobby ("Agents should be able to
+    # share failures in the lobby"). The lobby itself is Features #10/#25/#26 and
+    # is not built yet. What lands here is the durable, cross-agent substrate the
+    # lobby will broadcast from: failures are recorded, queryable by every agent
+    # against the shared store, and promotable into memory. When the lobby
+    # arrives it publishes these records rather than inventing its own format.
+
+    def report_failure(self, failure: Failure) -> str:
+        """Record a failed approach so other agents don't repeat it (§13).
+
+        Stores a FAILURE record (its evidence sealed, so each piece keeps the
+        identity it will carry if the failure is later promoted). If the failure
+        names a session that exists, it is also logged on that session's curated
+        account (#9), so `session_failures()` picks it up automatically.
+
+        Returns the failure record id (== failure.failure_id)."""
+        failure.seal_evidence()
+        record = EmberRecord(
+            id=failure.failure_id,
+            namespace=failure.namespace,
+            record_type=RecordType.FAILURE,
+            data=failure.to_record_payload(),
+            written_by=failure.agent_id,
+            agent_id=failure.agent_id,
+            session_id=failure.session_id,
+            creation_reason=f"failed approach: {failure.approach}",
+            tags=list(failure.tags) + ["failure"],
+        )
+        fid = self._writer.write(record)
+        # Tie it into the session's own account of what happened (#9), when the
+        # session is a first-class one. A bare session_id string is fine too —
+        # provenance still links them; we just skip the curated list.
+        if failure.session_id and self.get_session(failure.session_id) is not None:
+            self.record_failure(failure.session_id, fid,
+                                changed_by=failure.agent_id)
+        return fid
+
+    def get_failure(self, failure_id: str) -> Failure | None:
+        """Reconstruct a Failure from its CURRENT version (so `promoted_to`
+        reflects a later promotion)."""
+        rec = self._reader.get_current(failure_id)
+        if rec is None:
+            rec = self._reader.get(failure_id, include_deprecated=True,
+                                   include_superseded=True)
+        if rec is None or rec.record_type != RecordType.FAILURE:
+            return None
+        return self._failure_from_record(rec)
+
+    def _failure_from_record(self, rec: EmberRecord) -> Failure:
+        data = dict(rec.data or {})
+        return Failure.from_dict({**data, "namespace": rec.namespace,
+                                  "tags": [t for t in rec.tags if t != "failure"]})
+
+    def failures(self, namespace: str | None = None,
+                 agent_id: str | None = None,
+                 session_id: str | None = None,
+                 promoted_only: bool = False) -> list[Failure]:
+        """Every recorded failure, optionally filtered.
+
+        Deliberately NOT scoped to one agent by default: the whole value of §13
+        is that Agent B can see what Agent A already failed at."""
+        out, seen = [], set()
+        namespaces = ([namespace] if namespace is not None
+                      else self._all_namespaces())
+        for ns in namespaces:
+            for rec in self._reader.get_namespace(ns, include_deprecated=True,
+                                                  limit=None):
+                if rec.record_type != RecordType.FAILURE:
+                    continue
+                current = self._reader.get_current(rec.id) or rec
+                if current.id in seen:
+                    continue
+                seen.add(current.id)
+                f = self._failure_from_record(current)
+                if agent_id is not None and f.agent_id != agent_id:
+                    continue
+                if session_id is not None and f.session_id != session_id:
+                    continue
+                if promoted_only and f.promoted_to is None:
+                    continue
+                out.append(f)
+        return out
+
+    def failures_for_approach(self, approach: str,
+                              namespace: str | None = None) -> list[Failure]:
+        """> Has this approach already been tried and failed? — and by whom, why,
+        and on what evidence.
+
+        Matches on the NORMALIZED approach (case/whitespace-insensitive), so a
+        differently-phrased retry of the same attempt is still found. This is the
+        call that lets Agent B skip X and try Y instead."""
+        probe = Failure.normalize_approach(approach)
+        return [f for f in self.failures(namespace=namespace)
+                if Failure.normalize_approach(f.approach) == probe]
+
+    def has_failed(self, approach: str, namespace: str | None = None) -> bool:
+        """True if any agent has already recorded a failure for this approach.
+        The cheap pre-flight check before spending effort on it."""
+        return bool(self.failures_for_approach(approach, namespace))
+
+    def promote_failure(self, failure_id: str, lesson: str = "",
+                        confidence: float = 0.8,
+                        reason: str = "",
+                        promoted_by: str = "promotion-engine",
+                        submit: bool = True):
+        """Promote a failure into durable memory if it is valuable enough (§13).
+
+        A failure is not automatically durable knowledge — one crash is an event,
+        a structural limitation is a lesson. So promotion goes through the SAME
+        pipeline as any other discovery (§4/§5/§12) rather than a private
+        shortcut: the failure becomes a MemoryProposal carrying the failure's own
+        evidence and `derived_from` the failure record, and the Promotion Engine
+        decides. `promoted_to` is stamped on the failure (a new append-only
+        version) only if a memory actually resulted.
+
+        With submit=False the proposal is created and its id returned WITHOUT
+        routing it — for a human/consensus flow that decides separately.
+        Otherwise returns the PromotionResult from the engine."""
+        failure = self.get_failure(failure_id)
+        if failure is None:
+            raise KeyError(f"Failure {failure_id} not found.")
+
+        proposal = MemoryProposal(
+            namespace=failure.namespace,
+            discovery={
+                "lesson": lesson or f"{failure.approach} — does not work",
+                "approach": failure.approach,
+                "failed": failure.failed,
+                "cause": failure.cause,
+                "kind": "failure",
+            },
+            reason=reason or f"failed approach worth remembering: {failure.cause}",
+            confidence=confidence,
+            evidence=list(failure.evidence),
+            derivation=[failure_id],
+            written_by=promoted_by,
+            agent_id=failure.agent_id,
+            session_id=failure.session_id,
+            tags=["failure-lesson"],
+        )
+        proposal_id = self.propose(proposal)
+        if not submit:
+            return proposal_id
+
+        result = self.submit(proposal_id, validated_by=promoted_by)
+        if result.promoted:
+            self._mark_failure_promoted(failure, result.memory_id, promoted_by)
+        return result
+
+    def _mark_failure_promoted(self, failure: Failure, memory_id: str,
+                               changed_by: str) -> str:
+        """Stamp `promoted_to` on a failure as a NEW version (append-only) — the
+        original failure record is preserved, never rewritten."""
+        head = self._reader.get_current(failure.failure_id)
+        if head is None or head.record_type != RecordType.FAILURE:
+            raise KeyError(f"Failure {failure.failure_id} not found.")
+        failure.promoted_to = memory_id
+        new_id, _ = self.update(
+            head.id, failure.to_record_payload(), written_by=changed_by,
+            creation_reason="failure promoted to durable memory")
+        return new_id
 
     # ── Discovery, Evidence & Promotion (Features #4 / #5) ─────────────────────
     # The path research → discovery → evidence → PROPOSAL → validation → durable

@@ -25,6 +25,7 @@ class RecordType(str, Enum):
     PROPOSAL   = "proposal"    # A discovery awaiting validation (§4)
     CONFLICT   = "conflict"    # A mapped contradiction between two memories (§7)
     SESSION    = "session"     # A bounded period of agent activity (§9)
+    FAILURE    = "failure"     # A failed approach, shared so others don't repeat it (§13)
 
 
 class MemoryType(str, Enum):
