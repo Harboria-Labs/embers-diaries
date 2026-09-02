@@ -23,6 +23,8 @@ from .core.types import (
 from .core.edge import EdgeRef
 from .core.evidence import Evidence
 from .core.proposal import MemoryProposal
+from .core.conflict import Conflict
+from .core.types import ConflictType, ConflictStatus
 from .storage.store import PhysicalStore
 from .engine.writer import WriteEngine
 from .engine.reader import ReadEngine
@@ -416,6 +418,179 @@ class EmberDB:
                 ids.add(e["target"])
         ids.discard(record_id)
         return self._resolve_ids(ids, True, True)
+
+    # ── Conflict Engine (Feature #7) ───────────────────────────────────────────
+    # `conflicts()` above answers "what contradicts X?" from raw CONTRADICTS
+    # edges. The Conflict Engine promotes that into a first-class, append-only
+    # subsystem: a mapped contradiction becomes a CONFLICT record with the spec
+    # §7 shape (memory_a/memory_b/detected_*/type/status/resolution) and a
+    # triage lifecycle (open → investigating → resolved | accepted_both |
+    # superseded). NEITHER contradicting memory is ever destroyed — only the
+    # conflict record between them carries a resolution.
+    #
+    # Two conflict shapes are distinguished (§7):
+    #   • STORAGE conflict — two agents racing to modify one memory. Prevented at
+    #     write time by hash + version + optimistic concurrency (§6); it is never
+    #     stored as a Conflict, it is refused as a ConcurrentModificationError.
+    #   • SEMANTIC conflict — two durable memories whose claims disagree. This is
+    #     what map_conflict() records and the lifecycle below reconciles.
+
+    def map_conflict(self, memory_a: str, memory_b: str,
+                     detected_by: str = "system",
+                     conflict_type: ConflictType = ConflictType.SEMANTIC,
+                     note: str = "") -> str:
+        """Map a SEMANTIC contradiction between two existing memories (§7).
+
+        Records a CONFLICT record (status OPEN) AND draws a symmetric
+        `contradicts` edge between the two memories, so the contradiction is
+        visible both as a queryable conflict object and via `conflicts()`.
+        NEITHER memory is modified or destroyed. Idempotent: if a conflict
+        between this pair is already mapped and still live (not resolved/
+        superseded), its existing id is returned rather than mapping a duplicate.
+
+        Returns the conflict record id. Raises KeyError if either memory is
+        missing, ValueError if the two ids are equal."""
+        if not self.exists(memory_a):
+            raise KeyError(f"Memory {memory_a} not found.")
+        if not self.exists(memory_b):
+            raise KeyError(f"Memory {memory_b} not found.")
+
+        conflict = Conflict(
+            namespace=self.get(memory_a, True, True).namespace,
+            memory_a=memory_a, memory_b=memory_b,
+            conflict_type=conflict_type, detected_by=detected_by, note=note)
+
+        # Idempotency: is this exact pair already mapped and still live?
+        existing = self._find_live_conflict(conflict.pair_fingerprint())
+        if existing is not None:
+            return existing.conflict_id
+
+        record = EmberRecord(
+            id=conflict.conflict_id,
+            namespace=conflict.namespace,
+            record_type=RecordType.CONFLICT,
+            data=conflict.to_record_payload(),
+            written_by=detected_by,
+            creation_reason="semantic conflict mapped",
+            tags=list(conflict.tags) + ["conflict"],
+        )
+        cid = self._writer.write(record)
+
+        # Map the contradiction on the graph too (symmetric), so the existing
+        # conflicts() view and the promotion engine's conflict gate see it.
+        self.link(memory_a, memory_b, EdgeType.CONTRADICTS.value,
+                  label="contradicts")
+        return cid
+
+    def get_conflict(self, conflict_id: str) -> Conflict | None:
+        """Reconstruct a Conflict from its record (following supersession to the
+        CURRENT version, so status reflects the latest transition)."""
+        rec = self._reader.get_current(conflict_id)
+        if rec is None:
+            rec = self._reader.get(conflict_id, include_deprecated=True,
+                                   include_superseded=True)
+        if rec is None or rec.record_type != RecordType.CONFLICT:
+            return None
+        return self._conflict_from_record(rec)
+
+    def _conflict_from_record(self, rec: EmberRecord) -> Conflict:
+        data = dict(rec.data or {})
+        c = Conflict.from_dict({**data, "namespace": rec.namespace,
+                                "tags": [t for t in rec.tags if t != "conflict"]})
+        return c
+
+    def _find_live_conflict(self, pair_fingerprint: str) -> Conflict | None:
+        """The current, not-yet-closed conflict for a pair fingerprint, if any.
+        'Live' = status not in {RESOLVED, SUPERSEDED} — a closed conflict does
+        not block mapping a fresh one if the contradiction resurfaces."""
+        closed = {ConflictStatus.RESOLVED, ConflictStatus.SUPERSEDED}
+        for c in self.conflict_records(namespace=None):
+            if c.pair_fingerprint() == pair_fingerprint and c.status not in closed:
+                return c
+        return None
+
+    def conflict_records(self, namespace: str | None = None,
+                         status: ConflictStatus | None = None) -> list[Conflict]:
+        """All mapped conflicts, optionally filtered by namespace and/or status.
+
+        Resolves each conflict lineage to its CURRENT version so status is
+        accurate, and de-duplicates superseded copies of the same conflict."""
+        out, seen = [], set()
+        namespaces = ([namespace] if namespace is not None
+                      else self._all_namespaces())
+        for ns in namespaces:
+            for rec in self._reader.get_namespace(ns, include_deprecated=True,
+                                                  limit=None):
+                if rec.record_type != RecordType.CONFLICT:
+                    continue
+                current = self._reader.get_current(rec.id) or rec
+                if current.id in seen:
+                    continue
+                seen.add(current.id)
+                c = self._conflict_from_record(current)
+                if status is None or c.status == status:
+                    out.append(c)
+        return out
+
+    def conflicts_for(self, memory_id: str,
+                     include_closed: bool = False) -> list[Conflict]:
+        """Every mapped Conflict that involves a given memory (either side).
+
+        By default only live conflicts (not resolved/superseded); pass
+        include_closed=True to see the full triage history for the memory."""
+        closed = {ConflictStatus.RESOLVED, ConflictStatus.SUPERSEDED}
+        out = []
+        for c in self.conflict_records(
+                namespace=self.get(memory_id, True, True).namespace
+                if self.exists(memory_id) else None):
+            if memory_id not in (c.memory_a, c.memory_b):
+                continue
+            if not include_closed and c.status in closed:
+                continue
+            out.append(c)
+        return out
+
+    def update_conflict_status(self, conflict_id: str,
+                               status: ConflictStatus,
+                               resolution: str = "",
+                               changed_by: str = "system") -> tuple[str, str]:
+        """Advance a conflict's lifecycle — as a NEW version (append-only, §7).
+
+        A transition (open → investigating → resolved | accepted_both |
+        superseded) supersedes the conflict record with a new version carrying
+        the new status/resolution, so the full triage history is preserved.
+        NEITHER contradicting memory is touched — resolving a conflict records a
+        decision, it never deletes a memory. Returns (new_id, old_id)."""
+        head = self._reader.get_current(conflict_id)
+        if head is None or head.record_type != RecordType.CONFLICT:
+            raise KeyError(f"Conflict {conflict_id} not found.")
+        conflict = self._conflict_from_record(head)
+        payload = conflict.to_record_payload()
+        payload["status"] = ConflictStatus(status).value
+        if resolution:
+            payload["resolution"] = resolution
+        # Supersede the CURRENT head (not the original id) so repeated
+        # transitions extend one linear chain rather than forking the lineage.
+        return self.update(
+            head.id, payload, written_by=changed_by,
+            creation_reason=f"conflict → {ConflictStatus(status).value}")
+
+    def resolve_conflict(self, conflict_id: str, resolution: str,
+                         changed_by: str = "system") -> tuple[str, str]:
+        """Convenience: mark a conflict RESOLVED with a resolution note. Neither
+        memory is deleted — the resolution is a recorded decision only."""
+        return self.update_conflict_status(
+            conflict_id, ConflictStatus.RESOLVED, resolution, changed_by)
+
+    def _all_namespaces(self) -> list[str]:
+        """Every namespace that currently has records — used to sweep for
+        conflicts when no namespace filter is given."""
+        namespaces = set()
+        for rid in self._store.all_ids():
+            rec = self._store.read(rid)
+            if rec is not None:
+                namespaces.add(rec.namespace)
+        return list(namespaces)
 
     # ── Discovery, Evidence & Promotion (Features #4 / #5) ─────────────────────
     # The path research → discovery → evidence → PROPOSAL → validation → durable

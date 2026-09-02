@@ -23,6 +23,7 @@ class RecordType(str, Enum):
     RAW        = "raw"         # Binary, blobs, unstructured
     EVIDENCE   = "evidence"    # A hashed observation supporting a claim (§5)
     PROPOSAL   = "proposal"    # A discovery awaiting validation (§4)
+    CONFLICT   = "conflict"    # A mapped contradiction between two memories (§7)
 
 
 class MemoryType(str, Enum):
@@ -153,6 +154,39 @@ class PromotionMode(str, Enum):
     CONSENSUS = "consensus"
     HUMAN     = "human"
     HYBRID    = "hybrid"
+
+
+class ConflictType(str, Enum):
+    """The kind of conflict the Conflict Engine has mapped (spec §7).
+
+    STORAGE conflicts (two agents racing to modify the same memory) are handled
+    by hash + version + optimistic concurrency (§6) at write time — they are
+    prevented, not stored. What the Conflict Engine persists is the SEMANTIC
+    kind: two DURABLE memories whose claims contradict each other. They are
+    mapped and kept side by side, never silently reconciled or deleted."""
+    SEMANTIC = "semantic"   # contradictory claims in two memories
+    STORAGE  = "storage"    # concurrent modification (normally handled by §6)
+
+
+class ConflictStatus(str, Enum):
+    """Lifecycle of a mapped conflict (spec §7).
+
+      OPEN          detected, not yet triaged
+      INVESTIGATING someone is actively reconciling it
+      RESOLVED      a resolution was recorded (e.g. one side is now correct)
+      ACCEPTED_BOTH both memories are legitimately kept (context-dependent truth)
+      SUPERSEDED    the conflict itself was replaced (e.g. one memory got a new
+                    version that removed the contradiction)
+
+    Transitions are append-only: like proposals, a conflict record is superseded
+    by a new version carrying the new status, so the full triage history
+    (open → investigating → resolved) is preserved and auditable. Neither
+    contradicting memory is ever destroyed by any transition."""
+    OPEN          = "open"
+    INVESTIGATING = "investigating"
+    RESOLVED      = "resolved"
+    ACCEPTED_BOTH = "accepted_both"
+    SUPERSEDED    = "superseded"
 
 
 class DeprecationReason(str, Enum):
