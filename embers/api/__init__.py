@@ -52,7 +52,9 @@ app = FastAPI(
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 from .v1 import router as v1_router
+from .mcp_http import router as mcp_router
 app.include_router(v1_router)
+app.include_router(mcp_router)
 
 
 @app.get("/health")
