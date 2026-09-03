@@ -6,6 +6,7 @@ Handles all read operations. Aware of supersession and deprecation.
 from datetime import datetime
 from ..core.record import EmberRecord
 from ..storage.store import PhysicalStore
+from ..index.master import MasterIndex
 
 
 class ReadEngine:
@@ -14,9 +15,10 @@ class ReadEngine:
     Handles supersession resolution, deprecation filtering, access tracking.
     """
 
-    def __init__(self, store: PhysicalStore, writer=None):
+    def __init__(self, store: PhysicalStore, writer=None, master_index: MasterIndex | None = None):
         self._store  = store
         self._writer = writer  # WriteEngine ref for supersession checks
+        self._master_index = master_index
 
     # ── Primary read ──────────────────────────────────────────────────────────
 
@@ -113,18 +115,37 @@ class ReadEngine:
                       limit: int | None = None) -> list[EmberRecord]:
         """
         Return all records in a namespace.
-        Uses the namespace index if available, else full scan.
+
+        Resolve the namespace to record IDs through the shared MasterIndex,
+        then read only those records. This avoids scanning every .ember file.
+        The fallback is retained only for standalone ReadEngine instances that
+        have no EmberDB-created MasterIndex available yet.
         """
+        master_index = self._master_index or MasterIndex.get_registered(self._store.root)
+        if master_index is not None:
+            self._master_index = master_index
+            record_ids = master_index.get_namespace_ids(
+                namespace,
+                include_deprecated=include_deprecated,
+                include_superseded=include_superseded,
+            )
+            if limit is not None:
+                record_ids = record_ids[:limit]
+            return self.get_many(
+                record_ids,
+                include_deprecated=include_deprecated,
+                include_superseded=include_superseded,
+            )
+
+        # Compatibility fallback for standalone ReadEngine usage.
         all_ids = self._store.all_ids()
         results = []
-
         for record_id in all_ids:
             r = self.get(record_id, include_deprecated, include_superseded)
             if r and r.namespace == namespace:
                 results.append(r)
                 if limit and len(results) >= limit:
                     break
-
         return results
 
     def get_all(self, include_deprecated: bool = False,
