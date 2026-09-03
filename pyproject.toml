@@ -16,24 +16,16 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-
-# Vector similarity search (Phase 2)
 vector = [
     "numpy>=1.26.0,<3.0.0",
 ]
-
-# Full-text search (Phase 3)
 fulltext = [
     "whoosh>=2.7.4",
 ]
-
-# REST API (Phase 6)
 api = [
     "fastapi>=0.110.0,<1.0.0",
     "uvicorn>=0.29.0,<1.0.0",
 ]
-
-# Everything
 all = [
     "msgpack>=1.0.8,<2.0.0",
     "numpy>=1.26.0,<3.0.0",
@@ -41,12 +33,13 @@ all = [
     "fastapi>=0.110.0,<1.0.0",
     "uvicorn>=0.29.0,<1.0.0",
 ]
-
-# Dev / testing — never auto-installed
 dev = [
     "pytest>=7.4.0,<9.0.0",
     "pytest-cov>=4.1.0",
 ]
+
+[project.scripts]
+ember-mcp = "embers.mcp.server:main"
 
 [tool.setuptools.packages.find]
 include = ["embers*"]
