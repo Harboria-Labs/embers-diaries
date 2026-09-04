@@ -59,6 +59,7 @@ TOOLS = [
                 "namespace": {"type": "string"},
                 "session_id": {"type": "string"},
                 "creation_reason": {"type": "string"},
+                "tags": {"type": "array", "items": {"type": "string"}},
                 "agent_id": {"type": "string"},
                 "token": {"type": "string"},
             },
@@ -232,6 +233,7 @@ class EmberMCP:
                 agent_id=agent.agent_id,
                 session_id=args.get("session_id"),
                 creation_reason=args.get("creation_reason"),
+                tags=args.get("tags"),
             )
             if args.get("session_id") and self.db.get_session(args["session_id"]):
                 self.db.record_memory_write(
@@ -249,6 +251,8 @@ class EmberMCP:
                 "agent_id": rec.agent_id,
                 "session_id": rec.session_id,
                 "content_hash": rec.content_hash,
+                "tags": rec.tags,
+                "annotations": [a.to_dict() for a in rec.annotations],
             })
 
         if name == "ember_search":
