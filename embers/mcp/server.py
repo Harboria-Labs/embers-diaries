@@ -241,6 +241,7 @@ class EmberMCP:
             return _text({"id": rid, "agent_id": agent.agent_id})
 
         if name == "ember_read":
+            self._auth(args)
             rec = self.db.get(args["record_id"], True, True)
             if rec is None:
                 return _err("not found")
@@ -256,6 +257,7 @@ class EmberMCP:
             })
 
         if name == "ember_search":
+            self._auth(args)
             results = self.db.search(
                 args["query"], args.get("namespace"), int(args.get("top_k", 10)),
             )
@@ -272,15 +274,18 @@ class EmberMCP:
             return _text(result)
 
         if name == "ember_get_history":
+            self._auth(args)
             hist = self.db.get_history(args["record_id"])
             return _text([{"id": r.id, "data": r.data} for r in hist])
 
         if name == "ember_get_graph":
+            self._auth(args)
             neighbors = self.db.neighbors(
                 args["record_id"], depth=int(args.get("depth", 1)))
             return _text([{"id": r.id, "data": r.data} for r in neighbors])
 
         if name == "ember_get_session":
+            self._auth(args)
             session = self.db.get_session(args["session_id"])
             if session is None:
                 return _err("session not found")

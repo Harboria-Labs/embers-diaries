@@ -49,3 +49,50 @@ def test_write_rejects_bad_token(tmp_path: Path):
         }},
     })
     assert bad["result"]["isError"] is True
+
+
+def test_read_tools_require_authentication(tmp_path: Path):
+    """Reads must be gated like writes: an anonymous client can't drain a
+    shared store that enforces agent identity."""
+    db = EmberDB.connect(str(tmp_path / "s"))
+    mcp = EmberMCP(db=db)
+
+    # an agent writes a memory
+    reg = mcp.handle({
+        "jsonrpc": "2.0", "id": 1, "method": "tools/call",
+        "params": {"name": "ember_register",
+                    "arguments": {"name": "reader", "provider": "local", "model": "test"}},
+    })
+    payload = json.loads(reg["result"]["content"][0]["text"])
+    agent_id, token = payload["agent_id"], payload["token"]
+    written = mcp.handle({
+        "jsonrpc": "2.0", "id": 2, "method": "tools/call",
+        "params": {"name": "ember_write", "arguments": {
+            "content": "secret note", "agent_id": agent_id, "token": token,
+            "namespace": "memories",
+        }},
+    })
+    rid = json.loads(written["result"]["content"][0]["text"])["id"]
+
+    # authenticated read succeeds
+    ok = mcp.handle({
+        "jsonrpc": "2.0", "id": 3, "method": "tools/call",
+        "params": {"name": "ember_read", "arguments": {
+            "record_id": rid, "agent_id": agent_id, "token": token,
+        }},
+    })
+    assert ok["result"]["isError"] is False
+
+    # the SAME read without credentials is refused
+    for tool, args in [
+        ("ember_read", {"record_id": rid}),
+        ("ember_search", {"query": "secret"}),
+        ("ember_get_history", {"record_id": rid}),
+        ("ember_get_graph", {"record_id": rid}),
+        ("ember_get_session", {"session_id": "sess-none"}),
+    ]:
+        res = mcp.handle({
+            "jsonrpc": "2.0", "id": 4, "method": "tools/call",
+            "params": {"name": tool, "arguments": args},
+        })
+        assert res["result"]["isError"] is True, f"{tool} must require auth"
