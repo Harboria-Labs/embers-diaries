@@ -32,6 +32,7 @@ from .core.proposal import MemoryProposal
 from .core.conflict import Conflict
 from .core.session import Session
 from .core.failure import Failure
+from .core.agent_view import AgentView
 from .core.integrity import HASH_BACKEND, RecordIntegrityError
 from .core.errors import ConcurrentModificationError
 from .engine.promotion import (
@@ -51,6 +52,7 @@ __author__  = "Sammie — ticketguy"
 __all__ = [
     "EmberDB", "EmberRecord", "Annotation", "ReflectiveAnnotation",
     "EdgeRef", "Evidence", "MemoryProposal", "Conflict", "Session", "Failure",
+    "AgentView",
     "RecordType", "MemoryType", "MemoryScope",
     "AccessLevel", "VerifyStatus", "DeprecationReason", "EdgeType",
     "SourceType", "ProposalStatus", "MemoryStatus", "PromotionMethod",

@@ -26,6 +26,7 @@ from .core.proposal import MemoryProposal
 from .core.conflict import Conflict
 from .core.session import Session
 from .core.failure import Failure
+from .core.agent_view import AgentView
 from .core.types import ConflictType, ConflictStatus, SessionStatus
 from .storage.store import PhysicalStore
 from .engine.writer import WriteEngine
@@ -72,8 +73,14 @@ class EmberDB:
 
     def __init__(self, store_path: str | Path,
                  promotion_mode: PromotionMode = PromotionMode.AUTOMATIC,
-                 promotion_policy: PromotionPolicy | None = None):
+                 promotion_policy: PromotionPolicy | None = None,
+                 enforce_attribution: bool = False):
         self._path = Path(store_path)
+        # Feature #8: when True, every durable write must carry an agent_id
+        # (directly or via an AgentView). Defaults to False so unattributed
+        # writes keep working — changing the default would silently invalidate
+        # existing stores (§15).
+        self._enforce_attribution = enforce_attribution
         self._store = PhysicalStore(self._path)
         self._writer = WriteEngine(self._store)
 
@@ -115,14 +122,18 @@ class EmberDB:
     @classmethod
     def connect(cls, store_path: str | Path,
                 promotion_mode: PromotionMode = PromotionMode.AUTOMATIC,
-                promotion_policy: PromotionPolicy | None = None) -> "EmberDB":
+                promotion_policy: PromotionPolicy | None = None,
+                enforce_attribution: bool = False) -> "EmberDB":
         """Connect to (or create) an Ember's Diaries store.
 
         `promotion_mode` selects how the Promotion Engine decides whether a
         proposal becomes durable memory (AUTOMATIC by default). `promotion_policy`
-        tunes the gates (confidence thresholds, consensus size, trusted agents)."""
+        tunes the gates (confidence thresholds, consensus size, trusted agents).
+        `enforce_attribution` (Feature #8) requires every durable write to name
+        an agent; off by default for backward compatibility."""
         return cls(store_path, promotion_mode=promotion_mode,
-                   promotion_policy=promotion_policy)
+                   promotion_policy=promotion_policy,
+                   enforce_attribution=enforce_attribution)
 
     def _rebuild_indexes_if_needed(self):
         """On startup, rebuild indexes from store if they're empty."""
@@ -189,8 +200,64 @@ class EmberDB:
         """
         Write a new record. Returns the record ID.
         The record is permanent — it can never be deleted.
+
+        Feature #8: under `enforce_attribution`, a write must name an agent
+        (via `record.agent_id` or `written_by`). Off by default, so unattributed
+        writes keep working unchanged (§15).
         """
+        self._check_attribution(record)
         return self._writer.write(record)
+
+    def _check_attribution(self, record: EmberRecord) -> None:
+        """Feature #8 gate — raise if attribution is enforced and absent.
+
+        Attribution can be carried on the record (`agent_id`/`written_by`), or
+        supplied by an AgentView which stamps them before calling write(). The
+        sentinels `None`, `""`, and `"system"` are all ABSENCE of attribution:
+        a defaulted record (e.g. a plain EmberRecord or a Failure whose
+        agent_id defaults to "system") is not an authored write, so under
+        enforcement it must be rejected — otherwise the default would quietly
+        attribute everything to one fake "system" author.
+        """
+        if not self._enforce_attribution:
+            return
+        agent = record.agent_id
+        author = record.written_by
+        has_agent = agent and agent != "system"
+        has_author = author and author != "system"
+        if not (has_agent or has_author):
+            raise ValueError(
+                "This store enforces agent attribution (Feature #8): a durable "
+                "write must carry an agent_id. Write via db.as_agent(agent_id) "
+                "or set record.agent_id / written_by.")
+
+    def as_agent(self, agent_id: str, session_id: str | None = None) -> AgentView:
+        """Feature #8 — get a per-agent handle onto this shared store.
+
+        The returned AgentView stamps `agent_id` / `session_id` / `written_by`
+        on every write it performs, so one process can host many agents against
+        one substrate without cross-talk or a storage-layer change."""
+        return AgentView(self, agent_id, session_id=session_id)
+
+    def agents(self) -> list[str]:
+        """Feature #8 — every agent identity that has written to this store.
+
+        Pulls distinct agent_ids from the master index (the same index that
+        powers get_by_agent), so it reflects actual write history — not a
+        separate registry. One substrate, no storage change, adding agents is
+        just more values.
+        """
+        return self._master_index.agents()
+
+    def agent_context(self, agent_id: str) -> dict | None:
+        """Feature #8 — compact per-agent footprint report.
+
+        Returns what this agent wrote, broken down by record kind, plus how
+        many of those are the live head of their lineage. None if the agent has
+        never written anything."""
+        if not self._master_index.has_agent(agent_id):
+            return None
+        return self.as_agent(agent_id).context()
 
     def update(self, record_id: str, new_data: dict,
                written_by: str = "system",
@@ -788,6 +855,7 @@ class EmberDB:
             creation_reason=f"failed approach: {failure.approach}",
             tags=list(failure.tags) + ["failure"],
         )
+        self._check_attribution(record)
         fid = self._writer.write(record)
         # Tie it into the session's own account of what happened (#9), when the
         # session is a first-class one. A bare session_id string is fine too —
@@ -954,6 +1022,7 @@ class EmberDB:
             confidence=proposal.confidence,
             tags=list(proposal.tags) + ["proposal"],
         )
+        self._check_attribution(record)
         return self._writer.write(record)
 
     def get_proposal(self, proposal_id: str) -> MemoryProposal | None:

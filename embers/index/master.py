@@ -172,6 +172,18 @@ class MasterIndex:
     def get_by_agent(self, agent_id: str) -> set[str]:
         return self._by_agent.get(agent_id, set()).copy()
 
+    def has_agent(self, agent_id: str) -> bool:
+        """Feature #8 — has this agent written anything to this store?"""
+        return agent_id in self._by_agent
+
+    def agents(self) -> list[str]:
+        """Feature #8 — every agent identity present in the write index.
+
+        Derived from the index that also powers get_by_agent(), so it reports
+        actual write history. Adding an agent is just a new value here — no
+        storage-layer change (spec §8)."""
+        return sorted(self._by_agent.keys())
+
     def get_by_session(self, session_id: str) -> set[str]:
         return self._by_session.get(session_id, set()).copy()
 
