@@ -182,6 +182,187 @@ async def propose_memory(
     return {"proposal_id": pid, "agent_id": agent.agent_id}
 
 
+# ── Proposal → durable memory (§4/§5/§12) ─────────────────────────────────────
+# /memory/propose alone dead-ends: an agent can attach sealed evidence to a
+# proposal and nothing can admit it to durable memory. These complete the
+# pipeline, mirroring the MCP surface so both transports expose the same thing.
+
+
+@router.post("/memory/submit")
+async def submit_proposal(
+    body: dict,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    """Route a pending proposal through the Promotion Engine."""
+    from . import _get_db
+    db = _get_db()
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    pid = body.get("proposal_id")
+    if not pid:
+        raise HTTPException(400, "proposal_id required")
+    try:
+        result = db.submit(pid, validated_by=agent.agent_id)
+    except KeyError as e:
+        raise HTTPException(404, str(e)) from e
+    except ValueError as e:
+        raise HTTPException(409, str(e)) from e
+    return {"promoted": result.promoted, "memory_id": result.memory_id,
+            **result.decision.to_dict()}
+
+
+@router.post("/memory/promotion_route")
+async def promotion_route(
+    body: dict,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    """Dry run — what would the engine decide? Writes nothing."""
+    from . import _get_db
+    db = _get_db()
+    require_agent(db, x_ember_agent_id, x_ember_token)
+    pid = body.get("proposal_id")
+    if not pid:
+        raise HTTPException(400, "proposal_id required")
+    try:
+        return db.promotion_route(pid).to_dict()
+    except KeyError as e:
+        raise HTTPException(404, str(e)) from e
+
+
+@router.post("/memory/promote")
+async def promote_proposal(
+    body: dict,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    """Explicit caller decision — recorded as promotion_method=human.
+
+    Promotion means the proposal met the criteria to become durable memory,
+    NOT that it is true; the memory carries its own epistemic status."""
+    from . import _get_db
+    from ..core.types import MemoryStatus, PromotionMethod
+    db = _get_db()
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    pid = body.get("proposal_id")
+    if not pid:
+        raise HTTPException(400, "proposal_id required")
+    status = body.get("status")
+    try:
+        memory_id, proposal_id = db.promote(
+            pid, validated_by=agent.agent_id,
+            status=MemoryStatus(status) if status else None,
+            promotion_method=PromotionMethod.HUMAN,
+        )
+    except KeyError as e:
+        raise HTTPException(404, str(e)) from e
+    except ValueError as e:
+        raise HTTPException(409, str(e)) from e
+    return {"memory_id": memory_id, "proposal_id": proposal_id,
+            "method": PromotionMethod.HUMAN.value,
+            "status": db.memory_status(memory_id).value}
+
+
+@router.post("/memory/reject")
+async def reject_proposal(
+    body: dict,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    """Append-only rejection: stays queryable as rejected, never a memory."""
+    from . import _get_db
+    db = _get_db()
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    pid = body.get("proposal_id")
+    if not pid:
+        raise HTTPException(400, "proposal_id required")
+    try:
+        rejected_id = db.reject(pid, reason=body.get("reason", ""),
+                                rejected_by=agent.agent_id)
+    except KeyError as e:
+        raise HTTPException(404, str(e)) from e
+    except ValueError as e:
+        raise HTTPException(409, str(e)) from e
+    return {"proposal_id": rejected_id, "status": "rejected"}
+
+
+@router.get("/memory/proposals")
+async def list_proposals(
+    namespace: str,
+    status: str | None = None,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    """Proposals in a namespace — find what awaits a promotion decision."""
+    from . import _get_db
+    from ..core.types import ProposalStatus
+    db = _get_db()
+    require_agent(db, x_ember_agent_id, x_ember_token)
+    found = db.proposals(namespace,
+                         status=ProposalStatus(status) if status else None)
+    return {"proposals": [{
+        "proposal_id": p.proposal_id,
+        "discovery": p.discovery,
+        "reason": p.reason,
+        "confidence": p.confidence,
+        "status": p.status.value,
+        "agent_id": p.agent_id,
+        "evidence_count": len(p.evidence),
+    } for p in found]}
+
+
+@router.post("/memory/{memory_id}/evidence")
+async def attach_evidence(
+    memory_id: str,
+    body: dict,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    """Attach independent evidence to an existing memory (append-only, so the
+    memory's hash is untouched and its confirmation trail only grows)."""
+    from . import _get_db
+    db = _get_db()
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    source = body.get("source")
+    if not source:
+        raise HTTPException(400, "source required")
+    ev = Evidence(
+        source=source,
+        source_type=SourceType(body.get("source_type", "directly_observed")),
+        reference=body.get("reference", ""),
+        description=body.get("description", ""),
+        agent_id=agent.agent_id,
+        session_id=body.get("session_id"),
+    )
+    ev.seal()
+    try:
+        eid = db.attach_evidence(memory_id, ev)
+    except KeyError as e:
+        raise HTTPException(404, str(e)) from e
+    return {"evidence_id": eid, "memory_id": memory_id}
+
+
+@router.get("/memory/{memory_id}/evidence")
+async def evidence_for(
+    memory_id: str,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    """Evidence supporting a memory. Empty means it rests on a bare assertion."""
+    from . import _get_db
+    db = _get_db()
+    require_agent(db, x_ember_agent_id, x_ember_token)
+    records = db.evidence_for(memory_id)
+    return {"memory_id": memory_id, "evidence": [{
+        "id": r.id,
+        "source": (r.data or {}).get("source"),
+        "source_type": (r.data or {}).get("source_type"),
+        "description": (r.data or {}).get("description"),
+        "agent_id": r.agent_id,
+        "content_hash": r.content_hash,
+    } for r in records]}
+
+
 @router.post("/failures")
 async def report_failure(
     body: dict,

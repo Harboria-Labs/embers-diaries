@@ -15,7 +15,9 @@ from typing import Any
 from ..core.evidence import Evidence
 from ..core.failure import Failure
 from ..core.proposal import MemoryProposal
-from ..core.types import SourceType
+from ..core.types import (
+    MemoryStatus, PromotionMethod, ProposalStatus, SourceType,
+)
 from ..db import EmberDB
 from ..identity.registry import AgentRegistry
 from ..integration import MemoryProtocol
@@ -162,6 +164,124 @@ TOOLS = [
                 "token": {"type": "string"},
             },
             "required": ["discovery"],
+        },
+    },
+    # ── Proposal → durable memory (§4/§5/§12) ─────────────────────────────────
+    # Without these, ember_propose_memory dead-ends: an agent can attach sealed
+    # evidence to a proposal and nothing can ever admit it to durable memory.
+    {
+        "name": "ember_submit",
+        "description": ("Route a pending proposal through the Promotion Engine. "
+                        "The engine decides (per configured mode + policy) whether "
+                        "it enters durable memory. On a hold nothing is written and "
+                        "the proposal stays pending."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "proposal_id": {"type": "string"},
+                "agent_id": {"type": "string"},
+                "token": {"type": "string"},
+            },
+            "required": ["proposal_id"],
+        },
+    },
+    {
+        "name": "ember_promotion_route",
+        "description": ("Dry run: what would the Promotion Engine decide for this "
+                        "proposal? Writes nothing."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "proposal_id": {"type": "string"},
+                "agent_id": {"type": "string"},
+                "token": {"type": "string"},
+            },
+            "required": ["proposal_id"],
+        },
+    },
+    {
+        "name": "ember_promote",
+        "description": ("Explicitly promote a pending proposal into durable memory "
+                        "(an authenticated caller's own decision, recorded as "
+                        "promotion_method=human). Promotion means it met the "
+                        "criteria to become durable memory, NOT that it is true — "
+                        "the memory carries its own status."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "proposal_id": {"type": "string"},
+                "status": {"type": "string",
+                            "description": "verified / provisional / disputed"},
+                "agent_id": {"type": "string"},
+                "token": {"type": "string"},
+            },
+            "required": ["proposal_id"],
+        },
+    },
+    {
+        "name": "ember_reject",
+        "description": ("Reject a pending proposal. Append-only: it stays "
+                        "permanently queryable as rejected and never becomes a "
+                        "memory."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "proposal_id": {"type": "string"},
+                "reason": {"type": "string"},
+                "agent_id": {"type": "string"},
+                "token": {"type": "string"},
+            },
+            "required": ["proposal_id"],
+        },
+    },
+    {
+        "name": "ember_list_proposals",
+        "description": ("Proposals in a namespace, optionally filtered by status "
+                        "(pending / promoted / rejected) — find what awaits a "
+                        "promotion decision."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "namespace": {"type": "string"},
+                "status": {"type": "string"},
+                "agent_id": {"type": "string"},
+                "token": {"type": "string"},
+            },
+            "required": ["namespace"],
+        },
+    },
+    {
+        "name": "ember_attach_evidence",
+        "description": ("Attach independent evidence to an EXISTING durable "
+                        "memory. Append-only — the memory is not modified, so its "
+                        "hash is untouched and its confirmation trail only grows."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "memory_id": {"type": "string"},
+                "source": {"type": "string"},
+                "source_type": {"type": "string"},
+                "reference": {"type": "string"},
+                "description": {"type": "string"},
+                "session_id": {"type": "string"},
+                "agent_id": {"type": "string"},
+                "token": {"type": "string"},
+            },
+            "required": ["memory_id", "source"],
+        },
+    },
+    {
+        "name": "ember_evidence_for",
+        "description": ("Every evidence record supporting a memory. An empty list "
+                        "means the memory rests on a bare assertion, not evidence."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "memory_id": {"type": "string"},
+                "agent_id": {"type": "string"},
+                "token": {"type": "string"},
+            },
+            "required": ["memory_id"],
         },
     },
     {
@@ -326,6 +446,90 @@ class EmberMCP:
             )
             pid = self.db.propose(proposal)
             return _text({"proposal_id": pid, "agent_id": agent.agent_id})
+
+        # ── Proposal → durable memory ─────────────────────────────────────────
+        # These complete the pipeline the propose tool starts. Without them a
+        # sealed-evidence proposal can never become a memory.
+
+        if name == "ember_submit":
+            agent = self._auth(args)
+            result = self.db.submit(args["proposal_id"],
+                                    validated_by=agent.agent_id)
+            return _text({
+                "promoted": result.promoted,
+                "memory_id": result.memory_id,
+                **result.decision.to_dict(),
+            })
+
+        if name == "ember_promotion_route":
+            self._auth(args)
+            decision = self.db.promotion_route(args["proposal_id"])
+            return _text(decision.to_dict())
+
+        if name == "ember_promote":
+            agent = self._auth(args)
+            status = args.get("status")
+            memory_id, proposal_id = self.db.promote(
+                args["proposal_id"],
+                validated_by=agent.agent_id,
+                status=MemoryStatus(status) if status else None,
+                promotion_method=PromotionMethod.HUMAN,
+            )
+            return _text({
+                "memory_id": memory_id,
+                "proposal_id": proposal_id,
+                "method": PromotionMethod.HUMAN.value,
+                "status": self.db.memory_status(memory_id).value,
+            })
+
+        if name == "ember_reject":
+            agent = self._auth(args)
+            rejected_id = self.db.reject(
+                args["proposal_id"], reason=args.get("reason", ""),
+                rejected_by=agent.agent_id)
+            return _text({"proposal_id": rejected_id, "status": "rejected"})
+
+        if name == "ember_list_proposals":
+            self._auth(args)
+            status = args.get("status")
+            found = self.db.proposals(
+                args["namespace"],
+                status=ProposalStatus(status) if status else None)
+            return _text([{
+                "proposal_id": p.proposal_id,
+                "discovery": p.discovery,
+                "reason": p.reason,
+                "confidence": p.confidence,
+                "status": p.status.value,
+                "agent_id": p.agent_id,
+                "evidence_count": len(p.evidence),
+            } for p in found])
+
+        if name == "ember_attach_evidence":
+            agent = self._auth(args)
+            ev = Evidence(
+                source=args["source"],
+                source_type=SourceType(args.get("source_type", "directly_observed")),
+                reference=args.get("reference", ""),
+                description=args.get("description", ""),
+                agent_id=agent.agent_id,
+                session_id=args.get("session_id"),
+            )
+            ev.seal()
+            eid = self.db.attach_evidence(args["memory_id"], ev)
+            return _text({"evidence_id": eid, "memory_id": args["memory_id"]})
+
+        if name == "ember_evidence_for":
+            self._auth(args)
+            records = self.db.evidence_for(args["memory_id"])
+            return _text([{
+                "id": r.id,
+                "source": (r.data or {}).get("source"),
+                "source_type": (r.data or {}).get("source_type"),
+                "description": (r.data or {}).get("description"),
+                "agent_id": r.agent_id,
+                "content_hash": r.content_hash,
+            } for r in records])
 
         if name == "ember_report_failure":
             agent = self._auth(args)
