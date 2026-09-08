@@ -7,19 +7,22 @@ Run: uvicorn embers.api:app --port 9200
 
 import os
 from typing import Optional
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 
 from ..db import EmberDB
 from ..core.record import EmberRecord
 from ..core.annotation import Annotation
 from ..core.types import RecordType, DeprecationReason
+from ..identity.registry import AgentRegistry
 from ..integration import MemoryProtocol
 
 
 _db: Optional[EmberDB] = None
 _protocol: Optional[MemoryProtocol] = None
+_registry: Optional[AgentRegistry] = None
 
 
 def _get_db() -> EmberDB:
@@ -37,6 +40,23 @@ def _get_protocol() -> MemoryProtocol:
     return _protocol
 
 
+def _get_registry() -> AgentRegistry:
+    global _registry
+    if _registry is None:
+        _registry = AgentRegistry(_get_db())
+    return _registry
+
+
+def _legacy_agent(request: Request):
+    """Return the authenticated agent stamped by the legacy API middleware."""
+    agent = getattr(request.state, "ember_agent", None)
+    if agent is None:
+        # This should only be reachable when a route is called directly in
+        # Python instead of through FastAPI's middleware stack.
+        raise HTTPException(401, "X-Ember-Agent-Id and X-Ember-Token required")
+    return agent
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     _get_db()
@@ -49,7 +69,66 @@ app = FastAPI(
     description="Cognitive database engine for AI memory systems. Nothing is ever deleted.",
     lifespan=lifespan,
 )
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+# The legacy routes predate the authenticated /v1 surface. Keep the public
+# bootstrap/liveness endpoints useful, but put every stateful legacy route
+# behind the same persisted agent identity and token used by /v1.
+_LEGACY_PROTECTED_PREFIXES = (
+    "/records", "/namespaces", "/search", "/query", "/graph",
+    "/memory", "/timeline",
+)
+_PUBLIC_PATHS = {"/health", "/docs", "/redoc", "/openapi.json"}
+
+
+def _is_legacy_protected(path: str) -> bool:
+    return any(path == prefix or path.startswith(prefix + "/")
+               for prefix in _LEGACY_PROTECTED_PREFIXES)
+
+
+@app.middleware("http")
+async def require_legacy_agent(request: Request, call_next):
+    path = request.url.path.rstrip("/") or "/"
+    # /v1 owns its route-level auth, while MCP authenticates each tool call.
+    # Registration is intentionally public so a new client can bootstrap an
+    # identity; health/docs expose no memory data.
+    if (path in _PUBLIC_PATHS or path.startswith("/v1")
+            or path == "/mcp"):
+        return await call_next(request)
+    if not _is_legacy_protected(path):
+        return await call_next(request)
+
+    agent_id = request.headers.get("x-ember-agent-id")
+    token = request.headers.get("x-ember-token")
+    if not agent_id or not token:
+        return JSONResponse(
+            {"detail": "X-Ember-Agent-Id and X-Ember-Token required"},
+            status_code=401,
+            headers={"WWW-Authenticate": "Ember"},
+        )
+    try:
+        request.state.ember_agent = _get_registry().authenticate(agent_id, token)
+    except PermissionError as exc:
+        return JSONResponse(
+            {"detail": str(exc)},
+            status_code=401,
+            headers={"WWW-Authenticate": "Ember"},
+        )
+    return await call_next(request)
+
+
+# Browser access is opt-in. A wildcard origin would allow any website to make
+# authenticated requests with a caller's Ember token. Configure a comma-
+# separated allow-list only when browser clients are explicitly required.
+_cors_origins = [origin.strip() for origin in
+                 os.environ.get("EMBER_CORS_ORIGINS", "").split(",")
+                 if origin.strip()]
+if _cors_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_cors_origins,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["Content-Type", "X-Ember-Agent-Id", "X-Ember-Token"],
+    )
 
 from .v1 import router as v1_router
 from .mcp_http import router as mcp_router
@@ -59,13 +138,13 @@ app.include_router(mcp_router)
 
 @app.get("/health")
 async def health():
-    db = _get_db()
-    return {"status": "ok", "version": "0.2.0", "stats": db.stats()}
+    return {"status": "ok", "version": "0.2.0"}
 
 
 @app.post("/records")
-async def write_record(body: dict):
+async def write_record(request: Request, body: dict):
     db = _get_db()
+    agent = _legacy_agent(request)
     record = EmberRecord(
         namespace=body.get("namespace", "default"),
         record_type=RecordType(body.get("record_type", "document")),
@@ -73,7 +152,8 @@ async def write_record(body: dict):
         tags=body.get("tags", []),
         confidence=body.get("confidence", 1.0),
         decay_rate=body.get("decay_rate", 0.01),
-        written_by=body.get("written_by", "api"),
+        written_by=agent.agent_id,
+        agent_id=agent.agent_id,
     )
     record_id = db.write(record)
     return {"id": record_id, "namespace": record.namespace}
@@ -91,23 +171,25 @@ async def get_record(record_id: str,
 
 
 @app.put("/records/{record_id}")
-async def update_record(record_id: str, body: dict):
+async def update_record(request: Request, record_id: str, body: dict):
     db = _get_db()
+    agent = _legacy_agent(request)
     if not db.exists(record_id):
         raise HTTPException(404, "Record not found")
     new_data = body.get("data", {})
-    written_by = body.get("written_by", "api")
-    new_id, old_id = db.update(record_id, new_data, written_by)
+    new_id, old_id = db.update(record_id, new_data, agent.agent_id,
+                                agent_id=agent.agent_id)
     return {"new_id": new_id, "old_id": old_id}
 
 
 @app.delete("/records/{record_id}")
-async def deprecate_record(record_id: str, body: dict = {}):
+async def deprecate_record(request: Request, record_id: str, body: dict = {}):
     db = _get_db()
+    agent = _legacy_agent(request)
     if not db.exists(record_id):
         raise HTTPException(404, "Record not found")
     reason = body.get("reason", "")
-    db.deprecate(record_id, DeprecationReason.MANUAL, reason, body.get("written_by", "api"))
+    db.deprecate(record_id, DeprecationReason.MANUAL, reason, agent.agent_id)
     return {"status": "deprecated", "id": record_id}
 
 
@@ -128,15 +210,16 @@ async def get_current(record_id: str):
 
 
 @app.post("/records/{record_id}/annotate")
-async def annotate_record(record_id: str, body: dict):
+async def annotate_record(request: Request, record_id: str, body: dict):
     db = _get_db()
+    agent = _legacy_agent(request)
     if not db.exists(record_id):
         raise HTTPException(404, "Record not found")
     ann = Annotation(
         content=body.get("content", ""),
         context=body.get("context", ""),
         annotation_type=body.get("type", "note"),
-        written_by=body.get("written_by", "api"),
+        written_by=agent.agent_id,
         tags=body.get("tags", []),
     )
     ann_id = db.annotate(record_id, ann)
@@ -183,8 +266,9 @@ async def query_records(body: dict):
 
 
 @app.post("/graph/link")
-async def link_records(body: dict):
+async def link_records(request: Request, body: dict):
     db = _get_db()
+    _legacy_agent(request)
     from_id = body.get("from_id", "")
     to_id = body.get("to_id", "")
     edge_type = body.get("edge_type", "relates_to")
@@ -206,8 +290,9 @@ async def get_neighbors(record_id: str, depth: int = 1):
 
 
 @app.post("/memory/remember")
-async def remember(body: dict):
+async def remember(request: Request, body: dict):
     protocol = _get_protocol()
+    agent = _legacy_agent(request)
     content = body.get("content", "")
     if not content:
         raise HTTPException(400, "content required")
@@ -216,6 +301,8 @@ async def remember(body: dict):
         tags=body.get("tags"),
         confidence=body.get("confidence", 1.0),
         namespace=body.get("namespace"),
+        written_by=agent.agent_id,
+        agent_id=agent.agent_id,
     )
     return {"id": record_id, "status": "remembered"}
 
@@ -236,16 +323,18 @@ async def recall(body: dict):
 
 
 @app.post("/memory/reflect")
-async def reflect(body: dict = {}):
+async def reflect(request: Request, body: dict = {}):
     protocol = _get_protocol()
+    _legacy_agent(request)
     annotations = protocol.reflect(namespace=body.get("namespace"))
     return {"reflections": len(annotations),
             "annotations": [{"content": a.content, "type": a.annotation_type} for a in annotations]}
 
 
 @app.post("/memory/consolidate")
-async def consolidate(body: dict = {}):
+async def consolidate(request: Request, body: dict = {}):
     protocol = _get_protocol()
+    _legacy_agent(request)
     new_ids = protocol.consolidate(namespace=body.get("namespace"))
     return {"consolidated": len(new_ids), "new_record_ids": new_ids}
 
