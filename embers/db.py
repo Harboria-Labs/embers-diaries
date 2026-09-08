@@ -42,20 +42,28 @@ from .namespace.manager import NamespaceManager
 
 
 def _safe_print(text: str) -> None:
-    """Print a decorative banner line without ever crashing the host process.
+    """Write a diagnostic line to STDERR without ever crashing the host process.
 
-    The connection banner contains a 🔥 emoji and a "→" arrow. On consoles
-    whose encoding cannot represent those glyphs (notably Windows' legacy
-    cp1252 code page), a plain print() raises UnicodeEncodeError and takes down
-    whatever called EmberDB.connect(). A DB library must never crash a program
-    over cosmetic output, so we fall back to a lossy-but-safe rendering that
-    keeps the banner readable wherever full Unicode isn't available.
+    Two hazards, both real:
+
+    1. **Channel.** This must never touch stdout. When Ember is embedded in an
+       MCP stdio server, stdout IS the JSON-RPC wire — a banner printed there
+       arrives ahead of the first response and the client fails at handshake.
+       stderr is the channel meant for logs, so diagnostics go there and the
+       protocol channel stays clean for whoever owns it.
+    2. **Encoding.** The banner contains a 🔥 emoji and a "→" arrow. On consoles
+       whose encoding cannot represent those glyphs (notably Windows' legacy
+       cp1252 code page), a plain write raises UnicodeEncodeError and takes down
+       whatever called EmberDB.connect(). A DB library must never crash a
+       program over cosmetic output, so we fall back to a lossy-but-safe
+       rendering that stays readable wherever full Unicode isn't available.
     """
     try:
-        print(text)
+        print(text, file=sys.stderr)
     except UnicodeEncodeError:
-        enc = getattr(sys.stdout, "encoding", None) or "ascii"
-        print(text.encode(enc, errors="replace").decode(enc, errors="replace"))
+        enc = getattr(sys.stderr, "encoding", None) or "ascii"
+        print(text.encode(enc, errors="replace").decode(enc, errors="replace"),
+              file=sys.stderr)
 
 
 class EmberDB:
@@ -140,7 +148,9 @@ class EmberDB:
         store_count = self._store.record_count()
         index_count = self._master_index.record_count()
         if store_count > 0 and index_count == 0:
-            print(f"   Rebuilding indexes for {store_count} records...")
+            # stderr, not stdout — see _safe_print: stdout may be a protocol
+            # channel (MCP stdio), and rebuild chatter there breaks the client.
+            _safe_print(f"   Rebuilding indexes for {store_count} records...")
             for rid in self._store.all_ids():
                 record = self._store.read(rid)
                 if record:

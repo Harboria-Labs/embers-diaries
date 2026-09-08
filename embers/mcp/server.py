@@ -547,9 +547,19 @@ class EmberMCP:
         return _err(f"unknown tool: {name}")
 
     def handle(self, message: dict) -> dict | None:
+        if not isinstance(message, dict):
+            return {
+                "jsonrpc": "2.0",
+                "id": None,
+                "error": {"code": -32600, "message": "Invalid Request"},
+            }
+
         method = message.get("method")
+        is_notification = "id" not in message
         msg_id = message.get("id")
         if method == "initialize":
+            if is_notification:
+                return None
             return {
                 "jsonrpc": "2.0",
                 "id": msg_id,
@@ -562,14 +572,20 @@ class EmberMCP:
         if method in ("notifications/initialized", "initialized"):
             return None
         if method == "tools/list":
+            if is_notification:
+                return None
             return {"jsonrpc": "2.0", "id": msg_id, "result": {"tools": TOOLS}}
         if method == "tools/call":
             params = message.get("params") or {}
             result = self.call_tool(params.get("name", ""), params.get("arguments") or {})
+            if is_notification:
+                return None
             return {"jsonrpc": "2.0", "id": msg_id, "result": result}
         if method == "ping":
+            if is_notification:
+                return None
             return {"jsonrpc": "2.0", "id": msg_id, "result": {}}
-        if msg_id is None:
+        if is_notification:
             return None
         return {
             "jsonrpc": "2.0",
@@ -579,29 +595,56 @@ class EmberMCP:
 
 
 def _write(msg: dict) -> None:
-    body = json.dumps(msg)
-    sys.stdout.write(f"Content-Length: {len(body.encode('utf-8'))}\r\n\r\n{body}")
+    """Write one MCP stdio message as one newline-delimited JSON document."""
+    sys.stdout.write(json.dumps(msg, ensure_ascii=False, separators=(",", ":")) + "\n")
     sys.stdout.flush()
 
 
 def _read() -> dict | None:
-    header = {}
+    """Read newline-delimited JSON, accepting legacy Content-Length input."""
+    line = sys.stdin.readline()
+    if line == "":
+        return None
+
+    stripped = line.strip()
+    if stripped.startswith("{"):
+        return json.loads(stripped)
+    if not stripped:
+        # Ignore harmless blank lines between newline-delimited messages.
+        return _read()
+    if ":" not in stripped:
+        raise json.JSONDecodeError("Expected a JSON-RPC message", stripped, 0)
+
+    # Tolerate clients which still send LSP-style Content-Length framing.  We
+    # never emit it: MCP stdio responses are newline-delimited JSON.
+    headers: dict[str, str] = {}
     while True:
+        key, value = stripped.split(":", 1)
+        headers[key.lower()] = value.strip()
         line = sys.stdin.readline()
         if line == "":
-            return None
+            raise json.JSONDecodeError("Unexpected EOF in headers", "", 0)
         stripped = line.strip()
-        if stripped.startswith("{"):
-            return json.loads(stripped)
-        if stripped == "":
+        if not stripped:
             break
-        if ":" in stripped:
-            key, val = stripped.split(":", 1)
-            header[key.lower()] = val.strip()
-    n = int(header.get("content-length", "0"))
-    if n <= 0:
-        return None
-    body = sys.stdin.read(n)
+        if ":" not in stripped:
+            raise json.JSONDecodeError("Malformed header", stripped, 0)
+
+    try:
+        length = int(headers["content-length"])
+    except (KeyError, ValueError) as exc:
+        raise json.JSONDecodeError("Missing or invalid Content-Length", "", 0) from exc
+    if length < 0:
+        raise json.JSONDecodeError("Invalid Content-Length", str(length), 0)
+    body = sys.stdin.read(length)
+    # On Windows, a TextIOWrapper sender can turn an already-CRLF-delimited
+    # frame into CRCRLF.  Universal newline decoding then leaves one LF after
+    # the header terminator.  Discard only that delimiter residue and replace
+    # it so the declared byte count still governs the JSON body.
+    while body.startswith("\n"):
+        body = body[1:] + sys.stdin.read(1)
+    if len(body) != length:
+        raise json.JSONDecodeError("Unexpected EOF in message body", body, len(body))
     return json.loads(body)
 
 
@@ -610,11 +653,24 @@ def main() -> None:
     while True:
         try:
             message = _read()
-        except Exception:
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            _write({
+                "jsonrpc": "2.0", "id": None,
+                "error": {"code": -32700, "message": "Parse error"},
+            })
             continue
         if message is None:
             break
-        reply = server.handle(message)
+        try:
+            reply = server.handle(message)
+        except Exception:
+            # Keep one bad request from taking down a long-lived stdio server.
+            # Notifications deliberately receive no reply.
+            reply = None if isinstance(message, dict) and "id" not in message else {
+                "jsonrpc": "2.0",
+                "id": message.get("id") if isinstance(message, dict) else None,
+                "error": {"code": -32603, "message": "Internal error"},
+            }
         if reply is not None:
             _write(reply)
 
