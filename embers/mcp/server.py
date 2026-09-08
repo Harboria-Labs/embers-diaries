@@ -73,7 +73,11 @@ TOOLS = [
         "description": "Read a record by id.",
         "inputSchema": {
             "type": "object",
-            "properties": {"record_id": {"type": "string"}},
+            "properties": {
+                "record_id": {"type": "string"},
+                "agent_id": {"type": "string"},
+                "token": {"type": "string"},
+            },
             "required": ["record_id"],
         },
     },
@@ -86,6 +90,8 @@ TOOLS = [
                 "query": {"type": "string"},
                 "namespace": {"type": "string"},
                 "top_k": {"type": "integer"},
+                "agent_id": {"type": "string"},
+                "token": {"type": "string"},
             },
             "required": ["query"],
         },
@@ -110,7 +116,11 @@ TOOLS = [
         "description": "Version history for a record.",
         "inputSchema": {
             "type": "object",
-            "properties": {"record_id": {"type": "string"}},
+            "properties": {
+                "record_id": {"type": "string"},
+                "agent_id": {"type": "string"},
+                "token": {"type": "string"},
+            },
             "required": ["record_id"],
         },
     },
@@ -122,6 +132,8 @@ TOOLS = [
             "properties": {
                 "record_id": {"type": "string"},
                 "depth": {"type": "integer"},
+                "agent_id": {"type": "string"},
+                "token": {"type": "string"},
             },
             "required": ["record_id"],
         },
