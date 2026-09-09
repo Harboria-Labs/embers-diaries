@@ -16,7 +16,7 @@ from ..core.evidence import Evidence
 from ..core.failure import Failure
 from ..core.proposal import MemoryProposal
 from ..core.types import (
-    MemoryStatus, PromotionMethod, ProposalStatus, SourceType,
+    MemoryStatus, PromotionMethod, ProposalStatus, SourceType, ConflictType,
 )
 from ..db import EmberDB
 from ..identity.registry import AgentRegistry
@@ -313,6 +313,66 @@ TOOLS = [
             "required": ["approach"],
         },
     },
+    {
+        "name": "ember_map_conflict",
+        "description": ("Map a SEMANTIC (or STORAGE) contradiction between two "
+                        "existing memories (spec §7). Neither memory is modified "
+                        "or destroyed — this records a CONFLICT record (status "
+                        "OPEN) and draws a symmetric contradicts edge between "
+                        "them, so the contradiction is visible both as a "
+                        "queryable object and via graph traversal. Idempotent: "
+                        "mapping the same live pair again returns the existing "
+                        "conflict id rather than duplicating it."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "memory_a": {"type": "string"},
+                "memory_b": {"type": "string"},
+                "conflict_type": {"type": "string",
+                    "description": "semantic (default) or storage"},
+                "note": {"type": "string"},
+                "agent_id": {"type": "string"},
+                "token": {"type": "string"},
+            },
+            "required": ["memory_a", "memory_b"],
+        },
+    },
+    {
+        "name": "ember_conflicts_for",
+        "description": ("Every mapped Conflict involving a given memory, on "
+                        "either side. By default only live (not resolved/"
+                        "superseded) conflicts; pass include_closed for the "
+                        "full triage history."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "memory_id": {"type": "string"},
+                "include_closed": {"type": "boolean"},
+                "agent_id": {"type": "string"},
+                "token": {"type": "string"},
+            },
+            "required": ["memory_id"],
+        },
+    },
+    {
+        "name": "ember_resolve_conflict",
+        "description": ("Mark a mapped conflict RESOLVED with a resolution "
+                        "note. Append-only, like everything else here — this "
+                        "records a new version of the conflict with the "
+                        "decision; neither contradicting memory is deleted or "
+                        "changed. Use ember_conflicts_for first to find the "
+                        "conflict_id."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "conflict_id": {"type": "string"},
+                "resolution": {"type": "string"},
+                "agent_id": {"type": "string"},
+                "token": {"type": "string"},
+            },
+            "required": ["conflict_id", "resolution"],
+        },
+    },
 ]
 
 
@@ -555,6 +615,40 @@ class EmberMCP:
             )
             fid = self.db.report_failure(failure)
             return _text({"failure_id": fid, "agent_id": agent.agent_id})
+
+        if name == "ember_map_conflict":
+            agent = self._auth(args)
+            ctype = ConflictType(args.get("conflict_type", "semantic"))
+            cid = self.db.map_conflict(
+                args["memory_a"], args["memory_b"],
+                detected_by=agent.agent_id,
+                conflict_type=ctype,
+                note=args.get("note", ""))
+            return _text({"conflict_id": cid})
+
+        if name == "ember_conflicts_for":
+            self._auth(args)
+            conflicts = self.db.conflicts_for(
+                args["memory_id"],
+                include_closed=args.get("include_closed", False))
+            return _text([{
+                "conflict_id": c.conflict_id,
+                "namespace": c.namespace,
+                "memory_a": c.memory_a,
+                "memory_b": c.memory_b,
+                "conflict_type": c.conflict_type.value,
+                "status": c.status.value,
+                "detected_by": c.detected_by,
+                "resolution": c.resolution,
+                "note": c.note,
+            } for c in conflicts])
+
+        if name == "ember_resolve_conflict":
+            agent = self._auth(args)
+            new_id, old_id = self.db.resolve_conflict(
+                args["conflict_id"], args["resolution"],
+                changed_by=agent.agent_id)
+            return _text({"conflict_id": new_id, "superseded": old_id})
 
         return _err(f"unknown tool: {name}")
 
