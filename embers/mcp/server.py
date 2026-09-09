@@ -58,6 +58,17 @@ TOOLS = [
             "type": "object",
             "properties": {
                 "content": {"type": "string"},
+                "subject": {"type": "string",
+                    "description": ("Optional. Names the entity/claim this "
+                        "memory is about (e.g. 'server-1', "
+                        "'user:alice@example.com'). When two memories in the "
+                        "same namespace share a subject and disagree on some "
+                        "other field, it's mapped as a conflict via the "
+                        "persisted conflict engine for later triage "
+                        "(ember_conflicts_for / ember_resolve_conflict). "
+                        "Omit it and no conflict check runs at all -- this "
+                        "is opt-in specifically so two unrelated memories "
+                        "are never flagged just for having different text.")},
                 "namespace": {"type": "string"},
                 "session_id": {"type": "string"},
                 "creation_reason": {"type": "string"},
@@ -418,8 +429,12 @@ class EmberMCP:
 
         if name == "ember_write":
             agent = self._auth(args)
+            content = args["content"]
+            subject = args.get("subject")
+            if subject is not None:
+                content = {"content": content, "subject": subject}
             rid = self.protocol.remember(
-                args["content"],
+                content,
                 namespace=args.get("namespace"),
                 written_by=agent.agent_id,
                 agent_id=agent.agent_id,
