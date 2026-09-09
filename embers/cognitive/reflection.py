@@ -19,7 +19,6 @@ from typing import Callable
 from ..core.record import EmberRecord
 from ..core.annotation import Annotation, ReflectiveAnnotation
 from .decay import DecayEngine
-from .conflict import ConflictDetector, Conflict
 
 
 class ReflectionTrigger:
@@ -48,11 +47,19 @@ class ReflectionEngine:
     """
 
     def __init__(self, decay_engine: DecayEngine | None = None,
-                 conflict_detector: ConflictDetector | None = None,
+                 conflict_detector=None,
                  confidence_threshold: float = 0.4,
                  reflection_cooldown_hours: float = 24.0):
         self._decay = decay_engine or DecayEngine()
-        self._conflicts = conflict_detector or ConflictDetector()
+        # No default instantiation: the old in-memory ConflictDetector this
+        # took by default has been removed (conflict tracking is unified onto
+        # the persisted conflict engine, see MemoryProtocol._check_conflicts).
+        # conflict_detector is None unless a caller explicitly supplies an
+        # object exposing has_conflicts()/get_conflicts() -- this makes the
+        # conflict-based reflection branch below inert until reflect() is
+        # repointed at db.conflicts_for(), rather than silently resurrecting
+        # the removed dependency.
+        self._conflicts = conflict_detector
         self._confidence_threshold = confidence_threshold
         self._cooldown_hours = reflection_cooldown_hours
 
@@ -94,8 +101,9 @@ class ReflectionEngine:
                 ann = self._create_decay_reflection(record, eff_conf, context, written_by)
                 record_annotations.append(ann)
 
-            # 2. Conflict detection
-            if self._conflicts.has_conflicts(record.id):
+            # 2. Conflict detection (inert unless a conflict_detector was
+            # explicitly supplied -- see __init__)
+            if self._conflicts and self._conflicts.has_conflicts(record.id):
                 conflicts = self._conflicts.get_conflicts(record.id)
                 for conflict in conflicts:
                     if not conflict.resolved:
@@ -149,7 +157,7 @@ class ReflectionEngine:
         )
 
     def _create_conflict_reflection(self, record: EmberRecord,
-                                     conflict: Conflict,
+                                     conflict,
                                      context: str,
                                      written_by: str) -> ReflectiveAnnotation:
         return ReflectiveAnnotation(

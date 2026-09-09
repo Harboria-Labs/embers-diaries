@@ -19,9 +19,8 @@ from typing import Any, Callable
 
 from ..core.record import EmberRecord
 from ..core.annotation import Annotation, ReflectiveAnnotation
-from ..core.types import RecordType, MemoryType, VerifyStatus
+from ..core.types import RecordType, MemoryType, VerifyStatus, ConflictStatus
 from ..cognitive.decay import DecayEngine
-from ..cognitive.conflict import ConflictDetector
 from ..cognitive.consolidation import ConsolidationEngine
 from ..cognitive.episodic import EpisodicSegmenter
 from ..cognitive.reflection import ReflectionEngine
@@ -53,10 +52,16 @@ class MemoryProtocol:
 
         # Cognitive components
         self.decay = DecayEngine()
-        self.conflicts = ConflictDetector()
         self.consolidation = ConsolidationEngine()
         self.segmenter = EpisodicSegmenter()
-        self.reflection = ReflectionEngine(self.decay, self.conflicts)
+        # No cognitive.ConflictDetector: conflict tracking is unified onto the
+        # persisted conflict engine (EmberDB.map_conflict/conflicts_for, spec
+        # §7) via _check_conflicts() below, instead of the old in-memory,
+        # non-persistent ConflictDetector. ReflectionEngine's conflict-based
+        # reflection sub-feature is therefore inactive (passed None) until it
+        # is repointed at db.conflicts_for() -- reflect() is not currently
+        # reachable through any MCP tool, so this has no live effect today.
+        self.reflection = ReflectionEngine(self.decay, None)
 
         # Integration components
         self.embeddings = EmbeddingPipeline(embed_fn, embedding_dimension)
@@ -312,25 +317,80 @@ class MemoryProtocol:
 
     # ── Conflict Management ───────────────────────────────────────────────────
 
+    # Durable memories are written under two different record types depending
+    # on the path: remember() (this file) writes DOCUMENT, db.promote() writes
+    # NODE. Only compare against these -- not evidence, proposals, conflicts,
+    # or other staging records that also live in the namespace.
+    _DURABLE_MEMORY_TYPES = frozenset({RecordType.NODE, RecordType.DOCUMENT})
+
     def _check_conflicts(self, new_record: EmberRecord):
-        """Check new record against existing records for conflicts."""
-        ns = new_record.namespace
+        """Proactively check a new record against existing same-namespace
+        memories for a field-value contradiction, and map any found through
+        the PERSISTED conflict engine (EmberDB.map_conflict, spec §7) rather
+        than the old in-memory-only ConflictDetector (removed).
+
+        Deliberately opt-in and identity-scoped: only runs when the record's
+        data is a dict that declares a "subject" key, and only compares
+        against other records sharing that exact subject. Two memories with
+        no subject, or different subjects, are never compared.
+
+        This scoping exists because a blind all-keys diff across a namespace
+        is unsound: two unrelated memories (e.g. a WiFi password and a
+        standup-time note) almost always differ on their generic "content"
+        field, which produced permanent false "CONFLICT DETECTED"
+        annotations on ordinary, unrelated writes under the old
+        ConflictDetector-based version of this method. Requiring an explicit
+        shared subject means a difference is only surfaced when the caller
+        has already asserted "these are claims about the same thing" --
+        genuinely worth a human/agent's triage, not two unrelated facts that
+        happen to share a wrapper key. See db.map_conflict()'s docstring and
+        PromotionEngine._field_value_conflicts (engine/promotion.py) for the
+        same reasoning applied on the proposal side.
+
+        A mapped conflict is OPEN, not blocking -- map_conflict() never
+        modifies or removes either memory (spec §7); this only makes the
+        disagreement queryable and resolvable via ember_conflicts_for /
+        ember_resolve_conflict, instead of a disconnected annotation no
+        promotion or retrieval path could ever act on."""
+        if not isinstance(new_record.data, dict):
+            return
+        subject = new_record.data.get("subject")
+        if subject is None:
+            return
         try:
-            existing = self.db.get_namespace(ns, limit=20)
-            conflicts = self.conflicts.detect_value_conflict(new_record, existing)
-            for conflict in conflicts:
-                annotations = self.conflicts.create_conflict_annotations(conflict)
-                for ann in annotations:
+            existing = self.db.get_namespace(new_record.namespace, limit=200)
+        except Exception:
+            return
+        for rec in existing:
+            if rec.id == new_record.id:
+                continue
+            if rec.record_type not in self._DURABLE_MEMORY_TYPES:
+                continue
+            if not isinstance(rec.data, dict):
+                continue
+            if rec.data.get("subject") != subject:
+                continue
+            for key, new_val in new_record.data.items():
+                if key == "subject":
+                    continue
+                old_val = rec.data.get(key)
+                if old_val is not None and new_val is not None and old_val != new_val:
                     try:
-                        self.db.annotate(ann.target_record_id, ann)
+                        self.db.map_conflict(
+                            rec.id, new_record.id,
+                            detected_by=new_record.written_by or "conflict-detector",
+                            note=(f"Field {key!r} differs for subject "
+                                  f"{subject!r}: {old_val!r} vs {new_val!r}"))
                     except Exception:
                         pass
-        except Exception:
-            pass
+                    break  # one mapped conflict per pair is enough
 
-    def get_unresolved_conflicts(self) -> list[dict]:
-        """Get all unresolved conflicts."""
-        return [c.to_dict() for c in self.conflicts.get_unresolved()]
+    def get_unresolved_conflicts(self, namespace: str | None = None) -> list[dict]:
+        """Get all OPEN (unresolved) conflicts, reading the persisted conflict
+        engine directly rather than a separate in-memory tracker."""
+        ns = namespace or self.namespace
+        return [c.to_dict() for c in
+                self.db.conflict_records(namespace=ns, status=ConflictStatus.OPEN)]
 
     # ── Stats ─────────────────────────────────────────────────────────────────
 
@@ -338,7 +398,9 @@ class MemoryProtocol:
         return {
             "memories_written": self._write_count,
             "db_stats": self.db.stats(),
-            "conflicts": self.conflicts.stats(),
+            "conflicts": {
+                "open": len(self.db.conflict_records(status=ConflictStatus.OPEN)),
+            },
             "episodes": self.segmenter.stats(),
             "embeddings": {
                 "dimension": self.embeddings.dimension,

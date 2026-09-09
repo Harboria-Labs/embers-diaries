@@ -10,7 +10,6 @@ from datetime import datetime, timedelta, timezone
 from embers import EmberDB, EmberRecord, RecordType
 from embers.cognitive.decay import DecayEngine
 from embers.cognitive.consolidation import ConsolidationEngine
-from embers.cognitive.conflict import ConflictDetector, Conflict
 from embers.cognitive.episodic import EpisodicSegmenter, Episode
 from embers.cognitive.reflection import ReflectionEngine, ReflectionTrigger
 
@@ -137,55 +136,11 @@ class TestConsolidation:
 
 
 # ── Conflict Detection ────────────────────────────────────────────────────────
-
-class TestConflictDetection:
-    def test_detect_value_conflict(self):
-        detector = ConflictDetector()
-        r1 = EmberRecord(namespace="ns", data={"color": "blue"})
-        r2 = EmberRecord(namespace="ns", data={"color": "red"})
-        conflicts = detector.detect_value_conflict(r2, [r1])
-        assert len(conflicts) == 1
-        assert conflicts[0].conflict_type == "value_mismatch"
-
-    def test_no_conflict_when_matching(self):
-        detector = ConflictDetector()
-        r1 = EmberRecord(namespace="ns", data={"color": "blue"})
-        r2 = EmberRecord(namespace="ns", data={"color": "blue"})
-        conflicts = detector.detect_value_conflict(r2, [r1])
-        assert len(conflicts) == 0
-
-    def test_conflict_annotations_created(self):
-        detector = ConflictDetector()
-        r1 = EmberRecord(namespace="ns", data={"fact": "A"})
-        r2 = EmberRecord(namespace="ns", data={"fact": "B"})
-        conflicts = detector.detect_value_conflict(r2, [r1])
-        annotations = detector.create_conflict_annotations(conflicts[0])
-        assert len(annotations) == 2  # One for each record
-
-    def test_resolve_conflict(self):
-        detector = ConflictDetector()
-        r1 = EmberRecord(namespace="ns", data={"x": 1})
-        r2 = EmberRecord(namespace="ns", data={"x": 2})
-        conflicts = detector.detect_value_conflict(r2, [r1])
-        detector.resolve_conflict(conflicts[0].id, "r2 is correct")
-        unresolved = detector.get_unresolved()
-        assert len(unresolved) == 0
-
-    def test_semantic_conflict(self):
-        detector = ConflictDetector()
-        r1 = EmberRecord(data={"content": "Earth is round"})
-        r2 = EmberRecord(data={"content": "Earth is flat"})
-        conflict = detector.detect_semantic_conflict(r1, r2, similarity_score=0.9)
-        assert conflict is not None
-        assert conflict.conflict_type == "semantic"
-
-    def test_stats(self):
-        detector = ConflictDetector()
-        r1 = EmberRecord(namespace="ns", data={"x": 1})
-        r2 = EmberRecord(namespace="ns", data={"x": 2})
-        detector.detect_value_conflict(r2, [r1])
-        stats = detector.stats()
-        assert stats["total_conflicts"] == 1
+# The old ConflictDetector (in-memory only, never persisted) has been removed.
+# Conflict detection is now unified onto the persisted conflict engine in
+# EmberDB (map_conflict/conflicts_for/resolve_conflict, spec §7), exercised
+# via MemoryProtocol._check_conflicts() and tested in test_conflict_engine.py
+# / test_promotion_engine.py rather than here.
 
 
 # ── Episodic Segmentation ────────────────────────────────────────────────────
