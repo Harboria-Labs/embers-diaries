@@ -77,9 +77,19 @@ class ConsolidationEngine:
         """
         Find groups of records that should be consolidated.
         Groups by: same tags, similar data, temporal proximity.
-        
+
+        Excludes MemoryType.REFLECTIVE records (§2 of the architecture
+        review — meta-memory about the system's own state, e.g.
+        ReflectionEngine's own annotations-as-memories if ever promoted
+        that way). Merging those together the way ordinary recurring
+        experiences get merged doesn't match what they represent; they
+        aren't independent observations of the same underlying thing.
+
         Returns list of record groups (each group → one consolidated record).
         """
+        records = [r for r in records
+                   if (r.data or {}).get("memory_type") != MemoryType.REFLECTIVE.value]
+
         # Group by overlapping tags
         tag_groups: dict[str, list[EmberRecord]] = defaultdict(list)
         for r in records:
