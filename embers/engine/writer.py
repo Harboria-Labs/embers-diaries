@@ -214,6 +214,45 @@ class WriteEngine:
             current = next_id
         return chain
 
+    # ── Access tracking (reinforcement) ─────────────────────────────────────
+    # DecayEngine's reinforcement model (spec: "accessing a record resets the
+    # decay clock") needs access_count/last_accessed to persist across calls.
+    # Same sidecar pattern as supersession/deprecation: the immutable record
+    # is never touched -- a small mutable counter lives next to it instead.
+
+    def record_access(self, record_id: str) -> tuple[int, datetime]:
+        """Record one access to a record. Returns the new (access_count,
+        last_accessed) so the caller can reflect it on an in-memory record
+        without a second read. Cheap, lock-protected read-modify-write of a
+        single small sidecar file -- not a new EmberRecord version."""
+        with self._lock:
+            dir_ = self._store.root / "access"
+            dir_.mkdir(exist_ok=True)
+            sidecar = dir_ / f"{record_id}.access"
+            from ..storage.format import encode_index, decode_index
+            count = 0
+            if sidecar.exists():
+                count = decode_index(sidecar.read_bytes()).get("access_count", 0)
+            count += 1
+            now = datetime.now(timezone.utc)
+            sidecar.write_bytes(encode_index({
+                "record_id":     record_id,
+                "access_count":  count,
+                "last_accessed": now.isoformat(),
+            }))
+            return count, now
+
+    def get_access_stats(self, record_id: str) -> tuple[int, datetime | None]:
+        """Current persisted (access_count, last_accessed) for a record, or
+        (0, None) if it has never been accessed via record_access()."""
+        sidecar = self._store.root / "access" / f"{record_id}.access"
+        if not sidecar.exists():
+            return 0, None
+        from ..storage.format import decode_index
+        d = decode_index(sidecar.read_bytes())
+        last = d.get("last_accessed")
+        return d.get("access_count", 0), (datetime.fromisoformat(last) if last else None)
+
     # ── Deprecation ───────────────────────────────────────────────────────────
 
     def deprecate(self, record_id: str,

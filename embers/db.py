@@ -309,6 +309,13 @@ class EmberDB:
         """
         return self._writer.annotate(record_id, annotation)
 
+    def record_access(self, record_id: str) -> tuple[int, datetime]:
+        """Record one access to a record -- the persisted reinforcement
+        signal DecayEngine's effective_confidence() reads (access_count
+        slows the decay rate). Returns the new (access_count, last_accessed).
+        Cheap sidecar write, never touches the immutable record."""
+        return self._writer.record_access(record_id)
+
     def deprecate(self, record_id: str,
                   reason: DeprecationReason = DeprecationReason.MANUAL,
                   note: str = "",
@@ -1123,6 +1130,13 @@ class EmberDB:
             creation_reason=proposal.reason,
             derived_from=list(proposal.derivation),
             confidence=proposal.confidence,
+            # Matches MemoryProtocol.remember()'s default. Without this,
+            # EmberRecord's bare dataclass default (0.0) makes
+            # DecayEngine.effective_confidence() a permanent no-op for every
+            # promoted memory (it short-circuits on decay_rate <= 0) --
+            # promoted memories never decayed at all, silently, while
+            # ember_write memories did.
+            decay_rate=0.01,
             tags=[t for t in proposal.tags if t != "proposal"],
         )
         memory_id = self._writer.write(memory)
