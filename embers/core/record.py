@@ -136,7 +136,10 @@ class EmberRecord:
         return self.is_current and not self.deprecated
 
     def age_seconds(self) -> float:
-        return (datetime.now(timezone.utc) - self.created_at).total_seconds()
+        created_at = self.created_at
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+        return (datetime.now(timezone.utc) - created_at).total_seconds()
 
     def canonical_hash_payload(self) -> dict:
         """Return immutable state covered by the record's SHA-256 identity."""
