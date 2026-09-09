@@ -52,6 +52,16 @@ class ReadEngine:
         if self._writer:
             record.annotations = self._writer.get_annotations(record_id)
 
+        # Overlay persisted access stats (sidecar -- see WriteEngine.record_access).
+        # The record's own baked-in access_count/last_accessed are whatever
+        # they were at write time (usually 0/None); the sidecar holds the real
+        # running total. This is a read-only overlay -- it never writes.
+        if self._writer:
+            count, last = self._writer.get_access_stats(record_id)
+            if count:
+                record.access_count = count
+                record.last_accessed = last
+
         return record
 
     def get_current(self, record_id: str) -> EmberRecord | None:

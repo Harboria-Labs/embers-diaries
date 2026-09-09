@@ -106,7 +106,8 @@ class ConsolidationEngine:
     def create_consolidation_record(self,
                                      source_records: list[EmberRecord],
                                      summary: str = "",
-                                     written_by: str = "consolidation_engine") -> EmberRecord:
+                                     written_by: str = "consolidation_engine",
+                                     namespace: str | None = None) -> EmberRecord:
         """
         Create a consolidated record from multiple source records.
         The consolidated record links back to all sources.
@@ -138,7 +139,7 @@ class ConsolidationEngine:
 
         record = EmberRecord(
             id=str(uuid.uuid4()),
-            namespace=self.long_term_ns,
+            namespace=namespace or self.long_term_ns,
             record_type=RecordType.DOCUMENT,
             data=merged_data,
             tags=list(all_tags),

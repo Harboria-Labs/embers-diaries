@@ -188,10 +188,20 @@ class MemoryProtocol:
         # Limit
         records = records[:top_k]
 
-        # Track access (in-memory only — the immutable record on disk is untouched)
+        # Track access -- persisted (see EmberDB.record_access / WriteEngine's
+        # access sidecar). Previously this only mutated the in-memory record
+        # object here, discarded the moment the call returned, so
+        # reinforcement (DecayEngine.effective_confidence's access_count
+        # term) could never accumulate across separate recall() calls. The
+        # immutable record itself is still never touched -- record_access()
+        # writes a small sidecar counter, same pattern as deprecation.
         for r in records:
-            r.access_count += 1
-            r.last_accessed = datetime.now(timezone.utc)
+            try:
+                count, last = self.db.record_access(r.id)
+                r.access_count = count
+                r.last_accessed = last
+            except Exception:
+                pass
 
         # Format output
         if format == "raw":
@@ -286,6 +296,15 @@ class MemoryProtocol:
         """
         Run memory consolidation. Finds groups of related memories
         and creates consolidated long-term records.
+
+        The consolidated record is written to the SAME namespace it read
+        from (not ConsolidationEngine's own long_term_ns default) so it
+        stays visible to recall()/ember_recall with no special namespace
+        argument -- previously this defaulted to a different namespace
+        ("long_term") than recall() searches by default ("memories"),
+        so consolidation's own output was invisible to the tool most
+        callers would use to find it.
+
         Returns IDs of newly created consolidated records.
         """
         ns = namespace or self.namespace
@@ -296,7 +315,8 @@ class MemoryProtocol:
 
         new_ids = []
         for group in groups:
-            consolidated = self.consolidation.create_consolidation_record(group)
+            consolidated = self.consolidation.create_consolidation_record(
+                group, namespace=ns)
             try:
                 rid = self.db.write(consolidated)
                 new_ids.append(rid)
