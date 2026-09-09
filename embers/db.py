@@ -1293,6 +1293,13 @@ class EmberDB:
             return ev.evidence_id
         return self._writer.write(rec)
 
+    # Durable memories are written under two different record types depending
+    # on which path created them: promote() writes NODE, while the direct
+    # MemoryProtocol.remember() path writes DOCUMENT. attach_evidence() is
+    # documented as being for an "EXISTING durable memory" specifically — not
+    # any existing record — so both count, and nothing else does.
+    _DURABLE_MEMORY_TYPES = frozenset({RecordType.NODE, RecordType.DOCUMENT})
+
     def attach_evidence(self, memory_id: str, ev: Evidence) -> str:
         """Attach a new piece of evidence to an EXISTING durable memory.
 
@@ -1300,9 +1307,28 @@ class EmberDB:
         evidence to a memory over time WITHOUT modifying (superseding) it —
         append a new EVIDENCE record with a SUPPORTS edge. Append-only, so the
         memory's hash is untouched and its confirmation trail only grows.
-        Returns the evidence record id."""
-        if not self._reader.exists(memory_id):
+        Returns the evidence record id.
+
+        Only accepts a target that is actually a durable memory (NODE or
+        DOCUMENT). In particular this rejects a PENDING PROPOSAL id: a
+        proposal's own `evidence` list is what the Promotion Engine checks via
+        `is_grounded()` (baked into the proposal at propose()/creation time),
+        and evidence attached here afterward would never be seen by that gate
+        — so silently accepting a proposal id would let a caller believe
+        they've grounded a proposal when nothing has actually changed about
+        its promotion odds. Pass evidence inline to `propose()` instead to
+        ground a proposal."""
+        target = self._reader.get(memory_id, include_deprecated=True,
+                                  include_superseded=True)
+        if target is None:
             raise KeyError(f"Memory {memory_id} not found.")
+        if target.record_type not in self._DURABLE_MEMORY_TYPES:
+            raise ValueError(
+                f"{memory_id} is a {target.record_type.value} record, not a "
+                f"durable memory — attach_evidence() only accepts an existing "
+                f"memory (record_type NODE or DOCUMENT). If this is a pending "
+                f"PROPOSAL, pass evidence inline to propose() instead: "
+                f"evidence attached here would not affect its promotion gate.")
         return self._write_evidence_record(ev, memory_id)
 
     def evidence_for(self, memory_id: str) -> list[EmberRecord]:
