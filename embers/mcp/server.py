@@ -488,7 +488,7 @@ class EmberMCP:
             sid = self.db.start_session(
                 agent_id=agent.agent_id,
                 task=args.get("task", ""),
-                namespace=args.get("namespace", "default"),
+                namespace=args.get("namespace", self.protocol.namespace),
             )
             return _text({"session_id": sid, "agent_id": agent.agent_id})
 
@@ -507,7 +507,7 @@ class EmberMCP:
                 ev.seal()
                 evidence.append(ev)
             proposal = MemoryProposal(
-                namespace=args.get("namespace", "default"),
+                namespace=args.get("namespace", self.protocol.namespace),
                 discovery=args.get("discovery"),
                 reason=args.get("reason", ""),
                 evidence=evidence,
@@ -606,7 +606,7 @@ class EmberMCP:
         if name == "ember_report_failure":
             agent = self._auth(args)
             failure = Failure(
-                namespace=args.get("namespace", "default"),
+                namespace=args.get("namespace", self.protocol.namespace),
                 approach=args["approach"],
                 failed=args.get("failed", args["approach"]),
                 cause=args.get("cause", ""),
