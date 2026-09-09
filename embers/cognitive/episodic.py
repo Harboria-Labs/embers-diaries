@@ -17,6 +17,15 @@ from ..core.record import EmberRecord
 from ..core.types import RecordType
 
 
+def _tz_safe(dt: datetime) -> datetime:
+    """Same guard as consolidation.py/_tz_safe and decay.py's
+    effective_confidence: EmberRecord.created_at defaults to
+    datetime.utcnow() (naive); mixing that with an explicitly-aware
+    timestamp raises TypeError on comparison. Records module-owns its own
+    copy since this file has no dependency on cognitive.consolidation."""
+    return dt if dt.tzinfo is not None else dt.replace(tzinfo=timezone.utc)
+
+
 class Episode:
     """
     A coherent group of records forming a single episodic event.
@@ -36,10 +45,11 @@ class Episode:
 
     def add_record(self, record: EmberRecord):
         self.record_ids.append(record.id)
-        if self.start_time is None or record.created_at < self.start_time:
-            self.start_time = record.created_at
-        if self.end_time is None or record.created_at > self.end_time:
-            self.end_time = record.created_at
+        created_at = _tz_safe(record.created_at)
+        if self.start_time is None or created_at < self.start_time:
+            self.start_time = created_at
+        if self.end_time is None or created_at > self.end_time:
+            self.end_time = created_at
         self.tags.update(record.tags)
         self.namespace = record.namespace
 
@@ -110,7 +120,7 @@ class EpisodicSegmenter:
         if not records:
             return []
 
-        sorted_records = sorted(records, key=lambda r: r.created_at)
+        sorted_records = sorted(records, key=lambda r: _tz_safe(r.created_at))
         episodes = []
         current_episode = Episode()
         current_episode.add_record(sorted_records[0])
@@ -157,7 +167,7 @@ class EpisodicSegmenter:
         scores = []
 
         # 1. Temporal gap
-        time_gap = curr.created_at - prev.created_at
+        time_gap = _tz_safe(curr.created_at) - _tz_safe(prev.created_at)
         if time_gap > self.temporal_gap:
             scores.append(1.0)
         else:

@@ -20,6 +20,16 @@ from ..core.annotation import Annotation
 from ..core.types import RecordType, MemoryType
 
 
+def _tz_safe(dt: datetime) -> datetime:
+    """EmberRecord.created_at defaults to datetime.utcnow() (naive), but
+    anything that explicitly constructs a record with an aware UTC
+    timestamp is also valid -- and Python raises TypeError comparing/
+    sorting naive against aware datetimes. decay.py already guards against
+    this (see DecayEngine.effective_confidence); this mirrors that same
+    defensive pattern for consolidation's own created_at comparisons."""
+    return dt if dt.tzinfo is not None else dt.replace(tzinfo=timezone.utc)
+
+
 class ConsolidationEngine:
     """
     Manages memory lifecycle from sensory input to long-term storage.
@@ -79,7 +89,7 @@ class ConsolidationEngine:
 
         # Also group by temporal proximity (within 1 hour)
         time_groups: dict[str, list[EmberRecord]] = defaultdict(list)
-        sorted_records = sorted(records, key=lambda r: r.created_at)
+        sorted_records = sorted(records, key=lambda r: _tz_safe(r.created_at))
         if sorted_records:
             current_group_key = sorted_records[0].created_at.strftime("%Y-%m-%d-%H")
             for r in sorted_records:
@@ -135,7 +145,7 @@ class ConsolidationEngine:
         ) / total_weight if total_weight > 0 else 0.5
 
         # Use the earliest creation time as valid_from
-        earliest = min(r.created_at for r in source_records)
+        earliest = min(_tz_safe(r.created_at) for r in source_records)
 
         record = EmberRecord(
             id=str(uuid.uuid4()),

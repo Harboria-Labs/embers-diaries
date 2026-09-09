@@ -384,6 +384,66 @@ TOOLS = [
             "required": ["conflict_id", "resolution"],
         },
     },
+    {
+        "name": "ember_reflect",
+        "description": ("Run a reflection cycle over a namespace: examines "
+                        "memories for confidence decay and any custom "
+                        "reflection triggers, and PERSISTS the resulting "
+                        "reflective annotations (db.annotate) -- it does not "
+                        "modify or create memories, only comments on them. "
+                        "Nothing calls this automatically; there is no "
+                        "scheduler. Run it yourself periodically, or have an "
+                        "agent call it at the end of a session."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "namespace": {"type": "string"},
+                "limit": {"type": "integer"},
+                "agent_id": {"type": "string"},
+                "token": {"type": "string"},
+            },
+            "required": [],
+        },
+    },
+    {
+        "name": "ember_consolidate",
+        "description": ("Run memory consolidation over a namespace: groups "
+                        "memories by shared tags or temporal proximity and "
+                        "writes a new, higher-confidence consolidated "
+                        "record linking back to every source (sources are "
+                        "never deprecated or deleted). The consolidated "
+                        "record lands in the SAME namespace it read from, "
+                        "so it's findable via a plain ember_recall "
+                        "afterward. Nothing calls this automatically -- run "
+                        "it yourself periodically."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "namespace": {"type": "string"},
+                "agent_id": {"type": "string"},
+                "token": {"type": "string"},
+            },
+            "required": [],
+        },
+    },
+    {
+        "name": "ember_segment_episodes",
+        "description": ("Group a namespace's memories into episodes using "
+                        "temporal gaps, tag-overlap shifts, and a surprise "
+                        "score -- returns the groupings directly; nothing "
+                        "is written to the store (episodes aren't persisted "
+                        "as their own record type). Purely a read-side "
+                        "computation for the caller to use or discard."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "namespace": {"type": "string"},
+                "agent_id": {"type": "string"},
+                "token": {"type": "string"},
+            },
+            "required": [],
+        },
+    },
 ]
 
 
@@ -664,6 +724,30 @@ class EmberMCP:
                 args["conflict_id"], args["resolution"],
                 changed_by=agent.agent_id)
             return _text({"conflict_id": new_id, "superseded": old_id})
+
+        if name == "ember_reflect":
+            self._auth(args)
+            annotations = self.protocol.reflect(
+                namespace=args.get("namespace"),
+                limit=int(args.get("limit", 50)))
+            return _text({
+                "reflections": len(annotations),
+                "annotations": [
+                    {"content": a.content, "type": a.annotation_type,
+                     "target_record_id": a.target_record_id}
+                    for a in annotations
+                ],
+            })
+
+        if name == "ember_consolidate":
+            self._auth(args)
+            new_ids = self.protocol.consolidate(namespace=args.get("namespace"))
+            return _text({"consolidated": len(new_ids), "new_record_ids": new_ids})
+
+        if name == "ember_segment_episodes":
+            self._auth(args)
+            episodes = self.protocol.segment_episodes(namespace=args.get("namespace"))
+            return _text(episodes)
 
         return _err(f"unknown tool: {name}")
 
