@@ -72,10 +72,40 @@ class MemoryProtocol:
 
     # ── Core Memory Operations ────────────────────────────────────────────────
 
+    # Default decay_rate by memory_type, applied in remember() when the
+    # caller doesn't explicitly override it. §2 of the architecture review:
+    # every MemoryType existed as a label with zero behavioral difference.
+    # These defaults are deliberately simple and explainable from each
+    # type's own stated meaning (core/types.py's MemoryType docstring),
+    # not an invented mathematical model:
+    #   FAILURE    — a lesson from a failure shouldn't fade just from
+    #                inattention; it should persist until someone
+    #                deliberately revisits/deprecates it. No decay.
+    #   SKILL      — procedural knowledge, once learned, is meant to be
+    #                durable. Decays slower than the baseline.
+    #   CONNECTIVE — relational/structural links between memories; decaying
+    #                these independently of the memories they connect would
+    #                make the graph inconsistent. Decays slower.
+    #   REFLECTIVE — meta-memory about the system's own state. No strong
+    #                reason to decay faster or slower than baseline.
+    #   EPISODIC   — a specific event/experience; the type most literature
+    #                on episodic memory expects to fade without
+    #                reinforcement. Decays faster than the baseline.
+    #   RAW        — unclassified default; keeps the original flat 0.01
+    #                every type used before this.
+    _DEFAULT_DECAY_RATE_BY_TYPE = {
+        MemoryType.FAILURE:    0.0,
+        MemoryType.SKILL:      0.005,
+        MemoryType.CONNECTIVE: 0.005,
+        MemoryType.REFLECTIVE: 0.01,
+        MemoryType.RAW:        0.01,
+        MemoryType.EPISODIC:   0.02,
+    }
+
     def remember(self, content: Any,
                  tags: list[str] | None = None,
                  confidence: float = 1.0,
-                 decay_rate: float = 0.01,
+                 decay_rate: float | None = None,
                  written_by: str = "llm",
                  memory_type: str = "episodic",
                  verify_status: str = "hypothesis",
@@ -106,13 +136,23 @@ class MemoryProtocol:
         if "verify_status" not in data:
             data["verify_status"] = verify_status
 
+        if decay_rate is None:
+            try:
+                resolved_decay_rate = self._DEFAULT_DECAY_RATE_BY_TYPE[MemoryType(memory_type)]
+            except ValueError:
+                # Unrecognized memory_type string -- fall back to the
+                # original flat baseline rather than raising.
+                resolved_decay_rate = 0.01
+        else:
+            resolved_decay_rate = decay_rate
+
         record = EmberRecord(
             namespace=ns,
             record_type=RecordType.DOCUMENT,
             data=data,
             tags=tags or [],
             confidence=confidence,
-            decay_rate=decay_rate,
+            decay_rate=resolved_decay_rate,
             written_by=written_by,
             agent_id=agent_id,
             session_id=session_id,
