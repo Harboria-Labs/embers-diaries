@@ -142,12 +142,23 @@ class MemoryProtocol:
         """
         Retrieve relevant memories for a query.
 
-        Retrieval strategy (two-phase):
+        Retrieval strategy (two-phase, unified scoring):
           1. Vector similarity via db.similar() — uses the query embedding
              against the vector index. This is the primary retrieval path
              when an embedding function is available.
           2. Full-text BM25 via db.search() — keyword match as a complement.
-             Merged with vector results, deduped by record ID.
+
+        Adaptive ranking: vector (cosine) and BM25 scores are on different,
+        incomparable scales, so each list is independently min-max
+        normalized to [0,1] (standard hybrid-retrieval practice — this is
+        not a bespoke scoring formula, just score normalization so the two
+        result sets can be compared at all). Each candidate's normalized
+        retrieval score is then weighted by its DECAYED confidence
+        (DecayEngine.effective_confidence) — a stale or low-confidence
+        memory ranks lower even if it's the strongest textual/semantic
+        match, rather than a static concatenate-vector-then-append-text
+        order with no notion of relevance decay at all. A record appearing
+        in both result sets keeps its higher composite score.
 
         If no embedding function was provided at init, the built-in TF-IDF
         pipeline generates lightweight embeddings automatically. This means
@@ -171,22 +182,42 @@ class MemoryProtocol:
         vector_results = self.db.similar(
             query_embedding, namespace=ns, top_k=top_k * 2, threshold=threshold)
 
-        records = []
-        seen_ids = set()
-        for record, score in vector_results:
-            if record.id not in seen_ids:
-                records.append(record)
-                seen_ids.add(record.id)
+        # ── Phase 2: Full-text BM25 search (public API) ───────────────────
+        text_results = self.db.search(query, namespace=ns, top_k=top_k * 2)
 
-        # ── Phase 2: Full-text BM25 search (public API) — merge in ───────
-        text_results = self.db.search(query, namespace=ns, top_k=top_k)
-        for record, score in text_results:
-            if record.id not in seen_ids:
-                records.append(record)
-                seen_ids.add(record.id)
+        # ── Unified, confidence-weighted ranking ───────────────────────────
+        candidates: dict[str, tuple[EmberRecord, float]] = {}
 
-        # Limit
-        records = records[:top_k]
+        def _merge(results: list[tuple[EmberRecord, float]]):
+            if not results:
+                return
+            scores = [s for _, s in results]
+            lo, hi = min(scores), max(scores)
+            spread = (hi - lo) or 1.0
+            for record, raw_score in results:
+                # Min-max normalized, but floored at 0.2 rather than 0 --
+                # a hard 0 is a batch-size artifact (the worst score in ANY
+                # result set gets mapped to exactly 0 by plain min-max, even
+                # when it's still a genuine, relevant hit), and 0 * anything
+                # is always 0 -- which meant the confidence weight below
+                # could never matter for whichever record happened to be
+                # weakest in a given call, no matter how confident it was.
+                normalized = 0.2 + 0.8 * (raw_score - lo) / spread
+                eff_conf = self.decay.effective_confidence(record)
+                # Floor so a genuine retrieval hit is never zeroed out just
+                # because it decayed heavily -- decay demotes, it doesn't
+                # disqualify. Reflection (ember_reflect) is what surfaces a
+                # heavily-decayed memory for reinforcement/review.
+                composite = normalized * max(eff_conf, 0.05)
+                existing = candidates.get(record.id)
+                if existing is None or composite > existing[1]:
+                    candidates[record.id] = (record, composite)
+
+        _merge(vector_results)
+        _merge(text_results)
+
+        ranked = sorted(candidates.values(), key=lambda pair: pair[1], reverse=True)
+        records = [r for r, _ in ranked[:top_k]]
 
         # Track access -- persisted (see EmberDB.record_access / WriteEngine's
         # access sidecar). Previously this only mutated the in-memory record
