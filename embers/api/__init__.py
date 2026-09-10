@@ -6,6 +6,8 @@ Run: uvicorn embers.api:app --port 9200
 """
 
 import os
+import asyncio
+import logging
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,6 +20,9 @@ from ..core.annotation import Annotation
 from ..core.types import RecordType, DeprecationReason
 from ..identity.registry import AgentRegistry
 from ..integration import MemoryProtocol
+from ..maintenance import maintenance_loop
+
+logger = logging.getLogger(__name__)
 
 
 _db: Optional[EmberDB] = None
@@ -60,7 +65,29 @@ def _legacy_agent(request: Request):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     _get_db()
+
+    # Maintenance scheduler — OFF by default (see maintenance.py's module
+    # docstring for why: it must be an explicit opt-in, not something that
+    # silently starts acting on memories the moment the server boots).
+    # Set EMBER_MAINTENANCE_INTERVAL_SECONDS to a positive integer to
+    # enable; EMBER_MAINTENANCE_NAMESPACES is a comma-separated list
+    # (defaults to just "memories", the same default MemoryProtocol itself
+    # uses everywhere else).
+    task = None
+    interval = int(os.environ.get("EMBER_MAINTENANCE_INTERVAL_SECONDS", "0") or "0")
+    if interval > 0:
+        namespaces = [n.strip() for n in
+                      os.environ.get("EMBER_MAINTENANCE_NAMESPACES", "memories").split(",")
+                      if n.strip()]
+        logger.info("maintenance scheduler enabled: every %ss, namespaces=%s",
+                    interval, namespaces)
+        task = asyncio.create_task(
+            maintenance_loop(_get_protocol(), namespaces, interval))
+
     yield
+
+    if task is not None:
+        task.cancel()
 
 
 app = FastAPI(

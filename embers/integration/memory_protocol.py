@@ -21,6 +21,7 @@ from ..core.record import EmberRecord
 from ..core.annotation import Annotation, ReflectiveAnnotation
 from ..core.types import RecordType, MemoryType, VerifyStatus, ConflictStatus
 from ..cognitive.decay import DecayEngine
+from ..cognitive.lifecycle import LifecycleEngine, LifecycleReport
 from ..cognitive.consolidation import ConsolidationEngine
 from ..cognitive.episodic import EpisodicSegmenter
 from ..cognitive.reflection import ReflectionEngine
@@ -62,6 +63,7 @@ class MemoryProtocol:
         # is repointed at db.conflicts_for() -- reflect() is not currently
         # reachable through any MCP tool, so this has no live effect today.
         self.reflection = ReflectionEngine(self.decay, None)
+        self.lifecycle = LifecycleEngine(self.decay)
 
         # Integration components
         self.embeddings = EmbeddingPipeline(embed_fn, embedding_dimension)
@@ -482,6 +484,19 @@ class MemoryProtocol:
         ns = namespace or self.namespace
         return [c.to_dict() for c in
                 self.db.conflict_records(namespace=ns, status=ConflictStatus.OPEN)]
+
+    # ── Lifecycle (spec §11) ─────────────────────────────────────────────────
+
+    def get_lifecycle(self, record_id: str) -> LifecycleReport | None:
+        """Compute a memory's current lifecycle classification. Returns None
+        if the record doesn't exist. Never modifies anything -- pure read,
+        same as DecayEngine.effective_confidence."""
+        record = self.db._reader.get(record_id, include_deprecated=True,
+                                     include_superseded=True)
+        if record is None:
+            return None
+        has_open_conflict = len(self.db.conflicts_for(record_id)) > 0
+        return self.lifecycle.classify(record, has_open_conflict=has_open_conflict)
 
     # ── Stats ─────────────────────────────────────────────────────────────────
 

@@ -22,6 +22,7 @@ from .core.types import (
 )
 from .core.edge import EdgeRef
 from .core.evidence import Evidence
+from .core.feedback import Feedback
 from .core.proposal import MemoryProposal
 from .core.conflict import Conflict
 from .core.session import Session
@@ -1365,6 +1366,70 @@ class EmberDB:
         if rec is None or rec.record_type != RecordType.EVIDENCE:
             return None
         return Evidence.from_dict(rec.data)
+
+    # ── Feedback (outcome tracking + attribution, §8/§9) ────────────────────
+
+    def give_feedback(self, memory_id: str, fb: Feedback) -> str:
+        """Record an outcome report against an existing durable memory.
+
+        Same shape as attach_evidence(): only accepts a target that is
+        actually a durable memory (NODE or DOCUMENT), not a proposal or any
+        other staging record — feedback about "how a memory performed" only
+        makes sense once something has actually become a memory. Writes a
+        FEEDBACK record linked to the memory with a FEEDBACK_ON edge, the
+        same append-only pattern evidence uses: the memory itself is never
+        touched. Returns the feedback record id.
+
+        Ember does not act on this feedback itself — no automatic
+        deprecation, no automatic confidence change beyond what decay
+        already does independently. What happens next (deprecating the
+        memory, mapping a conflict, proposing a correction) is a deliberate
+        follow-up action by an agent, not a side effect of writing
+        feedback."""
+        target = self._reader.get(memory_id, include_deprecated=True,
+                                  include_superseded=True)
+        if target is None:
+            raise KeyError(f"Memory {memory_id} not found.")
+        if target.record_type not in self._DURABLE_MEMORY_TYPES:
+            raise ValueError(
+                f"{memory_id} is a {target.record_type.value} record, not a "
+                f"durable memory — give_feedback() only accepts an existing "
+                f"memory (record_type NODE or DOCUMENT).")
+        edge = EdgeRef(
+            edge_id=f"feedback_on:{fb.id}:{memory_id}",
+            target_id=memory_id,
+            edge_type=EdgeType.FEEDBACK_ON,
+            label="feedback_on",
+        )
+        rec = EmberRecord(
+            id=fb.id,
+            namespace=target.namespace,
+            record_type=RecordType.FEEDBACK,
+            data=fb.to_dict(),
+            connections=[edge],
+            written_by=fb.agent_id,
+            agent_id=fb.agent_id,
+            session_id=fb.session_id,
+        )
+        return self._writer.write(rec)
+
+    def feedback_for(self, memory_id: str) -> list[EmberRecord]:
+        """Every FEEDBACK record reported against a memory (incoming
+        FEEDBACK_ON edges), oldest first isn't guaranteed — sort by
+        created_at if chronological order matters to the caller."""
+        ids = set()
+        for e in self._graph_index.get_edges(memory_id, direction="incoming"):
+            if e["edge_type"] == EdgeType.FEEDBACK_ON.value:
+                ids.add(e["target"])
+        return self._resolve_ids(ids, True, True)
+
+    def get_feedback(self, feedback_id: str) -> Feedback | None:
+        """Reconstruct a structured Feedback object from its stored record."""
+        rec = self._reader.get(feedback_id, include_deprecated=True,
+                               include_superseded=True)
+        if rec is None or rec.record_type != RecordType.FEEDBACK:
+            return None
+        return Feedback.from_dict(rec.data)
 
     def proposals(self, namespace: str,
                   status: ProposalStatus | None = None) -> list[MemoryProposal]:

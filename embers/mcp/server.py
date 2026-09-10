@@ -13,6 +13,7 @@ import sys
 from typing import Any
 
 from ..core.evidence import Evidence
+from ..core.feedback import Feedback, FeedbackOutcome, FeedbackAttribution
 from ..core.failure import Failure
 from ..core.proposal import MemoryProposal
 from ..core.types import (
@@ -21,6 +22,7 @@ from ..core.types import (
 from ..db import EmberDB
 from ..identity.registry import AgentRegistry
 from ..integration import MemoryProtocol
+from ..maintenance import run_maintenance_cycle
 
 PROTOCOL = "2024-11-05"
 
@@ -444,6 +446,93 @@ TOOLS = [
             "required": [],
         },
     },
+    {
+        "name": "ember_feedback",
+        "description": ("Report what happened after retrieving and using a "
+                        "memory -- the missing half of the retrieve/act/"
+                        "outcome loop. outcome is one of: useful, "
+                        "irrelevant, correct, incorrect, confirmed, "
+                        "contradicted, stale, misleading, successful, "
+                        "unsuccessful. For a negative outcome, attribution "
+                        "(optional) names WHY, always as YOUR diagnosis, "
+                        "never Ember's guess: retrieval_failure (the right "
+                        "memory existed but wasn't retrieved), "
+                        "memory_failure (the retrieved memory was itself "
+                        "wrong), stale_memory (was right, no longer "
+                        "current), reasoning_failure (correct memory, you "
+                        "reasoned incorrectly), context_failure (correct "
+                        "memory, insufficient for the situation), or "
+                        "user_correction. Ember never auto-acts on "
+                        "feedback -- deprecating, disputing, or correcting "
+                        "the memory is a separate, deliberate action you "
+                        "take afterward if warranted."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "memory_id": {"type": "string"},
+                "outcome": {"type": "string"},
+                "usefulness": {"type": "number"},
+                "accuracy": {"type": "number"},
+                "attribution": {"type": "string"},
+                "note": {"type": "string"},
+                "session_id": {"type": "string"},
+                "agent_id": {"type": "string"},
+                "token": {"type": "string"},
+            },
+            "required": ["memory_id", "outcome"],
+        },
+    },
+    {
+        "name": "ember_feedback_for",
+        "description": "Every outcome report filed against a memory.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "memory_id": {"type": "string"},
+                "agent_id": {"type": "string"},
+                "token": {"type": "string"},
+            },
+            "required": ["memory_id"],
+        },
+    },
+    {
+        "name": "ember_lifecycle",
+        "description": ("Compute a memory's current lifecycle state from "
+                        "its real signals -- decayed confidence, access "
+                        "count, and any open conflict -- rather than a "
+                        "separately stored field that could drift out of "
+                        "sync with them. One of: active, verified, "
+                        "reinforced, weakening, stale, disputed, archived."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "record_id": {"type": "string"},
+                "agent_id": {"type": "string"},
+                "token": {"type": "string"},
+            },
+            "required": ["record_id"],
+        },
+    },
+    {
+        "name": "ember_run_maintenance",
+        "description": ("Run one reflection + consolidation pass over one "
+                        "or more namespaces right now. This is the manual/"
+                        "on-demand trigger for the same maintenance cycle "
+                        "the server can also run on a schedule (see "
+                        "EMBER_MAINTENANCE_INTERVAL_SECONDS) -- use this "
+                        "when you want it to happen now rather than "
+                        "waiting for the next scheduled run, or when the "
+                        "scheduler isn't enabled at all."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "namespaces": {"type": "array", "items": {"type": "string"}},
+                "agent_id": {"type": "string"},
+                "token": {"type": "string"},
+            },
+            "required": [],
+        },
+    },
 ]
 
 
@@ -748,6 +837,40 @@ class EmberMCP:
             self._auth(args)
             episodes = self.protocol.segment_episodes(namespace=args.get("namespace"))
             return _text(episodes)
+
+        if name == "ember_feedback":
+            agent = self._auth(args)
+            fb = Feedback(
+                memory_id=args["memory_id"],
+                agent_id=agent.agent_id,
+                outcome=FeedbackOutcome(args["outcome"]),
+                usefulness=args.get("usefulness"),
+                accuracy=args.get("accuracy"),
+                attribution=(FeedbackAttribution(args["attribution"])
+                             if args.get("attribution") else None),
+                note=args.get("note", ""),
+                session_id=args.get("session_id"),
+            )
+            fid = self.db.give_feedback(args["memory_id"], fb)
+            return _text({"feedback_id": fid})
+
+        if name == "ember_feedback_for":
+            self._auth(args)
+            records = self.db.feedback_for(args["memory_id"])
+            return _text([r.data for r in records])
+
+        if name == "ember_lifecycle":
+            self._auth(args)
+            report = self.protocol.get_lifecycle(args["record_id"])
+            if report is None:
+                return _err(f"record {args['record_id']} not found")
+            return _text(report.to_dict())
+
+        if name == "ember_run_maintenance":
+            self._auth(args)
+            namespaces = args.get("namespaces") or [self.protocol.namespace]
+            summary = run_maintenance_cycle(self.protocol, namespaces)
+            return _text(summary)
 
         return _err(f"unknown tool: {name}")
 
