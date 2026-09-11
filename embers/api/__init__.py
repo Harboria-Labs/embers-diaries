@@ -51,8 +51,6 @@ def _legacy_agent(request: Request):
     """Return the authenticated agent stamped by the legacy API middleware."""
     agent = getattr(request.state, "ember_agent", None)
     if agent is None:
-        # This should only be reachable when a route is called directly in
-        # Python instead of through FastAPI's middleware stack.
         raise HTTPException(401, "X-Ember-Agent-Id and X-Ember-Token required")
     return agent
 
@@ -70,9 +68,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# The legacy routes predate the authenticated /v1 surface. Keep the public
-# bootstrap/liveness endpoints useful, but put every stateful legacy route
-# behind the same persisted agent identity and token used by /v1.
 _LEGACY_PROTECTED_PREFIXES = (
     "/records", "/namespaces", "/search", "/query", "/graph",
     "/memory", "/timeline",
@@ -88,9 +83,6 @@ def _is_legacy_protected(path: str) -> bool:
 @app.middleware("http")
 async def require_legacy_agent(request: Request, call_next):
     path = request.url.path.rstrip("/") or "/"
-    # /v1 owns its route-level auth, while MCP authenticates each tool call.
-    # Registration is intentionally public so a new client can bootstrap an
-    # identity; health/docs expose no memory data.
     if (path in _PUBLIC_PATHS or path.startswith("/v1")
             or path == "/mcp"):
         return await call_next(request)
@@ -116,9 +108,6 @@ async def require_legacy_agent(request: Request, call_next):
     return await call_next(request)
 
 
-# Browser access is opt-in. A wildcard origin would allow any website to make
-# authenticated requests with a caller's Ember token. Configure a comma-
-# separated allow-list only when browser clients are explicitly required.
 _cors_origins = [origin.strip() for origin in
                  os.environ.get("EMBER_CORS_ORIGINS", "").split(",")
                  if origin.strip()]
@@ -303,6 +292,8 @@ async def remember(request: Request, body: dict):
         namespace=body.get("namespace"),
         written_by=agent.agent_id,
         agent_id=agent.agent_id,
+        memory_type=body.get("memory_type", "unscoped"),
+        room=body.get("room", "unscoped"),
     )
     return {"id": record_id, "status": "remembered"}
 
@@ -317,6 +308,7 @@ async def recall(body: dict):
         query,
         top_k=body.get("top_k", 10),
         namespace=body.get("namespace"),
+        room=body.get("room"),
         format=body.get("format", "structured"),
     )
     return {"query": query, "memories": result}
