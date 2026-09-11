@@ -6,11 +6,13 @@ import pytest
 
 from embers.core.types import ConflictStatus
 from embers.db import EmberDB
+from embers.integration.conflict_policy import install
 from embers.integration.memory_protocol import MemoryProtocol
 
 
 @pytest.fixture
 def protocol(tmp_path: Path):
+    install()
     db = EmberDB.connect(str(tmp_path / "store"))
     return MemoryProtocol(db, default_namespace="cf")
 
