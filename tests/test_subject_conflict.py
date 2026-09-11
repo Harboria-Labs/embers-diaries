@@ -1,4 +1,4 @@
-"""Same subject + different content is not a conflict."""
+"""Same subject is a hint. Only the agent maps a conflict."""
 
 from pathlib import Path
 
@@ -6,7 +6,7 @@ import pytest
 
 from embers.db import EmberDB
 from embers.integration.memory_protocol import MemoryProtocol
-from embers.integration.conflict_policy import install
+from embers.integration.conflict_policy import candidates_for, install
 
 
 @pytest.fixture
@@ -27,9 +27,10 @@ def test_different_content_same_subject_is_not_a_conflict(protocol):
     )
     assert protocol.db.conflicts_for(a) == []
     assert protocol.db.conflicts_for(b) == []
+    assert protocol._last_conflict_hints == []
 
 
-def test_same_subject_different_claim_field_is_a_conflict(protocol):
+def test_claim_field_is_only_a_hint_until_agent_maps(protocol):
     a = protocol.remember(
         {"content": "note a", "subject": "server-probe", "status": "green"},
         room="project",
@@ -38,6 +39,12 @@ def test_same_subject_different_claim_field_is_a_conflict(protocol):
         {"content": "note b", "subject": "server-probe", "status": "red"},
         room="project",
     )
+    assert protocol.db.conflicts_for(a) == []
+    hints = protocol._last_conflict_hints
+    assert len(hints) == 1
+    assert hints[0]["field"] == "status"
+    assert hints[0]["other_id"] == a
+
+    protocol.db.map_conflict(a, b, detected_by="agent", note="agent decided")
     found = protocol.db.conflicts_for(a)
     assert len(found) == 1
-    assert "Field 'status'" in found[0].note
