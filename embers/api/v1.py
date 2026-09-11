@@ -85,6 +85,8 @@ async def memory_write(
         session_id=body.get("session_id"),
         creation_reason=body.get("creation_reason"),
         derived_from=body.get("derived_from"),
+        memory_type=body.get("memory_type", "unscoped"),
+        room=body.get("room", "unscoped"),
     )
     if body.get("session_id") and db.get_session(body["session_id"]):
         db.record_memory_write(body["session_id"], rid, changed_by=agent.agent_id)
@@ -107,6 +109,7 @@ async def memory_recall(
         query,
         top_k=body.get("top_k", 10),
         namespace=body.get("namespace"),
+        room=body.get("room"),
         format=body.get("format", "structured"),
     )
     return {"query": query, "memories": result}
@@ -182,7 +185,7 @@ async def propose_memory(
     return {"proposal_id": pid, "agent_id": agent.agent_id}
 
 
-# ── Proposal → durable memory (§4/§5/§12) ─────────────────────────────────────
+# ── Proposal → durable memory (§4/§5/§12) ─────────────────────
 # /memory/propose alone dead-ends: an agent can attach sealed evidence to a
 # proposal and nothing can admit it to durable memory. These complete the
 # pipeline, mirroring the MCP surface so both transports expose the same thing.
