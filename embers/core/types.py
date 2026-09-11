@@ -29,7 +29,29 @@ class RecordType(str, Enum):
 
 
 class MemoryType(str, Enum):
-    """Memory types for AI cognitive systems (e.g. A Thousand Pearls)."""
+    """WHAT KIND of thing this memory is. Not WHERE it belongs.
+
+    Kind ≠ room. A skill can live in personal ("user prefers surgical diffs")
+    or in project ("this repo uses Prisma"). An episode can be a personal
+    story or a task event. The type only answers: what sort of memory is
+    this? The room (MemoryRoom) answers: which door may open for it later.
+
+    Do not infer a room from the type at recall. If write did not store a
+    room, the row is unscoped. If write did not store a kind, the row is
+    type unscoped.
+
+    UNSCOPED   — agent forgot or could not choose a kind. Honest default.
+                 Same decay as RAW. Do not treat this as episodic.
+    RAW        — older unclassified kind. Prefer UNSCOPED when the agent
+                 simply did not classify.
+    SKILL      — how to do something; a standing procedure or method.
+    FAILURE    — a lesson from a miss. Meant to persist until someone
+                 deliberately revisits or deprecates it.
+    EPISODIC   — a thing that happened: a session, a scene, an event.
+    CONNECTIVE — a link between memories, not the memories themselves.
+    REFLECTIVE — a note about the system's own state (meta-memory).
+    """
+    UNSCOPED   = "unscoped"
     RAW        = "raw"
     SKILL      = "skill"
     FAILURE    = "failure"
@@ -38,8 +60,50 @@ class MemoryType(str, Enum):
     REFLECTIVE = "reflective"
 
 
+class MemoryRoom(str, Enum):
+    """WHERE this memory belongs. Not WHAT KIND it is.
+
+    Kind ≠ room. Room is the door. Type is the object behind the door.
+
+    The agent sets the room on every remember() write. Ember does not
+    guess the room from the text, and recall must not invent a room that
+    write never stored. Context later only opens doors that were labelled
+    at write time.
+
+    Why these three (same idea as instruction / personal / task files in
+    ordinary agent memory, minus a separate "instruction" file — standing
+    rules about the person live in PERSONAL):
+
+    PERSONAL — who this user is, standing likes, standing rules. Comes
+               in when the work is for that person. Stays out of a
+               general world-fact question. Does not need wiki-style
+               evidence; the user is the source.
+    PROJECT  — decisions and facts for one repo / product / codebase.
+               Comes in only when that project is the context.
+               Little-Fig rules do not speak during a different app.
+    TASK     — the current job only. Replaced when the job ends.
+               Not a personality trait and not a project law.
+
+    UNSCOPED — write happened and the agent did not choose a room.
+               Honest default. Recall must not promote this to personal
+               or project just because the words look similar.
+
+    MemoryScope (task / agent / lilacore) is a different axis: tree
+    level in a multi-agent store. Do not use MemoryScope as the room.
+    """
+    PERSONAL = "personal"
+    PROJECT  = "project"
+    TASK     = "task"
+    UNSCOPED = "unscoped"
+
+
 class MemoryScope(str, Enum):
-    """Scope levels in the memory tree."""
+    """Tree level in a multi-agent memory store. Not the room.
+
+    TASK / AGENT / LILACORE say how high the record sits in a shared
+    tree. MemoryRoom says which door opens for this user, this project,
+    or this job. Keep them separate.
+    """
     TASK      = "task"
     AGENT     = "agent"
     LILACORE  = "lilacore"
