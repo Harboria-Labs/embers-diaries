@@ -7,7 +7,7 @@ and the language model. It provides:
 
 1. remember(text) → store a new memory with auto-embedding
 2. recall(query) → retrieve relevant memories as LLM context
-3. reflect() → trigger cognitive processing (decay, conflicts, consolidation)
+3. reflect() → decay notes only. Conflicts are a separate agent queue.
 4. forget(id) → deprecate a memory (never delete)
 5. update(id, new_data) → supersede a memory (never overwrite)
 
@@ -39,7 +39,8 @@ class MemoryProtocol:
     - Process its memories → protocol.reflect()
     
     The protocol handles embedding, indexing, retrieval, decay,
-    conflict detection, and context formatting automatically.
+    and context formatting automatically. Conflict mapping is an
+    agent decision, not a write side-effect.
     """
 
     def __init__(self, db,  # EmberDB instance
@@ -59,6 +60,7 @@ class MemoryProtocol:
         self.context_builder = ContextBuilder(self.decay, max_context_tokens)
 
         self._write_count = 0
+        self._last_conflict_hints: list[dict] = []
 
     _DEFAULT_DECAY_RATE_BY_TYPE = {
         MemoryType.FAILURE:    0.0,
@@ -211,7 +213,8 @@ class MemoryProtocol:
         elif format == "messages":
             return self.context_builder.build_message_context(records)
         elif format == "structured":
-            return self.context_builder.build_structured_context(records)
+            rows = self.context_builder.build_structured_context(records)
+            return self._stamp_conflicts(rows)
         else:
             return self.context_builder.build_text_context(
                 records, include_annotations=include_annotations)
@@ -286,17 +289,25 @@ class MemoryProtocol:
         return [ep.to_dict() for ep in episodes]
 
     _DURABLE_MEMORY_TYPES = frozenset({RecordType.NODE, RecordType.DOCUMENT})
+    _CONFLICT_SKIP_KEYS = frozenset({
+        "subject", "content", "memory_type", "room", "verify_status",
+    })
 
     def _check_conflicts(self, new_record: EmberRecord):
+        """Hint only. Never maps a CONFLICT record."""
+        self._last_conflict_hints = self.conflict_hints(new_record)
+
+    def conflict_hints(self, new_record: EmberRecord) -> list[dict]:
         if not isinstance(new_record.data, dict):
-            return
+            return []
         subject = new_record.data.get("subject")
         if subject is None:
-            return
+            return []
         try:
             existing = self.db.get_namespace(new_record.namespace, limit=200)
         except Exception:
-            return
+            return []
+        hints = []
         for rec in existing:
             if rec.id == new_record.id:
                 continue
@@ -307,19 +318,40 @@ class MemoryProtocol:
             if rec.data.get("subject") != subject:
                 continue
             for key, new_val in new_record.data.items():
-                if key == "subject":
+                if key in self._CONFLICT_SKIP_KEYS:
                     continue
                 old_val = rec.data.get(key)
                 if old_val is not None and new_val is not None and old_val != new_val:
-                    try:
-                        self.db.map_conflict(
-                            rec.id, new_record.id,
-                            detected_by=new_record.written_by or "conflict-detector",
-                            note=(f"Field {key!r} differs for subject "
-                                  f"{subject!r}: {old_val!r} vs {new_val!r}"))
-                    except Exception:
-                        pass
+                    hints.append({
+                        "other_id": rec.id,
+                        "subject": subject,
+                        "field": key,
+                        "theirs": old_val,
+                        "ours": new_val,
+                        "note": (
+                            "Possible disagreement. Map it with "
+                            "ember_map_conflict only if you decide this "
+                            "is a real conflict."
+                        ),
+                    })
                     break
+        return hints
+
+    def _stamp_conflicts(self, rows: list[dict]) -> list[dict]:
+        for row in rows:
+            rid = row.get("id")
+            if not rid:
+                continue
+            try:
+                found = self.db.conflicts_for(rid)
+            except Exception:
+                found = []
+            if not found:
+                continue
+            live = found[0]
+            row["conflict"] = live.status.value
+            row["conflict_id"] = live.conflict_id
+        return rows
 
     def get_unresolved_conflicts(self, namespace: str | None = None) -> list[dict]:
         ns = namespace or self.namespace
