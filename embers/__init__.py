@@ -40,7 +40,7 @@ from .engine.promotion import (
     PromotionOutcome,
 )
 from .core.types import (
-    RecordType, MemoryType, MemoryScope,
+    RecordType, MemoryType, MemoryRoom, MemoryScope,
     AccessLevel, VerifyStatus, DeprecationReason, EdgeType,
     SourceType, ProposalStatus, MemoryStatus, PromotionMethod, PromotionMode,
     ConflictType, ConflictStatus, SessionStatus,
@@ -53,7 +53,7 @@ __all__ = [
     "EmberDB", "EmberRecord", "Annotation", "ReflectiveAnnotation",
     "EdgeRef", "Evidence", "MemoryProposal", "Conflict", "Session", "Failure",
     "AgentView",
-    "RecordType", "MemoryType", "MemoryScope",
+    "RecordType", "MemoryType", "MemoryRoom", "MemoryScope",
     "AccessLevel", "VerifyStatus", "DeprecationReason", "EdgeType",
     "SourceType", "ProposalStatus", "MemoryStatus", "PromotionMethod",
     "PromotionMode", "ConflictType", "ConflictStatus", "SessionStatus",
