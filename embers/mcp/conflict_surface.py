@@ -1,4 +1,7 @@
-"""MCP surface for agent-decided conflicts. No auto-map."""
+"""Patch MCP TOOLS + handlers so the catalog and runtime match.
+
+Write hints only. Agent maps. Resolve has real statuses.
+"""
 
 from __future__ import annotations
 

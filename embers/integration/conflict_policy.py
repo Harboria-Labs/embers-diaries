@@ -14,8 +14,3 @@ def candidates_for(db, new_record) -> list[dict]:
 
 def install() -> None:
     return
-
-
-def install_mcp() -> None:
-    from ..mcp.conflict_surface import install as install_surface
-    install_surface()

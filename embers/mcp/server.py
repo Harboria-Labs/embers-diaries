@@ -17,10 +17,12 @@ from ..core.failure import Failure
 from ..core.proposal import MemoryProposal
 from ..core.types import (
     MemoryStatus, PromotionMethod, ProposalStatus, SourceType, ConflictType,
+    ConflictStatus,
 )
 from ..db import EmberDB
 from ..identity.registry import AgentRegistry
 from ..integration import MemoryProtocol
+from .tools import TOOLS
 
 PROTOCOL = "2024-11-05"
 
@@ -35,416 +37,6 @@ def _text(obj: Any) -> dict:
 
 def _err(msg: str) -> dict:
     return {"content": [{"type": "text", "text": msg}], "isError": True}
-
-
-TOOLS = [
-    {
-        "name": "ember_register",
-        "description": "Register this agent. Returns agent_id and token. Store both.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "name": {"type": "string"},
-                "provider": {"type": "string"},
-                "model": {"type": "string"},
-            },
-            "required": ["name"],
-        },
-    },
-    {
-        "name": "ember_write",
-        "description": "Write a durable memory attributed to the authenticated agent.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "content": {"type": "string"},
-                "subject": {"type": "string",
-                    "description": ("Optional. Names the entity/claim this "
-                        "memory is about (e.g. 'server-1', "
-                        "'user:alice@example.com'). When two memories in the "
-                        "same namespace share a subject and disagree on some "
-                        "other field, it's mapped as a conflict via the "
-                        "persisted conflict engine for later triage "
-                        "(ember_conflicts_for / ember_resolve_conflict). "
-                        "Omit it and no conflict check runs at all -- this "
-                        "is opt-in specifically so two unrelated memories "
-                        "are never flagged just for having different text.")},
-                "namespace": {"type": "string"},
-                "session_id": {"type": "string"},
-                "creation_reason": {"type": "string"},
-                "tags": {"type": "array", "items": {"type": "string"}},
-                "agent_id": {"type": "string"},
-                "token": {"type": "string"},
-            },
-            "required": ["content"],
-        },
-    },
-    {
-        "name": "ember_read",
-        "description": "Read a record by id.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "record_id": {"type": "string"},
-                "agent_id": {"type": "string"},
-                "token": {"type": "string"},
-            },
-            "required": ["record_id"],
-        },
-    },
-    {
-        "name": "ember_search",
-        "description": "Full-text search over memories.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "query": {"type": "string"},
-                "namespace": {"type": "string"},
-                "top_k": {"type": "integer"},
-                "agent_id": {"type": "string"},
-                "token": {"type": "string"},
-            },
-            "required": ["query"],
-        },
-    },
-    {
-        "name": "ember_recall",
-        "description": "Retrieve relevant memories for a query.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "query": {"type": "string"},
-                "namespace": {"type": "string"},
-                "top_k": {"type": "integer"},
-                "agent_id": {"type": "string"},
-                "token": {"type": "string"},
-            },
-            "required": ["query"],
-        },
-    },
-    {
-        "name": "ember_get_history",
-        "description": "Version history for a record.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "record_id": {"type": "string"},
-                "agent_id": {"type": "string"},
-                "token": {"type": "string"},
-            },
-            "required": ["record_id"],
-        },
-    },
-    {
-        "name": "ember_get_graph",
-        "description": "Graph neighbors of a record.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "record_id": {"type": "string"},
-                "depth": {"type": "integer"},
-                "agent_id": {"type": "string"},
-                "token": {"type": "string"},
-            },
-            "required": ["record_id"],
-        },
-    },
-    {
-        "name": "ember_get_session",
-        "description": "Load a session by id.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {"session_id": {"type": "string"}},
-            "required": ["session_id"],
-        },
-    },
-    {
-        "name": "ember_start_session",
-        "description": "Open a session for the authenticated agent.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "task": {"type": "string"},
-                "namespace": {"type": "string"},
-                "agent_id": {"type": "string"},
-                "token": {"type": "string"},
-            },
-        },
-    },
-    {
-        "name": "ember_propose_memory",
-        "description": "Submit a memory proposal (not yet durable memory).",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "discovery": {},
-                "reason": {"type": "string"},
-                "confidence": {"type": "number"},
-                "namespace": {"type": "string"},
-                "session_id": {"type": "string"},
-                "evidence": {"type": "array"},
-                "agent_id": {"type": "string"},
-                "token": {"type": "string"},
-            },
-            "required": ["discovery"],
-        },
-    },
-    # ── Proposal → durable memory (§4/§5/§12) ─────────────────────────────────
-    # Without these, ember_propose_memory dead-ends: an agent can attach sealed
-    # evidence to a proposal and nothing can ever admit it to durable memory.
-    {
-        "name": "ember_submit",
-        "description": ("Route a pending proposal through the Promotion Engine. "
-                        "The engine decides (per configured mode + policy) whether "
-                        "it enters durable memory. On a hold nothing is written and "
-                        "the proposal stays pending."),
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "proposal_id": {"type": "string"},
-                "agent_id": {"type": "string"},
-                "token": {"type": "string"},
-            },
-            "required": ["proposal_id"],
-        },
-    },
-    {
-        "name": "ember_promotion_route",
-        "description": ("Dry run: what would the Promotion Engine decide for this "
-                        "proposal? Writes nothing."),
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "proposal_id": {"type": "string"},
-                "agent_id": {"type": "string"},
-                "token": {"type": "string"},
-            },
-            "required": ["proposal_id"],
-        },
-    },
-    {
-        "name": "ember_promote",
-        "description": ("Explicitly promote a pending proposal into durable memory "
-                        "(an authenticated caller's own decision, recorded as "
-                        "promotion_method=human). Promotion means it met the "
-                        "criteria to become durable memory, NOT that it is true — "
-                        "the memory carries its own status."),
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "proposal_id": {"type": "string"},
-                "status": {"type": "string",
-                            "description": "verified / provisional / disputed"},
-                "agent_id": {"type": "string"},
-                "token": {"type": "string"},
-            },
-            "required": ["proposal_id"],
-        },
-    },
-    {
-        "name": "ember_reject",
-        "description": ("Reject a pending proposal. Append-only: it stays "
-                        "permanently queryable as rejected and never becomes a "
-                        "memory."),
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "proposal_id": {"type": "string"},
-                "reason": {"type": "string"},
-                "agent_id": {"type": "string"},
-                "token": {"type": "string"},
-            },
-            "required": ["proposal_id"],
-        },
-    },
-    {
-        "name": "ember_list_proposals",
-        "description": ("Proposals in a namespace, optionally filtered by status "
-                        "(pending / promoted / rejected) — find what awaits a "
-                        "promotion decision."),
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "namespace": {"type": "string"},
-                "status": {"type": "string"},
-                "agent_id": {"type": "string"},
-                "token": {"type": "string"},
-            },
-            "required": ["namespace"],
-        },
-    },
-    {
-        "name": "ember_attach_evidence",
-        "description": ("Attach independent evidence to an EXISTING durable "
-                        "memory. Append-only — the memory is not modified, so its "
-                        "hash is untouched and its confirmation trail only grows."),
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "memory_id": {"type": "string"},
-                "source": {"type": "string"},
-                "source_type": {"type": "string"},
-                "reference": {"type": "string"},
-                "description": {"type": "string"},
-                "session_id": {"type": "string"},
-                "agent_id": {"type": "string"},
-                "token": {"type": "string"},
-            },
-            "required": ["memory_id", "source"],
-        },
-    },
-    {
-        "name": "ember_evidence_for",
-        "description": ("Every evidence record supporting a memory. An empty list "
-                        "means the memory rests on a bare assertion, not evidence."),
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "memory_id": {"type": "string"},
-                "agent_id": {"type": "string"},
-                "token": {"type": "string"},
-            },
-            "required": ["memory_id"],
-        },
-    },
-    {
-        "name": "ember_report_failure",
-        "description": "Record a failed approach so other agents can skip it.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "approach": {"type": "string"},
-                "failed": {"type": "string"},
-                "cause": {"type": "string"},
-                "namespace": {"type": "string"},
-                "session_id": {"type": "string"},
-                "agent_id": {"type": "string"},
-                "token": {"type": "string"},
-            },
-            "required": ["approach"],
-        },
-    },
-    {
-        "name": "ember_map_conflict",
-        "description": ("Map a SEMANTIC (or STORAGE) contradiction between two "
-                        "existing memories (spec §7). Neither memory is modified "
-                        "or destroyed — this records a CONFLICT record (status "
-                        "OPEN) and draws a symmetric contradicts edge between "
-                        "them, so the contradiction is visible both as a "
-                        "queryable object and via graph traversal. Idempotent: "
-                        "mapping the same live pair again returns the existing "
-                        "conflict id rather than duplicating it."),
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "memory_a": {"type": "string"},
-                "memory_b": {"type": "string"},
-                "conflict_type": {"type": "string",
-                    "description": "semantic (default) or storage"},
-                "note": {"type": "string"},
-                "agent_id": {"type": "string"},
-                "token": {"type": "string"},
-            },
-            "required": ["memory_a", "memory_b"],
-        },
-    },
-    {
-        "name": "ember_conflicts_for",
-        "description": ("Every mapped Conflict involving a given memory, on "
-                        "either side. By default only live (not resolved/"
-                        "superseded) conflicts; pass include_closed for the "
-                        "full triage history."),
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "memory_id": {"type": "string"},
-                "include_closed": {"type": "boolean"},
-                "agent_id": {"type": "string"},
-                "token": {"type": "string"},
-            },
-            "required": ["memory_id"],
-        },
-    },
-    {
-        "name": "ember_resolve_conflict",
-        "description": ("Mark a mapped conflict RESOLVED with a resolution "
-                        "note. Append-only, like everything else here — this "
-                        "records a new version of the conflict with the "
-                        "decision; neither contradicting memory is deleted or "
-                        "changed. Use ember_conflicts_for first to find the "
-                        "conflict_id."),
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "conflict_id": {"type": "string"},
-                "resolution": {"type": "string"},
-                "agent_id": {"type": "string"},
-                "token": {"type": "string"},
-            },
-            "required": ["conflict_id", "resolution"],
-        },
-    },
-    {
-        "name": "ember_reflect",
-        "description": ("Run a reflection cycle over a namespace: examines "
-                        "memories for confidence decay and any custom "
-                        "reflection triggers, and PERSISTS the resulting "
-                        "reflective annotations (db.annotate) -- it does not "
-                        "modify or create memories, only comments on them. "
-                        "Nothing calls this automatically; there is no "
-                        "scheduler. Run it yourself periodically, or have an "
-                        "agent call it at the end of a session."),
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "namespace": {"type": "string"},
-                "limit": {"type": "integer"},
-                "agent_id": {"type": "string"},
-                "token": {"type": "string"},
-            },
-            "required": [],
-        },
-    },
-    {
-        "name": "ember_consolidate",
-        "description": ("Run memory consolidation over a namespace: groups "
-                        "memories by shared tags or temporal proximity and "
-                        "writes a new, higher-confidence consolidated "
-                        "record linking back to every source (sources are "
-                        "never deprecated or deleted). The consolidated "
-                        "record lands in the SAME namespace it read from, "
-                        "so it's findable via a plain ember_recall "
-                        "afterward. Nothing calls this automatically -- run "
-                        "it yourself periodically."),
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "namespace": {"type": "string"},
-                "agent_id": {"type": "string"},
-                "token": {"type": "string"},
-            },
-            "required": [],
-        },
-    },
-    {
-        "name": "ember_segment_episodes",
-        "description": ("Group a namespace's memories into episodes using "
-                        "temporal gaps, tag-overlap shifts, and a surprise "
-                        "score -- returns the groupings directly; nothing "
-                        "is written to the store (episodes aren't persisted "
-                        "as their own record type). Purely a read-side "
-                        "computation for the caller to use or discard."),
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "namespace": {"type": "string"},
-                "agent_id": {"type": "string"},
-                "token": {"type": "string"},
-            },
-            "required": [],
-        },
-    },
-]
 
 
 class EmberMCP:
@@ -505,7 +97,11 @@ class EmberMCP:
             if args.get("session_id") and self.db.get_session(args["session_id"]):
                 self.db.record_memory_write(
                     args["session_id"], rid, changed_by=agent.agent_id)
-            return _text({"id": rid, "agent_id": agent.agent_id})
+            return _text({
+                "id": rid,
+                "agent_id": agent.agent_id,
+                "possible_conflicts": getattr(self.protocol, "_last_conflict_hints", []) or [],
+            })
 
         if name == "ember_read":
             self._auth(args)
@@ -593,10 +189,6 @@ class EmberMCP:
             )
             pid = self.db.propose(proposal)
             return _text({"proposal_id": pid, "agent_id": agent.agent_id})
-
-        # ── Proposal → durable memory ─────────────────────────────────────────
-        # These complete the pipeline the propose tool starts. Without them a
-        # sealed-evidence proposal can never become a memory.
 
         if name == "ember_submit":
             agent = self._auth(args)
@@ -718,18 +310,70 @@ class EmberMCP:
                 "note": c.note,
             } for c in conflicts])
 
+        if name == "ember_open_conflicts":
+            self._auth(args)
+            ns = args.get("namespace") or self.protocol.namespace
+            queue = {ConflictStatus.OPEN, ConflictStatus.INVESTIGATING}
+            found = []
+            for c in self.db.conflict_records(namespace=ns):
+                if c.status in queue:
+                    found.append({
+                        "conflict_id": c.conflict_id,
+                        "namespace": c.namespace,
+                        "memory_a": c.memory_a,
+                        "memory_b": c.memory_b,
+                        "conflict_type": c.conflict_type.value,
+                        "status": c.status.value,
+                        "detected_by": c.detected_by,
+                        "resolution": c.resolution,
+                        "note": c.note,
+                    })
+            return _text(found)
+
         if name == "ember_resolve_conflict":
             agent = self._auth(args)
-            new_id, old_id = self.db.resolve_conflict(
-                args["conflict_id"], args["resolution"],
-                changed_by=agent.agent_id)
-            return _text({"conflict_id": new_id, "superseded": old_id})
+            raw = (args.get("status") or "resolved").lower()
+            mapping = {
+                "investigating": ConflictStatus.INVESTIGATING,
+                "resolved": ConflictStatus.RESOLVED,
+                "accepted_both": ConflictStatus.ACCEPTED_BOTH,
+                "dismissed": ConflictStatus.SUPERSEDED,
+            }
+            status = mapping.get(raw)
+            if status is None:
+                return _err(
+                    "status must be investigating | resolved | accepted_both | dismissed")
+            note = args.get("resolution") or ""
+            if args.get("winner_id"):
+                note = (note + f" winner={args['winner_id']}").strip()
+            if raw == "dismissed" and "dismissed" not in note.lower():
+                note = (note + " dismissed: not a conflict").strip()
+            new_id, old_id = self.db.update_conflict_status(
+                args["conflict_id"], status, note, changed_by=agent.agent_id)
+            return _text({
+                "conflict_id": new_id,
+                "superseded": old_id,
+                "status": status.value,
+            })
 
         if name == "ember_reflect":
             self._auth(args)
             annotations = self.protocol.reflect(
                 namespace=args.get("namespace"),
                 limit=int(args.get("limit", 50)))
+            ns = args.get("namespace") or self.protocol.namespace
+            queue = {ConflictStatus.OPEN, ConflictStatus.INVESTIGATING}
+            open_conflicts = []
+            for c in self.db.conflict_records(namespace=ns):
+                if c.status in queue:
+                    open_conflicts.append({
+                        "conflict_id": c.conflict_id,
+                        "namespace": c.namespace,
+                        "memory_a": c.memory_a,
+                        "memory_b": c.memory_b,
+                        "status": c.status.value,
+                        "note": c.note,
+                    })
             return _text({
                 "reflections": len(annotations),
                 "annotations": [
@@ -737,6 +381,7 @@ class EmberMCP:
                      "target_record_id": a.target_record_id}
                     for a in annotations
                 ],
+                "open_conflicts": open_conflicts,
             })
 
         if name == "ember_consolidate":
@@ -800,28 +445,21 @@ class EmberMCP:
 
 
 def _write(msg: dict) -> None:
-    """Write one MCP stdio message as one newline-delimited JSON document."""
     sys.stdout.write(json.dumps(msg, ensure_ascii=False, separators=(",", ":")) + "\n")
     sys.stdout.flush()
 
 
 def _read() -> dict | None:
-    """Read newline-delimited JSON, accepting legacy Content-Length input."""
     line = sys.stdin.readline()
     if line == "":
         return None
-
     stripped = line.strip()
     if stripped.startswith("{"):
         return json.loads(stripped)
     if not stripped:
-        # Ignore harmless blank lines between newline-delimited messages.
         return _read()
     if ":" not in stripped:
         raise json.JSONDecodeError("Expected a JSON-RPC message", stripped, 0)
-
-    # Tolerate clients which still send LSP-style Content-Length framing.  We
-    # never emit it: MCP stdio responses are newline-delimited JSON.
     headers: dict[str, str] = {}
     while True:
         key, value = stripped.split(":", 1)
@@ -834,7 +472,6 @@ def _read() -> dict | None:
             break
         if ":" not in stripped:
             raise json.JSONDecodeError("Malformed header", stripped, 0)
-
     try:
         length = int(headers["content-length"])
     except (KeyError, ValueError) as exc:
@@ -842,10 +479,6 @@ def _read() -> dict | None:
     if length < 0:
         raise json.JSONDecodeError("Invalid Content-Length", str(length), 0)
     body = sys.stdin.read(length)
-    # On Windows, a TextIOWrapper sender can turn an already-CRLF-delimited
-    # frame into CRCRLF.  Universal newline decoding then leaves one LF after
-    # the header terminator.  Discard only that delimiter residue and replace
-    # it so the declared byte count still governs the JSON body.
     while body.startswith("\n"):
         body = body[1:] + sys.stdin.read(1)
     if len(body) != length:
@@ -869,8 +502,6 @@ def main() -> None:
         try:
             reply = server.handle(message)
         except Exception:
-            # Keep one bad request from taking down a long-lived stdio server.
-            # Notifications deliberately receive no reply.
             reply = None if isinstance(message, dict) and "id" not in message else {
                 "jsonrpc": "2.0",
                 "id": message.get("id") if isinstance(message, dict) else None,
