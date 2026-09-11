@@ -5,7 +5,10 @@ from __future__ import annotations
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
+from ..mcp.room_wire import install
 from ..mcp.server import EmberMCP
+
+install()
 
 router = APIRouter()
 _mcp: EmberMCP | None = None
