@@ -44,6 +44,11 @@ class ReflectionEngine:
     
     This is the "Emergence Engine" from the Lila architecture —
     the component that makes memory self-aware.
+
+    Reflect comments on memories. It does not classify, set room,
+    create memories, or change rank. When a stored room and kind
+    exist, the comment names them (e.g. "this personal skill is fading").
+    Missing labels are reported as unscoped, not guessed.
     """
 
     def __init__(self, decay_engine: DecayEngine | None = None,
@@ -76,7 +81,7 @@ class ReflectionEngine:
         """Register a custom reflection trigger."""
         self._triggers.append(trigger)
 
-    # ── Reflection cycle ──────────────────────────────────────────────────────
+    # ── Reflection cycle ─────────────────────────────────────
 
     def reflect(self, records: list[EmberRecord],
                 context: str = "",
@@ -125,6 +130,15 @@ class ReflectionEngine:
         self._pending_annotations.extend(annotations)
         return annotations
 
+
+    @staticmethod
+    def _kind_and_room(record: EmberRecord) -> tuple[str, str]:
+        """Read stored labels. Do not invent personal/project or a kind."""
+        data = record.data if isinstance(record.data, dict) else {}
+        kind = data.get("memory_type") or "unscoped"
+        room = data.get("room") or "unscoped"
+        return str(kind), str(room)
+
     def _should_reflect(self, record: EmberRecord, now: datetime) -> bool:
         """Check if enough time has passed since last reflection on this record."""
         last = self._last_reflection.get(record.id)
@@ -133,19 +147,22 @@ class ReflectionEngine:
         hours_since = (now - last).total_seconds() / 3600.0
         return hours_since >= self._cooldown_hours
 
-    # ── Annotation generators ─────────────────────────────────────────────────
+    # ── Annotation generators ─────────────────────────────────
 
     def _create_decay_reflection(self, record: EmberRecord,
                                   effective_confidence: float,
                                   context: str,
                                   written_by: str) -> ReflectiveAnnotation:
+        kind, room = self._kind_and_room(record)
         return ReflectiveAnnotation(
             target_record_id=record.id,
             content=(
-                f"Memory confidence has decayed to {effective_confidence:.2f} "
+                f"This {room} {kind} is fading. "
+                f"Confidence has decayed to {effective_confidence:.2f} "
                 f"(base: {record.confidence:.2f}). "
-                f"This memory has not been accessed in a while. "
-                f"Consider reinforcing or re-evaluating."
+                f"It has not been accessed in a while. "
+                f"Consider reinforcing or re-evaluating. "
+                f"Reflect does not change the room or the kind."
             ),
             context=context or "scheduled_reflection_cycle",
             annotation_type="reflection",
@@ -153,19 +170,22 @@ class ReflectionEngine:
             confidence=effective_confidence,
             triggered_by="confidence_decay",
             insight_score=1.0 - effective_confidence,  # More decayed = higher insight value
-            tags=["decay", "needs_reinforcement"],
+            tags=["decay", "needs_reinforcement", f"room:{room}", f"kind:{kind}"],
         )
 
     def _create_conflict_reflection(self, record: EmberRecord,
                                      conflict,
                                      context: str,
                                      written_by: str) -> ReflectiveAnnotation:
+        kind, room = self._kind_and_room(record)
         return ReflectiveAnnotation(
             target_record_id=record.id,
             content=(
-                f"Unresolved conflict detected: {conflict.description}. "
-                f"This memory may be contested. "
-                f"Conflicting records: {', '.join(conflict.record_ids)}"
+                f"This {room} {kind} has an unresolved conflict: "
+                f"{conflict.description}. "
+                f"It may be contested. "
+                f"Conflicting records: {', '.join(conflict.record_ids)}. "
+                f"Reflect does not change the room or the kind."
             ),
             context=context or "conflict_detected",
             annotation_type="reflection",
@@ -173,7 +193,7 @@ class ReflectionEngine:
             confidence=1.0 - conflict.severity,
             triggered_by="conflict_detection",
             insight_score=conflict.severity,
-            tags=["conflict", "needs_resolution"],
+            tags=["conflict", "needs_resolution", f"room:{room}", f"kind:{kind}"],
             related_record_ids=conflict.record_ids,
         )
 
@@ -181,19 +201,23 @@ class ReflectionEngine:
                                     trigger: ReflectionTrigger,
                                     context: str,
                                     written_by: str) -> ReflectiveAnnotation:
+        kind, room = self._kind_and_room(record)
         return ReflectiveAnnotation(
             target_record_id=record.id,
-            content=f"Custom trigger '{trigger.name}' activated for this memory.",
+            content=(
+                f"Custom trigger '{trigger.name}' activated "
+                f"for this {room} {kind}."
+            ),
             context=context or f"trigger:{trigger.name}",
             annotation_type="reflection",
             written_by=written_by,
             confidence=1.0,
             triggered_by=trigger.name,
             insight_score=trigger.priority,
-            tags=["custom_trigger", trigger.name],
+            tags=["custom_trigger", trigger.name, f"room:{room}", f"kind:{kind}"],
         )
 
-    # ── Pending annotations ───────────────────────────────────────────────────
+    # ── Pending annotations ─────────────────────────────────
 
     def get_pending_annotations(self) -> list[ReflectiveAnnotation]:
         """Get annotations generated during reflection, ready to be written."""
