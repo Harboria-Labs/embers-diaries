@@ -7,10 +7,12 @@ from fastapi.responses import JSONResponse
 
 from ..mcp.session_auth import install as install_session_auth
 from ..mcp.room_wire import install as install_room_wire
+from ..mcp.conflict_surface import install as install_conflict_surface
 from ..mcp.server import EmberMCP
 
 install_session_auth()
 install_room_wire()
+install_conflict_surface()
 
 router = APIRouter()
 _mcp: EmberMCP | None = None
