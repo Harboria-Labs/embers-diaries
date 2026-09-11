@@ -1,9 +1,13 @@
-"""Subject conflicts compare claims, not prose.
+"""Conflicts are a decision, not a write side-effect.
 
-content / room / kind / verify_status are not claim fields.
-Two notes about the same subject with different wording stay both durable.
-A conflict opens only when another field on the record disagrees.
+Write may HINT that two subject-rows disagree on a claim field.
+Only the agent maps a conflict (ember_map_conflict).
+content / room / kind / verify_status are never claims.
 """
+
+from __future__ import annotations
+
+import json
 
 from ..core.types import RecordType
 
@@ -12,24 +16,18 @@ SKIP = frozenset({
 })
 
 
-def install() -> None:
-    from .memory_protocol import MemoryProtocol
-    MemoryProtocol._CONFLICT_SKIP_KEYS = SKIP
-    MemoryProtocol._check_conflicts = _check_conflicts
-
-
-def _check_conflicts(self, new_record):
-    if not isinstance(new_record.data, dict):
-        return
+def candidates_for(db, new_record) -> list[dict]:
+    if not isinstance(getattr(new_record, "data", None), dict):
+        return []
     subject = new_record.data.get("subject")
     if subject is None:
-        return
+        return []
     try:
-        existing = self.db.get_namespace(new_record.namespace, limit=200)
+        existing = db.get_namespace(new_record.namespace, limit=200)
     except Exception:
-        return
-    durable = getattr(self, "_DURABLE_MEMORY_TYPES",
-                      frozenset({RecordType.NODE, RecordType.DOCUMENT}))
+        return []
+    durable = frozenset({RecordType.NODE, RecordType.DOCUMENT})
+    hints = []
     for rec in existing:
         if rec.id == new_record.id:
             continue
@@ -44,13 +42,50 @@ def _check_conflicts(self, new_record):
                 continue
             old_val = rec.data.get(key)
             if old_val is not None and new_val is not None and old_val != new_val:
-                try:
-                    self.db.map_conflict(
-                        rec.id, new_record.id,
-                        detected_by=new_record.written_by or "conflict-detector",
-                        note=(f"Field {key!r} differs for subject "
-                              f"{subject!r}: {old_val!r} vs {new_val!r}"),
-                    )
-                except Exception:
-                    pass
+                hints.append({
+                    "other_id": rec.id,
+                    "subject": subject,
+                    "field": key,
+                    "theirs": old_val,
+                    "ours": new_val,
+                    "note": (
+                        "Possible disagreement. Map it with ember_map_conflict "
+                        "only if you decide this is a real conflict."
+                    ),
+                })
                 break
+    return hints
+
+
+def install() -> None:
+    from .memory_protocol import MemoryProtocol
+    MemoryProtocol._CONFLICT_SKIP_KEYS = SKIP
+    MemoryProtocol._check_conflicts = _check_conflicts
+
+
+def _check_conflicts(self, new_record):
+    self._last_conflict_hints = candidates_for(self.db, new_record)
+
+
+def install_mcp() -> None:
+    from ..mcp import server
+    orig = server.EmberMCP._call
+
+    def _call(self, name: str, args: dict):
+        result = orig(self, name, args)
+        if name != "ember_write" or not isinstance(result, dict):
+            return result
+        if result.get("isError"):
+            return result
+        hints = getattr(self.protocol, "_last_conflict_hints", None) or []
+        if not hints:
+            return result
+        try:
+            body = json.loads(result["content"][0]["text"])
+        except Exception:
+            return result
+        body["possible_conflicts"] = hints
+        result["content"][0]["text"] = json.dumps(body)
+        return result
+
+    server.EmberMCP._call = _call
