@@ -109,7 +109,8 @@ def test_legacy_stateful_routes_require_agent_headers(client, method, path):
     kwargs = {"json": {"content": "blocked"}} if method == "post" else {}
     response = getattr(client, method)(path, **kwargs)
     assert response.status_code == 401
-    assert "X-Ember-Agent-Id" in response.json()["detail"]
+    detail = response.json()["detail"]
+    assert "Session" in detail or "Token" in detail
 
 
 def test_invalid_token_is_rejected(client):
@@ -137,9 +138,31 @@ def test_authenticated_legacy_write_is_attributed_to_agent(client):
     assert record["written_by"] == headers["X-Ember-Agent-Id"]
 
 
+def test_session_header_is_enough_after_start_session(client):
+    headers = _auth(client)
+    started = client.post("/v1/sessions", headers=headers, json={"task": "api-session"})
+    assert started.status_code == 200, started.text
+    session_id = started.json()["session_id"]
+
+    session_headers = {"X-Ember-Session-Id": session_id}
+    written = client.post(
+        "/v1/memory/write",
+        headers=session_headers,
+        json={"content": "session-only write", "room": "task", "memory_type": "episodic"},
+    )
+    assert written.status_code == 200, written.text
+    assert written.json()["agent_id"] == headers["X-Ember-Agent-Id"]
+
+    legacy = client.post(
+        "/memory/remember",
+        headers=session_headers,
+        json={"content": "legacy session write"},
+    )
+    assert legacy.status_code == 200, legacy.text
+
+
 def test_default_cors_does_not_grant_wildcard_access(client):
     response = client.request(
         "OPTIONS", "/records", headers={"Origin": "https://evil.example"},
     )
     assert response.headers.get("access-control-allow-origin") is None
-
