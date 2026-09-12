@@ -1,8 +1,9 @@
-"""Bind MCP auth to a session, not to every write.
+"""Bind MCP auth to a session id, not to every write.
 
-Call ember_register, then ember_start_session once with the token.
-Later tools on this connection use that session. They may also pass
-session_id instead of the token (survives a new process).
+Register once. ember_start_session once with the token.
+Every later call passes session_id. That id is paired to the agent
+in the store. Do not reuse the last identity on this process —
+the HTTP /mcp adapter shares one EmberMCP across every client.
 """
 
 from __future__ import annotations
@@ -17,8 +18,8 @@ _INSTALLED = False
 _WHOAMI = {
     "name": "ember_whoami",
     "description": (
-        "Show the bound agent and session. "
-        "No token needed once ember_start_session has run."
+        "Show the agent for this session_id. "
+        "Pass session_id, or agent_id and token."
     ),
     "inputSchema": {
         "type": "object",
@@ -37,7 +38,6 @@ def install() -> None:
     if _INSTALLED:
         return
     _patch_schema()
-    _patch_init()
     _patch_auth()
     _patch_call()
     _INSTALLED = True
@@ -50,22 +50,10 @@ def _patch_schema() -> None:
     for tool in server.TOOLS:
         if tool.get("name") == "ember_start_session":
             tool["description"] = (
-                "Open a session and bind this MCP connection. "
-                "Pass agent_id and token once. Later tools use this session "
-                "and do not need the token again. Pass session_id on a new "
-                "connection to resume."
+                "Open a session. Pass agent_id and token once. "
+                "Keep session_id. Later tools pass session_id only — "
+                "not the token."
             )
-
-
-def _patch_init() -> None:
-    orig = server.EmberMCP.__init__
-
-    def __init__(self, *args, **kwargs):
-        orig(self, *args, **kwargs)
-        self._identity = None
-        self._session_id = None
-
-    server.EmberMCP.__init__ = __init__
 
 
 def _patch_auth() -> None:
@@ -74,11 +62,9 @@ def _patch_auth() -> None:
         agent_id = args.get("agent_id") or os.environ.get("EMBER_AGENT_ID")
         token = args.get("token") or os.environ.get("EMBER_TOKEN")
         if agent_id and token:
-            ident = self.registry.authenticate(agent_id, token)
-            self._identity = ident
-            return ident
+            return self.registry.authenticate(agent_id, token)
 
-        sid = args.get("session_id") or getattr(self, "_session_id", None)
+        sid = args.get("session_id")
         if sid:
             session = self.db.get_session(sid)
             if session is None:
@@ -88,17 +74,10 @@ def _patch_auth() -> None:
             ident = self.registry.get(session.agent_id)
             if ident is None:
                 raise PermissionError("unknown agent")
-            self._identity = ident
-            self._session_id = sid
-            return ident
-
-        ident = getattr(self, "_identity", None)
-        if ident is not None:
             return ident
 
         raise PermissionError(
-            "No session. Call ember_start_session once with agent_id and "
-            "token, or pass session_id."
+            "Pass session_id, or agent_id and token on ember_start_session."
         )
 
     server.EmberMCP._auth = _auth
@@ -116,13 +95,15 @@ def _patch_call() -> None:
                 provider=args.get("provider", "unknown"),
                 model=args.get("model", "unknown"),
             )
-            self._identity = ident
             return server._text({
                 "agent_id": ident.agent_id,
                 "token": token,
                 "provider": ident.provider,
                 "model": ident.model,
-                "note": "Call ember_start_session once with this pair. Later tools use the session.",
+                "note": (
+                    "Call ember_start_session once with this pair. "
+                    "Later tools pass session_id only."
+                ),
             })
 
         if name == "ember_start_session":
@@ -132,8 +113,6 @@ def _patch_call() -> None:
                 task=args.get("task", ""),
                 namespace=args.get("namespace") or self.protocol.namespace,
             )
-            self._identity = agent
-            self._session_id = sid
             return server._text({
                 "session_id": sid,
                 "agent_id": agent.agent_id,
@@ -141,25 +120,14 @@ def _patch_call() -> None:
 
         if name == "ember_whoami":
             try:
-                agent = self._auth(args) if (
-                    args.get("session_id") or args.get("agent_id") or args.get("token")
-                    or getattr(self, "_identity", None)
-                    or getattr(self, "_session_id", None)
-                ) else None
+                agent = self._auth(args)
             except PermissionError as e:
                 return server._err(str(e))
-            if agent is None:
-                return server._err(
-                    "No session. Call ember_start_session once with agent_id and token."
-                )
             return server._text({
                 "agent_id": agent.agent_id,
                 "name": agent.name,
-                "session_id": getattr(self, "_session_id", None),
+                "session_id": args.get("session_id"),
             })
-
-        if not args.get("session_id") and getattr(self, "_session_id", None):
-            args["session_id"] = self._session_id
 
         return orig(self, name, args)
 
