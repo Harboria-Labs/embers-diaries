@@ -79,6 +79,12 @@ def _work_view(mcp, args, result) -> dict:
     sid = args.get("session_id") or body.get("session_id")
     session = mcp.db.get_session(sid) if sid else None
     body["board"] = STORE.summary_for_session(sid)
+    live = []
+    board = STORE.board_for_session(sid)
+    if board:
+        live = [{"post_id": p["post_id"], "type": p["type"],
+                 "body": p["body"], "promoted_to": p.get("promoted_to")}
+                for p in board["posts"]]
     body["work"] = {
         "task": body.get("task") or (session.task if session else ""),
         "agent_id": body.get("agent_id") or (session.agent_id if session else None),
@@ -86,6 +92,7 @@ def _work_view(mcp, args, result) -> dict:
         "discoveries": list(session.discoveries) if session else [],
         "failures": list(session.failures) if session else [],
         "board": body["board"],
+        "lobby_posts": live,
     }
     result["content"][0]["text"] = json.dumps(body, default=str)
     return result
