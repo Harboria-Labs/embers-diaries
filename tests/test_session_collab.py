@@ -59,6 +59,7 @@ def test_session_lists_write_discovery_failure(mcp):
     assert proposed["proposal_id"] in view["work"]["discoveries"]
     assert failed["failure_id"] in view["work"]["failures"]
     assert view["board"] is None
+    assert view["work"]["lobby_posts"] == []
 
 
 def test_lobby_promote_and_close_land_on_session(mcp):
