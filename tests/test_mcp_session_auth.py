@@ -1,6 +1,7 @@
-"""MCP auth is per session, not per write."""
+"""MCP auth is session_id after register + start_session."""
 
 from pathlib import Path
+import json
 
 import pytest
 
@@ -21,30 +22,31 @@ def mcp(tmp_path: Path):
 def test_write_without_session_is_rejected(mcp):
     result = mcp.call_tool("ember_write", {"content": "no session"})
     assert result["isError"]
-    assert "session" in result["content"][0]["text"].lower()
+    text = result["content"][0]["text"].lower()
+    assert "session" in text or "token" in text
 
 
-def test_register_then_start_session_then_write_without_token(mcp):
-    reg = mcp.call_tool("ember_register", {
+def test_register_start_then_write_with_session_id(mcp):
+    reg = json.loads(mcp.call_tool("ember_register", {
         "name": "session-agent", "provider": "test", "model": "test",
-    })
-    assert not reg["isError"]
-    import json
-    body = json.loads(reg["content"][0]["text"])
-    agent_id, token = body["agent_id"], body["token"]
+    })["content"][0]["text"])
+    agent_id, token = reg["agent_id"], reg["token"]
 
-    started = mcp.call_tool("ember_start_session", {
+    started = json.loads(mcp.call_tool("ember_start_session", {
         "agent_id": agent_id,
         "token": token,
         "task": "probe",
-    })
-    assert not started["isError"]
-    session = json.loads(started["content"][0]["text"])
-    assert session["session_id"]
-    assert session["agent_id"] == agent_id
+    })["content"][0]["text"])
+    sid = started["session_id"]
+    assert started["agent_id"] == agent_id
+
+    # Same process still requires session_id. HTTP shares one EmberMCP.
+    bare = mcp.call_tool("ember_write", {"content": "no id after start"})
+    assert bare["isError"]
 
     written = mcp.call_tool("ember_write", {
-        "content": "bound session write",
+        "content": "session_id write",
+        "session_id": sid,
         "memory_type": "skill",
         "room": "personal",
     })
@@ -52,7 +54,7 @@ def test_register_then_start_session_then_write_without_token(mcp):
     wid = json.loads(written["content"][0]["text"])["id"]
     rec = mcp.db.get(wid)
     assert rec.agent_id == agent_id
-    assert rec.session_id == session["session_id"]
+    assert rec.session_id == sid
     assert rec.data["room"] == "personal"
 
 
@@ -60,7 +62,6 @@ def test_session_id_resumes_on_new_mcp(tmp_path: Path):
     install_session_auth()
     db = EmberDB.connect(str(tmp_path / "store"))
     first = EmberMCP(db=db)
-    import json
     reg = json.loads(first.call_tool("ember_register", {"name": "resume"})["content"][0]["text"])
     started = json.loads(first.call_tool("ember_start_session", {
         "agent_id": reg["agent_id"], "token": reg["token"],
@@ -76,3 +77,13 @@ def test_session_id_resumes_on_new_mcp(tmp_path: Path):
     rec = second.db.get(wid)
     assert rec.agent_id == reg["agent_id"]
     assert rec.session_id == started["session_id"]
+
+
+def test_shared_instance_does_not_auth_the_next_caller(mcp):
+    """HTTP /mcp uses one EmberMCP. Last start_session must not authenticate a bare write."""
+    a = json.loads(mcp.call_tool("ember_register", {"name": "agent-a"})["content"][0]["text"])
+    mcp.call_tool("ember_start_session", {
+        "agent_id": a["agent_id"], "token": a["token"],
+    })
+    other = mcp.call_tool("ember_write", {"content": "stranger"})
+    assert other["isError"]

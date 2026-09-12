@@ -1,4 +1,9 @@
-"""JSON-RPC MCP over HTTP. Same EmberMCP instance family as stdio."""
+"""JSON-RPC MCP over HTTP. Same EmberMCP instance family as stdio.
+
+One shared EmberMCP for every HTTP client. Auth is in the JSON-RPC
+args: session_id after start_session, or agent_id+token to start.
+This handler does not extract or remember a session from the socket.
+"""
 
 from __future__ import annotations
 
