@@ -1,4 +1,4 @@
-# Lobby design (Features 10 / 11 / 25 / 26 / 27)
+# Lobby design (Features 10 / 11 / 25 / 27; 26 deferred)
 
 Status: design only. Not implemented.
 Against Ember `main` after session-id-only auth (`739be5b`).
@@ -6,54 +6,72 @@ Against Ember `main` after session-id-only auth (`739be5b`).
 Lobby is an on-demand work board for a shared task. It is not chat,
 not memory, and not on by default.
 
+## Invariant
+
+Lobby is deliberately outside Ember's append-only guarantee. That is
+why it is allowed to forget. Posts are not records: no `content_hash`,
+not in the WAL, not in the conflict engine. TTL and board close are
+not deletions of memory. If someone files "ttl deleted a memory," the
+answer is: it was never one.
+
 ## Why it exists
 
-An agent should see another agent's live status, failure, or discovery
-before repeating the same work. Durable Ember is the wrong place for
-that signal: too slow, too permanent, too easy to treat as fact.
+An agent should see another agent's live failure or discovery before
+repeating the same work. Durable Ember is the wrong place for that
+signal: too slow, too permanent, too easy to treat as fact.
 
 ## Why it stays off
 
-Lobby is a leak if it is always open. Personal facts, preferences,
-secrets, and single-agent private work belong in Ember with a room
-(`personal` / `project` / `task`), never on a board other agents read.
+Always-on lobby leaks. Personal facts, preferences, secrets, and
+single-agent private work belong in Ember with a room, never on a
+board other agents read.
 
-Default: no board. Trigger only when a shared task needs coordination.
+Default: no board. Connecting or registering is not a trigger.
 
 ## Trigger
 
-Open a board only when all of these hold:
+Open only when all hold:
 
-1. The session has a shared task (not personal preference/storage work).
-2. More than one agent may act on that task, or a failure/discovery
-   would waste the next agent.
-3. The caller explicitly opens the board (`ember_lobby_open`).
-   Connecting or registering is not a trigger.
+1. Shared task (project/task work, not personal storage).
+2. More than one agent may act, or a failure/discovery would waste
+   the next agent.
+3. Caller opens explicitly (`action=open`).
 
-Close on `ember_lobby_close` or when the session ends.
+## Gate — structural, no guessing
 
-## Gate (publish rejected)
+Ember does not classify free text as "this is a preference." The old
+line "body looks like a durable fact" is a no-op and is dropped.
 
-- No `session_id`
-- Session or payload marked `room=personal`
-- Missing type, or type is free chat
-- Body is a durable preference/fact with no shared task
+Publish requires an explicit room. Default-deny:
 
-Allowed types only: `status` | `failure` | `discovery` | `question`.
-Short body. Optional `approach` key (same key space as durable failures).
+- missing room → reject
+- `personal` → reject
+- `unscoped` → reject (that is the forget-bucket, not a shared task)
+- `project` or `task` → allowed
+
+Also reject: no `session_id`; board closed; type not in the allow-list.
+
+Room on a lobby post is a **gate**, not a lobby channel. Durable
+room/kind (Feature 8 / 28) stay how memories are stored after promote.
+
+## Types this cut
+
+`failure` | `discovery` | `question`
+
+`status` is out. The board is a per-turn snapshot. Status without
+realtime is stale the moment after the poll. Collision avoidance
+under polling would be a claim/lock, not a status broadcast. Ship
+three types first.
+
+`warning` stays out of this cut. It is distinct from failure but not
+needed to prove the board. Spec §10's other kinds (hypothesis,
+request-for-help) fold into durable `verify_status` and `question`.
 
 ## Auth
 
-Same as the rest of Ember after `739be5b`:
-
-- Register once.
-- `ember_start_session` once with agent_id + token.
-- Every lobby call passes `session_id`.
-- Session is paired to the agent in the store.
-- Do not remember last client on the shared HTTP `EmberMCP`.
-
-Board state is keyed by `board_id` / task + namespace, never by
-`self._last_*` on the process.
+Register once. `ember_start_session` once with the pair. Every lobby
+call passes `session_id`. No last-client memory on the shared HTTP
+`EmberMCP`. Board state keyed by `board_id` / task + namespace.
 
 ## Objects (ephemeral)
 
@@ -62,8 +80,10 @@ Board state is keyed by `board_id` / task + namespace, never by
 - `board_id`
 - `task`
 - `namespace`
+- `room` (project | task only)
 - `status`: open | closed
 - `opened_by` (agent_id, session_id)
+- `participants` (session_ids that opened or published)
 - `ttl`
 
 ### Post
@@ -71,72 +91,125 @@ Board state is keyed by `board_id` / task + namespace, never by
 - `post_id`
 - `board_id`
 - `session_id` / `agent_id`
-- `type`: status | failure | discovery | question
+- `room` (copied from publish; project | task)
+- `type`: failure | discovery | question
 - `body`
-- `approach` (optional)
+- `approach` (optional; same key space as durable failures)
+- `corroborations` (list of {agent_id, session_id, at})
 - `created_at`
 
-Posts die with TTL or board close. They are not Ember records.
-They do not get `content_hash` in the memory WAL.
-They do not enter the conflict engine.
+## Corroborate (the missing §11 step)
 
-## Path into Ember (Feature 27)
+Spec flow: lobby update → other agents review → evidence → proposal.
+Promote-only skips review. PromotionEngine CONSENSUS already counts
 
 ```
-lobby post
-  → ember_lobby_promote (explicit)
-  → MemoryProposal  (existing Feature 12)
-  → submit / promote / reject
-  → durable Ember
+agents = {ev.agent_id for ev in proposal.evidence}
 ```
 
-Failure posts may instead become `ember_report_failure` when the
-caller says so. Nothing in the lobby auto-calls `ember_write`.
+threshold default 2. That is live in `promotion.py`. It does nothing
+for lobby if promote creates a one-author proposal.
 
-Semantic conflict mapping stays on durable memories only.
+`action=corroborate` on a post: "I hit this too." Stored on the post,
+still ephemeral. Author cannot corroborate their own post.
+
+On `action=promote`:
+
+- each corroboration becomes an `Evidence` row with that `agent_id`
+- author evidence included
+- then existing Feature 12 (`propose` → `submit` / CONSENSUS / HUMAN)
+
+Do not open a proposal at first publish. That would fill Ember with
+unreviewed drafts. Corroboration lives on the board until promote.
+
+## Close — failures must not vanish silently
+
+Discoveries and questions die with the board unless promoted.
+
+Unpromoted **failure** posts on close: auto `ember_report_failure`
+(same approach key, agent/session from the post, room already gated).
+Durable failure is a negative result, not a truth claim. That is
+Feature 13. Silent drop is ruled out.
+
+`action=close` returns what was flushed (`failure_ids`) so the caller
+can see it. Who may close: opener or any participant (someone who
+published or corroborated). A stranger session_id cannot. Combined
+with failure flush, one participant closing does not erase the only
+copy of "X died."
+
+## Path into Ember
+
+```
+publish (failure|discovery|question)
+  → optional corroborate (other agents)
+  → promote → MemoryProposal + evidence per corroborator
+  → existing promotion engine
+```
+
+```
+close
+  → unpromoted failures → report_failure
+  → board empty
+```
+
+No silent `ember_write`. No conflict map from board text.
 Two agents disagreeing on the board is conversation.
 
-## Surfaces
+## Surface — one tool
 
-Same core for MCP and REST.
+Spec §32 names `ember_lobby_publish` / `read` / `status` / `promote`.
+This cut uses **one** tool so a 25-tool catalog does not grow four
+dead entries while the default board is off:
 
-MCP:
+```
+ember_lobby
+  action: open | publish | corroborate | board | promote | close
+  session_id
+  room          required on open and publish (project|task)
+  task          open
+  namespace     open
+  type, body, approach   publish
+  post_id       corroborate | promote
+```
 
-- `ember_lobby_open`     task, namespace, session_id
-- `ember_lobby_publish`  type, body, optional approach, session_id
-- `ember_lobby_board`    snapshot: presence, last status, failures, discoveries
-- `ember_lobby_promote`  post_id → proposal (or failure record)
-- `ember_lobby_close`    session_id
+`read` → `board` (snapshot). `status` type dropped. `open`/`close`
+are the off-by-default thesis and are deliberate spec drift.
 
-REST (later, same names under `/v1/lobby/...`).
+`ember_get_session` always includes `board`: object or `null`.
+Clients do not branch on key existence.
 
-Also: a short board summary on `ember_get_session` so a client that
-cannot see lobby tools still knows whether a board is open.
+Realtime (WebSocket / SSE) remains Feature 26, not this cut.
 
-`ember_lobby_board` is a snapshot for this turn. Realtime fan-out
-(WebSocket / SSE) is Feature 26 and is out of this cut.
+## Experiment notes (why these rules)
 
-## Room vs kind
-
-Unchanged, Feature 8 / 28. Kind = what a durable memory is.
-Room = where it belongs. Not used as lobby channels.
-`room=personal` is a publish reject, not a lobby name.
+1. Semantic "is this a preference?" on `body` cannot run. Required
+   room default-deny is the same taxonomy as Feature 8, used as a
+   lock, not as a classifier.
+2. CONSENSUS in `PromotionEngine._route_consensus` is already paid
+   for. Without corroborate, lobby promote can never hit it.
+3. Grok drops return values. Auto-flush failures on close beats
+   "return them and hope the agent writes them."
+4. Status-under-snapshot: Agent B polls empty, starts work, Agent A
+   posts "on auth" 200ms later. They collide anyway. Don't ship it.
 
 ## This cut does not include
 
-- WebSocket / SSE
+- WebSocket / SSE (§26)
 - Lobby rows in the WAL
 - Conflict mapping from lobby text
 - Persist-on-shutdown as memory
 - Auto-open on register
+- `status` / `warning` publish types
 - Config.toml lobby knobs until the board exists
 
 ## Implementation order (when we leave design)
 
-1. In-memory board + posts keyed by board_id, TTL, session_id auth.
-2. Four MCP tools + get_session summary.
-3. Promote → existing proposal / failure APIs.
-4. Tests: personal gate, no session_id reject, shared HTTP instance
-   cannot inherit another agent's board, close drops posts.
-5. REST mirror.
-6. Only then realtime transport.
+1. In-memory board + posts + corroborations, session_id auth, room gate.
+2. One MCP tool `ember_lobby` + `board: null` on get_session.
+3. Promote → proposal + evidence per corroborator.
+4. Close → flush unpromoted failures.
+5. Tests: personal/unscoped reject, no session_id reject, own-corroborate
+   reject, stranger cannot close, shared HTTP instance cannot inherit
+   another board, close persists failures only.
+6. REST mirror.
+7. Only then realtime transport.
