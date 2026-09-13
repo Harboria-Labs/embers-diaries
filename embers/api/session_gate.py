@@ -1,7 +1,4 @@
-"""HTTP auth is per session, same rule as MCP.
-
-Token pair opens a session. Later requests may send X-Ember-Session-Id.
-"""
+"""HTTP auth is per session, same rule as MCP."""
 
 from __future__ import annotations
 
@@ -53,6 +50,8 @@ def install(app) -> None:
 
     bind_feedback(EmberDB)
     v1.require_agent = resolve_agent
+    from .feedback_routes import router as feedback_router
+    app.include_router(feedback_router)
 
     @app.middleware("http")
     async def bind_session_header(request, call_next):
