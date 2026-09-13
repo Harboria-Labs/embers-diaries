@@ -1,7 +1,8 @@
 # Lobby design (Features 10 / 11 / 25 / 27; 26 deferred)
 
-Status: design only. Not implemented.
-Against Ember `main` after session-id-only auth (`739be5b`).
+Status: implemented on main as a request/response board. Realtime (§26) deferred.
+Tool: `ember_lobby` actions `open | publish | corroborate | board | promote | close`.
+Posts are not Ember records. Room gate is default-deny. Off until `action=open`.
 
 Lobby is an on-demand work board for a shared task. It is not chat,
 not memory, and not on by default.
@@ -180,18 +181,6 @@ Clients do not branch on key existence.
 
 Realtime (WebSocket / SSE) remains Feature 26, not this cut.
 
-## Experiment notes (why these rules)
-
-1. Semantic "is this a preference?" on `body` cannot run. Required
-   room default-deny is the same taxonomy as Feature 8, used as a
-   lock, not as a classifier.
-2. CONSENSUS in `PromotionEngine._route_consensus` is already paid
-   for. Without corroborate, lobby promote can never hit it.
-3. Grok drops return values. Auto-flush failures on close beats
-   "return them and hope the agent writes them."
-4. Status-under-snapshot: Agent B polls empty, starts work, Agent A
-   posts "on auth" 200ms later. They collide anyway. Don't ship it.
-
 ## This cut does not include
 
 - WebSocket / SSE (§26)
@@ -200,16 +189,3 @@ Realtime (WebSocket / SSE) remains Feature 26, not this cut.
 - Persist-on-shutdown as memory
 - Auto-open on register
 - `status` / `warning` publish types
-- Config.toml lobby knobs until the board exists
-
-## Implementation order (when we leave design)
-
-1. In-memory board + posts + corroborations, session_id auth, room gate.
-2. One MCP tool `ember_lobby` + `board: null` on get_session.
-3. Promote → proposal + evidence per corroborator.
-4. Close → flush unpromoted failures.
-5. Tests: personal/unscoped reject, no session_id reject, own-corroborate
-   reject, stranger cannot close, shared HTTP instance cannot inherit
-   another board, close persists failures only.
-6. REST mirror.
-7. Only then realtime transport.
