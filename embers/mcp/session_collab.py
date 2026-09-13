@@ -1,8 +1,4 @@
-"""Feature 29: session is the bridge from live work to durable Ember.
-
-get_session answers what the agent worked on, found, failed, and committed.
-Lobby posts stay ephemeral; ids that entered Ember are on the session.
-"""
+"""Feature 29: session is the bridge from live work to durable Ember."""
 
 from __future__ import annotations
 
@@ -85,6 +81,12 @@ def _work_view(mcp, args, result) -> dict:
         live = [{"post_id": p["post_id"], "type": p["type"],
                  "body": p["body"], "promoted_to": p.get("promoted_to")}
                 for p in board["posts"]]
+    feedback_ids = []
+    if sid:
+        for r in mcp.db.get_by_session(sid):
+            rt = getattr(r, "record_type", None)
+            if rt is not None and getattr(rt, "value", rt) == "feedback":
+                feedback_ids.append(r.id)
     body["work"] = {
         "task": body.get("task") or (session.task if session else ""),
         "agent_id": body.get("agent_id") or (session.agent_id if session else None),
@@ -93,6 +95,7 @@ def _work_view(mcp, args, result) -> dict:
         "failures": list(session.failures) if session else [],
         "board": body["board"],
         "lobby_posts": live,
+        "feedback": feedback_ids,
     }
     result["content"][0]["text"] = json.dumps(body, default=str)
     return result
