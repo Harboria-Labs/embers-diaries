@@ -20,11 +20,26 @@ Behavioral tests mapped to the spec's §6 requirements:
 Run: diaries/Scripts/python.exe -m pytest tests/test_concurrency.py -v
 """
 
+import multiprocessing
 import threading
 
 import pytest
 
 from embers import EmberDB, EmberRecord, ConcurrentModificationError
+from embers.storage.store import PhysicalStore, STORE_LOCK_BACKEND
+
+
+def _physical_store_process_writer(store_path, tag, start_event, result_queue):
+    """Spawn-safe worker used to prove the native lock crosses processes."""
+    try:
+        store = PhysicalStore(store_path)
+        record = EmberRecord(namespace="process", data={"writer": tag})
+        record.seal()
+        if not start_event.wait(20):
+            raise TimeoutError("process writers did not receive the start signal")
+        result_queue.put(("ok", store.write(record)))
+    except BaseException as exc:
+        result_queue.put(("error", f"{type(exc).__name__}: {exc}"))
 
 
 # ── Fixtures / helpers ──────────────────────────────────────────────────────
@@ -278,3 +293,34 @@ class TestConcurrentWritersSerialized:
         assert [record.version for record in history] == list(range(1, n + 2))
         assert first._store.record_count() == n + 1
         assert len({handle.get_current(rid).id for handle in handles}) == 1
+
+    def test_independent_processes_serialize_physical_store_transactions(
+        self, tmp_path,
+    ):
+        assert STORE_LOCK_BACKEND == "rust-pyo3"
+        store_path = str(tmp_path / "process_store")
+        context = multiprocessing.get_context("spawn")
+        start_event = context.Event()
+        result_queue = context.Queue()
+        process_count = 6
+        processes = [
+            context.Process(
+                target=_physical_store_process_writer,
+                args=(store_path, tag, start_event, result_queue),
+            )
+            for tag in range(process_count)
+        ]
+        for process in processes:
+            process.start()
+        start_event.set()
+        for process in processes:
+            process.join(30)
+
+        assert [process.exitcode for process in processes] == [0] * process_count
+        results = [result_queue.get(timeout=5) for _ in processes]
+        assert all(status == "ok" for status, _ in results), results
+
+        store = PhysicalStore(store_path)
+        assert store.record_count() == process_count
+        assert store.stats()["meta"]["record_count"] == process_count
+        assert store.wal.recover() == []

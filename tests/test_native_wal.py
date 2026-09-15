@@ -5,7 +5,7 @@ import builtins
 import pytest
 
 from embers.core.record import EmberRecord
-from embers.engine.wal import WAL_BACKEND, WriteAheadLog
+from embers.engine.wal import WAL_BACKEND, WALEntry, WriteAheadLog
 from embers.storage.store import PhysicalStore
 
 
@@ -41,6 +41,32 @@ def test_native_wal_rejects_unframed_multiline_payload(tmp_path):
     with pytest.raises(ValueError, match="one JSON line"):
         append_wal_line(str(tmp_path / "wal.jsonl"), b"{}\n{}")
     assert not (tmp_path / "wal.jsonl").exists()
+
+
+def test_rust_owns_pending_and_commit_envelope_encoding(tmp_path, monkeypatch):
+    wal = WriteAheadLog(tmp_path)
+
+    def reject_python_envelope(self):
+        raise AssertionError("Python encoded the WAL envelope")
+
+    monkeypatch.setattr(WALEntry, "to_dict", reject_python_envelope)
+    entry = wal.log("write", "record-1", {"value": 7})
+    wal.commit(entry.wal_id)
+
+    pending, committed = [
+        __import__("json").loads(line)
+        for line in wal.path.read_text(encoding="utf-8").splitlines()
+    ]
+    assert pending == {
+        "wal_id": entry.wal_id,
+        "operation": "write",
+        "record_id": "record-1",
+        "data": {"value": 7},
+        "status": "PENDING",
+        "timestamp": entry.timestamp,
+    }
+    assert committed["wal_id"] == entry.wal_id
+    assert committed["status"] == "COMMITTED"
 
 
 def test_python_checkpoint_keeps_native_pending_frame_compatible(tmp_path):

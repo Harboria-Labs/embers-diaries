@@ -21,7 +21,8 @@ from ..storage.format import encode_index, decode_index
 
 try:
     from embers._native import (
-        append_wal_line as _append_wal_line,
+        append_wal_commit as _append_wal_commit,
+        append_wal_pending as _append_wal_pending,
         checkpoint_wal as _checkpoint_wal,
         recover_wal_lines as _recover_wal_lines,
     )
@@ -29,14 +30,36 @@ try:
 except ImportError:
     WAL_BACKEND = "python-fallback"
 
-    def _append_wal_line(path: str, line: bytes) -> None:
-        if b"\n" in line or b"\r" in line:
-            raise ValueError(
-                "WAL payload must be exactly one JSON line without CR/LF")
+    def _append_line(path: str, line: bytes) -> None:
         with open(path, "ab") as wal_file:
             wal_file.write(line + b"\n")
             wal_file.flush()
             os.fsync(wal_file.fileno())
+
+    def _append_wal_pending(
+        path: str,
+        wal_id: str,
+        operation: str,
+        record_id: str,
+        data_json: bytes,
+        timestamp: str,
+    ) -> None:
+        data = decode_index(data_json)
+        _append_line(path, encode_index({
+            "wal_id": wal_id,
+            "operation": operation,
+            "record_id": record_id,
+            "data": data,
+            "status": "PENDING",
+            "timestamp": timestamp,
+        }))
+
+    def _append_wal_commit(path: str, wal_id: str, timestamp: str) -> None:
+        _append_line(path, encode_index({
+            "wal_id": wal_id,
+            "status": "COMMITTED",
+            "timestamp": timestamp,
+        }))
 
     def _recover_wal_lines(path: str) -> list[bytes]:
         entries: dict[str, bytes] = {}
@@ -109,16 +132,19 @@ class WriteAheadLog:
         if not self.path.exists():
             self.path.touch()
 
-    def _append(self, payload: dict) -> None:
-        """Durably append one JSONL frame through the native WAL backend."""
-        line = encode_index(payload)
-        with self._lock:
-            _append_wal_line(str(self.path), line)
-
     def log(self, operation: str, record_id: str, data: dict) -> WALEntry:
         """Write a PENDING entry to the WAL. Returns the entry."""
         entry = WALEntry(operation, record_id, data)
-        self._append(entry.to_dict())
+        data_json = encode_index(data)
+        with self._lock:
+            _append_wal_pending(
+                str(self.path),
+                entry.wal_id,
+                entry.operation,
+                entry.record_id,
+                data_json,
+                entry.timestamp,
+            )
         return entry
 
     def commit(self, wal_id: str):
@@ -126,9 +152,9 @@ class WriteAheadLog:
         Mark a WAL entry as COMMITTED.
         We do this by appending a commit marker — the WAL is never modified.
         """
-        commit_marker = {"wal_id": wal_id, "status": "COMMITTED",
-                         "timestamp": datetime.now(timezone.utc).isoformat()}
-        self._append(commit_marker)
+        timestamp = datetime.now(timezone.utc).isoformat()
+        with self._lock:
+            _append_wal_commit(str(self.path), wal_id, timestamp)
 
     def recover(self) -> list[dict]:
         """

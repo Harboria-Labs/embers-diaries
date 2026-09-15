@@ -21,6 +21,73 @@ from ..core.record import EmberRecord
 from ..core.integrity import RecordIntegrityError
 
 
+try:
+    from embers._native import (
+        acquire_store_lock as _acquire_store_file_lock,
+        atomic_write_new as _atomic_write_new,
+    )
+    STORE_LOCK_BACKEND = "rust-pyo3"
+except ImportError:
+    STORE_LOCK_BACKEND = "python-process-local"
+
+    class _FallbackStoreFileLock:
+        def release(self):
+            return None
+
+    def _acquire_store_file_lock(path: str):
+        return _FallbackStoreFileLock()
+
+    def _atomic_write_new(path: str, data: bytes) -> bool:
+        destination = Path(path)
+        if destination.exists():
+            return False
+        temp = destination.with_suffix(".tmp")
+        try:
+            with open(temp, "wb") as temp_file:
+                temp_file.write(data)
+                temp_file.flush()
+                os.fsync(temp_file.fileno())
+            temp.rename(destination)
+            return True
+        except Exception:
+            if temp.exists():
+                temp.unlink()
+            raise
+
+
+class _StoreTransactionLock:
+    """Reentrant thread lock plus one Rust-owned inter-process file lock."""
+
+    def __init__(self, lock_path: Path):
+        self._thread_lock = threading.RLock()
+        self._local = threading.local()
+        self._lock_path = lock_path
+        self._native_guard = None
+
+    def __enter__(self):
+        self._thread_lock.acquire()
+        depth = getattr(self._local, "depth", 0)
+        try:
+            if depth == 0:
+                self._native_guard = _acquire_store_file_lock(
+                    str(self._lock_path))
+            self._local.depth = depth + 1
+            return self
+        except Exception:
+            self._thread_lock.release()
+            raise
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        depth = self._local.depth - 1
+        self._local.depth = depth
+        try:
+            if depth == 0:
+                guard, self._native_guard = self._native_guard, None
+                guard.release()
+        finally:
+            self._thread_lock.release()
+
+
 class PhysicalStore:
     """
     Low-level storage engine.
@@ -28,11 +95,12 @@ class PhysicalStore:
     Does NOT know about indexes — that's the writer/reader's job.
     """
 
-    _shared_locks: dict[str, threading.RLock] = {}
+    _shared_locks: dict[str, _StoreTransactionLock] = {}
     _shared_locks_guard = threading.RLock()
 
     def __init__(self, store_path: str | Path):
         self.root = Path(store_path)
+        self.root.mkdir(parents=True, exist_ok=True)
         self.records_dir = self.root / "records"
         self.meta_dir    = self.root / "meta"
 
@@ -42,7 +110,8 @@ class PhysicalStore:
         # every handle in this process that points at the same store.
         key = os.path.normcase(str(self.root.resolve()))
         with self._shared_locks_guard:
-            self._lock = self._shared_locks.setdefault(key, threading.RLock())
+            self._lock = self._shared_locks.setdefault(
+                key, _StoreTransactionLock(self.root / ".ember.lock"))
         with self._lock:
             self._setup()
             self.wal = WriteAheadLog(self.root)
@@ -109,22 +178,11 @@ class PhysicalStore:
     def _write_record_file(self, record: EmberRecord):
         """Write a single record to its UUID.ember file. Never overwrites."""
         record_file = self.records_dir / f"{record.id}.ember"
-        if record_file.exists():
-            # Record already exists — this is a recovery replay, skip
-            return
         raw = encode(record.to_dict())
-        # Atomic write: write to temp file, then rename
-        tmp_file = self.records_dir / f"{record.id}.tmp"
-        try:
-            with open(tmp_file, "wb") as f:
-                f.write(raw)
-                f.flush()
-                os.fsync(f.fileno())
-            tmp_file.rename(record_file)
-        except Exception:
-            if tmp_file.exists():
-                tmp_file.unlink()
-            raise
+        # Rust publishes the fully synced temp file without ever overwriting an
+        # existing immutable record. False means recovery found it already
+        # present, which is the expected idempotent replay case.
+        _atomic_write_new(str(record_file), raw)
 
     # ── Read ──────────────────────────────────────────────────────────────────
 
