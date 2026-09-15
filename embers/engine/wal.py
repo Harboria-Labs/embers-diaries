@@ -19,6 +19,22 @@ from pathlib import Path
 from ..storage.format import encode_index, decode_index
 
 
+try:
+    from embers._native import append_wal_line as _append_wal_line
+    WAL_BACKEND = "rust-pyo3"
+except ImportError:
+    WAL_BACKEND = "python-fallback"
+
+    def _append_wal_line(path: str, line: bytes) -> None:
+        if b"\n" in line or b"\r" in line:
+            raise ValueError(
+                "WAL payload must be exactly one JSON line without CR/LF")
+        with open(path, "ab") as wal_file:
+            wal_file.write(line + b"\n")
+            wal_file.flush()
+            os.fsync(wal_file.fileno())
+
+
 _WAL_FILENAME = "wal.jsonl"
 
 
@@ -57,15 +73,16 @@ class WriteAheadLog:
         if not self.path.exists():
             self.path.touch()
 
+    def _append(self, payload: dict) -> None:
+        """Durably append one JSONL frame through the native WAL backend."""
+        line = encode_index(payload)
+        with self._lock:
+            _append_wal_line(str(self.path), line)
+
     def log(self, operation: str, record_id: str, data: dict) -> WALEntry:
         """Write a PENDING entry to the WAL. Returns the entry."""
         entry = WALEntry(operation, record_id, data)
-        with self._lock:
-            with open(self.path, "ab") as f:
-                line = encode_index(entry.to_dict()) + b"\n"
-                f.write(line)
-                f.flush()
-                os.fsync(f.fileno())
+        self._append(entry.to_dict())
         return entry
 
     def commit(self, wal_id: str):
@@ -75,12 +92,7 @@ class WriteAheadLog:
         """
         commit_marker = {"wal_id": wal_id, "status": "COMMITTED",
                          "timestamp": datetime.now(timezone.utc).isoformat()}
-        with self._lock:
-            with open(self.path, "ab") as f:
-                line = encode_index(commit_marker) + b"\n"
-                f.write(line)
-                f.flush()
-                os.fsync(f.fileno())
+        self._append(commit_marker)
 
     def recover(self) -> list[dict]:
         """
