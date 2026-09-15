@@ -394,6 +394,221 @@ class EmberDB:
                                   include_superseded=True)
         return record.provenance() if record else None
 
+    def audit_write(self, record_id: str) -> dict | None:
+        """Return a read-only, structured audit trace for one durable write.
+
+        The trace contains only facts already persisted by Ember: record
+        identity and hashes, the write's provenance, its branch-aware version
+        context, typed graph relationships, deprecation/supersession state,
+        supporting Evidence, and its originating proposal/discovery when one
+        exists. It never reconstructs or invents private reasoning; ``reason``
+        is the stored, concise ``creation_reason``/proposal reason.
+
+        Shape::
+
+            {
+              "record": {id, record_type, namespace, version,
+                         content_hash, parent_hash, created_at},
+              "provenance": {author, agent_id, session_id, timestamp,
+                             creation_reason, source, derived_from},
+              "state": {result, is_lineage_head, superseded,
+                        superseded_by, deprecated},
+              "version_context": {root_id, previous_version, next_versions,
+                                  lineage_heads, branch_points, tree},
+              "causal_context": {derived_from, derived_records, caused_by,
+                                 led_to, conflicts, edges},
+              "proposal": {...} | None,
+              "evidence": [{"supports_record_id", "record", "evidence"}],
+            }
+
+        ``evidence`` covers the audited write and its direct version ancestors;
+        every entry names the exact version it supports, so support attached to
+        an earlier version is not misrepresented as support for a later write.
+        Returns ``None`` for an unknown record id. No access counters, indexes,
+        records, or sidecars are changed.
+        """
+        # All EmberDB handles for one canonical store path share this lock. It
+        # keeps the composed snapshot coherent with in-process writes while
+        # remaining a read-only operation itself.
+        with self._writer.lock:
+            return self._audit_write_snapshot(record_id)
+
+    def _audit_write_snapshot(self, record_id: str) -> dict | None:
+        record = self._reader.get(
+            record_id, include_deprecated=True, include_superseded=True)
+        if record is None:
+            return None
+
+        previous = self.version_parent(record_id)
+        children = sorted(
+            self.version_children(record_id), key=self._audit_record_sort_key)
+        ancestors = self.version_ancestors(record_id)
+        root = ancestors[-1] if ancestors else record
+        heads = sorted(
+            self.current_versions(record_id), key=self._audit_record_sort_key)
+        branch_points = sorted(
+            self.branch_points(record_id), key=self._audit_record_sort_key)
+        raw_tree = self.version_tree(record_id)
+        tree = {rid: sorted(raw_tree[rid]) for rid in sorted(raw_tree)}
+
+        if children:
+            result = "branched" if len(children) > 1 else "superseded"
+            if record.deprecated:
+                result += "_and_deprecated"
+        else:
+            result = "deprecated" if record.deprecated else "current"
+
+        lineage_ids = set(tree) or {record.id}
+        audit_path = list(reversed(ancestors)) + [record]
+
+        return {
+            "record": self._audit_record_ref(record),
+            "provenance": record.provenance(),
+            "state": {
+                "result": result,
+                "is_lineage_head": any(r.id == record.id for r in heads),
+                "superseded": bool(children) or record.superseded_by is not None,
+                "superseded_by": record.superseded_by,
+                "deprecated": record.deprecated,
+            },
+            "version_context": {
+                "root_id": root.id,
+                "previous_version": self._audit_record_ref(previous),
+                "next_versions": [self._audit_record_ref(r) for r in children],
+                "lineage_heads": [self._audit_record_ref(r) for r in heads],
+                "branch_points": [self._audit_record_ref(r)
+                                  for r in branch_points],
+                "tree": tree,
+            },
+            "causal_context": self._audit_causal_context(record),
+            "proposal": self._audit_proposal(record, lineage_ids),
+            "evidence": self._audit_evidence(audit_path),
+        }
+
+    @staticmethod
+    def _audit_record_sort_key(record: EmberRecord) -> tuple[int, str]:
+        return record.version, record.id
+
+    @staticmethod
+    def _audit_record_ref(record: EmberRecord | None) -> dict | None:
+        """Compact, JSON-safe identity for records referenced by an audit."""
+        if record is None:
+            return None
+        return {
+            "id": record.id,
+            "record_type": record.record_type.value,
+            "namespace": record.namespace,
+            "version": record.version,
+            "content_hash": record.content_hash,
+            "parent_hash": record.parent_hash,
+            "created_at": record.created_at.isoformat(),
+        }
+
+    def _audit_refs(self, record_ids) -> list[dict]:
+        """Resolve audit references while preserving explicit missing ids."""
+        refs = []
+        seen = set()
+        for record_id in record_ids:
+            if record_id in seen:
+                continue
+            seen.add(record_id)
+            record = self._reader.get(
+                record_id, include_deprecated=True, include_superseded=True)
+            refs.append(self._audit_record_ref(record) if record else {
+                "id": record_id,
+                "missing": True,
+            })
+        return refs
+
+    def _audit_causal_context(self, record: EmberRecord) -> dict:
+        incoming = self._graph_index.get_edges(record.id, direction="incoming")
+        derived_records = sorted({
+            edge["target"] for edge in incoming
+            if edge["edge_type"] == EdgeType.DERIVED_FROM.value
+        })
+
+        edges = []
+        for direction in ("outgoing", "incoming"):
+            for edge in self._graph_index.get_edges(record.id, direction=direction):
+                edges.append({
+                    "direction": direction,
+                    "record_id": edge["target"],
+                    "edge_type": edge["edge_type"],
+                    "weight": edge.get("weight", 1.0),
+                    "edge_id": edge.get("edge_id", ""),
+                    "label": edge.get("label", ""),
+                    "metadata": dict(edge.get("metadata") or {}),
+                })
+        edges.sort(key=lambda edge: (
+            edge["direction"], edge["edge_type"], edge["record_id"],
+            edge["edge_id"]))
+
+        return {
+            "derived_from": self._audit_refs(record.derived_from),
+            "derived_records": self._audit_refs(derived_records),
+            "caused_by": [self._audit_record_ref(r) for r in sorted(
+                self.caused_by(record.id), key=self._audit_record_sort_key)],
+            "led_to": [self._audit_record_ref(r) for r in sorted(
+                self.led_to(record.id), key=self._audit_record_sort_key)],
+            "conflicts": [self._audit_record_ref(r) for r in sorted(
+                self.conflicts(record.id), key=self._audit_record_sort_key)],
+            "edges": edges,
+        }
+
+    def _audit_proposal(self, record: EmberRecord,
+                        lineage_ids: set[str]) -> dict | None:
+        """Find the exact/current proposal represented by this lineage."""
+        proposal_record = None
+        if record.record_type == RecordType.PROPOSAL:
+            proposal_record = self._reader.get_current(record.id) or record
+        elif record.record_type in self._DURABLE_MEMORY_TYPES:
+            candidates = self._reader.get_namespace(
+                record.namespace, include_deprecated=True,
+                include_superseded=False, limit=None)
+            matches = [
+                candidate for candidate in candidates
+                if candidate.record_type == RecordType.PROPOSAL
+                and isinstance(candidate.data, dict)
+                and candidate.data.get("promoted_to") in lineage_ids
+            ]
+            if matches:
+                proposal_record = sorted(
+                    matches, key=self._audit_record_sort_key)[0]
+
+        if proposal_record is None or not isinstance(proposal_record.data, dict):
+            return None
+
+        data = proposal_record.data
+        return {
+            "record": self._audit_record_ref(proposal_record),
+            "proposal_id": data.get("proposal_id", proposal_record.id),
+            "status": data.get("status"),
+            "promoted_to": data.get("promoted_to"),
+            "rejection_reason": data.get("rejection_reason"),
+            "discovery": data.get("discovery"),
+            "reason": data.get("reason", proposal_record.creation_reason),
+            "sources": list(data.get("sources") or []),
+            "confidence": data.get("confidence", proposal_record.confidence),
+            "derivation": list(data.get("derivation") or []),
+            "evidence": [dict(item) for item in data.get("evidence", [])
+                         if isinstance(item, dict)],
+        }
+
+    def _audit_evidence(self, audit_path: list[EmberRecord]) -> list[dict]:
+        """Evidence attached to the exact write path, labeled by target."""
+        entries = []
+        for target in audit_path:
+            supporting = sorted(
+                self.evidence_for(target.id), key=self._audit_record_sort_key)
+            for evidence_record in supporting:
+                evidence = self.get_evidence(evidence_record.id)
+                entries.append({
+                    "supports_record_id": target.id,
+                    "record": self._audit_record_ref(evidence_record),
+                    "evidence": evidence.to_dict() if evidence else None,
+                })
+        return entries
+
     def _resolve_ids(self, ids, include_deprecated: bool,
                      include_superseded: bool) -> list[EmberRecord]:
         """Resolve record IDs to records, honoring the visibility filters and

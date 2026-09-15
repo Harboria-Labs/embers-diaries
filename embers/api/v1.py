@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Header, HTTPException, Query
 
 from ..core.evidence import Evidence
 from ..core.failure import Failure
@@ -136,6 +136,106 @@ async def memory_recall(
         format=body.get("format", "structured"),
     )
     return {"query": query, "memories": result}
+
+
+@router.get("/memory/read/{record_id}")
+async def memory_read(
+    record_id: str,
+    include_deprecated: bool = False,
+    include_superseded: bool = False,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    """Read one record through the same visibility rules as ``EmberDB.get``."""
+    from . import _get_db, _serialize_record
+    db = _get_db()
+    require_agent(db, x_ember_agent_id, x_ember_token)
+    record = db.get(record_id, include_deprecated, include_superseded)
+    if record is None:
+        raise HTTPException(404, "Record not found")
+    return _serialize_record(record)
+
+
+@router.post("/memory/query")
+async def memory_query(
+    body: dict,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    """Run an indexed document query without duplicating query behavior."""
+    from . import _get_db, _serialize_record
+    db = _get_db()
+    require_agent(db, x_ember_agent_id, x_ember_token)
+    records = db.query(
+        body.get("namespace", "default"),
+        body.get("filters"),
+        body.get("tags"),
+        limit=body.get("limit", 100),
+        include_deprecated=body.get("include_deprecated", False),
+        include_superseded=body.get("include_superseded", False),
+    )
+    return {
+        "count": len(records),
+        "records": [_serialize_record(record) for record in records],
+    }
+
+
+@router.get("/memory/search")
+async def memory_search(
+    q: str = Query(..., min_length=1),
+    namespace: str | None = None,
+    top_k: int = Query(default=10, ge=1, le=100),
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    """Run the core full-text search and preserve its relevance ordering."""
+    from . import _get_db, _serialize_record
+    db = _get_db()
+    require_agent(db, x_ember_agent_id, x_ember_token)
+    results = db.search(q, namespace, top_k)
+    return {
+        "query": q,
+        "results": [
+            {"record": _serialize_record(record), "score": round(score, 4)}
+            for record, score in results
+        ],
+    }
+
+
+@router.get("/memory/history/{record_id}")
+async def memory_history(
+    record_id: str,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    """Return the complete supersession chain, oldest version first."""
+    from . import _get_db, _serialize_record
+    db = _get_db()
+    require_agent(db, x_ember_agent_id, x_ember_token)
+    return {
+        "history": [
+            _serialize_record(record) for record in db.get_history(record_id)
+        ],
+    }
+
+
+@router.get("/memory/graph/{record_id}")
+async def memory_graph(
+    record_id: str,
+    depth: int = Query(default=1, ge=1),
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    """Return graph neighbors up to ``depth``, matching ``ember_get_graph``."""
+    from . import _get_db, _serialize_record
+    db = _get_db()
+    require_agent(db, x_ember_agent_id, x_ember_token)
+    neighbors = db.neighbors(record_id, depth=depth)
+    return {
+        "record_id": record_id,
+        "depth": depth,
+        "neighbors": [_serialize_record(record) for record in neighbors],
+    }
 
 
 @router.post("/sessions")

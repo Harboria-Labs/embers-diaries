@@ -40,6 +40,86 @@ def test_register_then_write_roundtrip(tmp_path: Path):
     assert rec.data["content"] == "parser fails above 10000"
 
 
+def test_query_filters_complete_records_by_session_and_tag(tmp_path: Path):
+    db = EmberDB.connect(str(tmp_path / "s"))
+    mcp = EmberMCP(db=db)
+    agent_id, token = _agent(mcp)
+
+    wanted_id = json.loads(_call(mcp, "ember_write", {
+        "content": "session finding", "namespace": "project",
+        "session_id": "session-a", "tags": ["parser", "verified"],
+        "creation_reason": "focused MCP query test",
+        "agent_id": agent_id, "token": token,
+    })["content"][0]["text"])["id"]
+    _call(mcp, "ember_write", {
+        "content": "different session", "namespace": "project",
+        "session_id": "session-b", "tags": ["parser"],
+        "agent_id": agent_id, "token": token,
+    })
+    _call(mcp, "ember_write", {
+        "content": "different namespace", "namespace": "other",
+        "session_id": "session-a", "tags": ["parser", "verified"],
+        "agent_id": agent_id, "token": token,
+    })
+
+    queried = _call(mcp, "ember_query", {
+        "namespace": "project", "session_id": "session-a",
+        "filters": {"content": "session finding"},
+        "tags": ["verified"], "limit": 5,
+        "agent_id": agent_id, "token": token,
+    })
+
+    assert queried["isError"] is False
+    body = json.loads(queried["content"][0]["text"])
+    assert body["count"] == 1
+    assert [record["id"] for record in body["records"]] == [wanted_id]
+    assert body["records"][0]["session_id"] == "session-a"
+    assert body["records"][0]["creation_reason"] == "focused MCP query test"
+    assert body["records"][0]["content_hash"]
+
+
+def test_query_visibility_flags_are_forwarded_to_db(tmp_path: Path):
+    db = EmberDB.connect(str(tmp_path / "s"))
+    mcp = EmberMCP(db=db)
+    agent_id, token = _agent(mcp)
+    auth = {"agent_id": agent_id, "token": token}
+
+    old_id = json.loads(_call(mcp, "ember_write", {
+        "content": "old", "namespace": "visibility", **auth,
+    })["content"][0]["text"])["id"]
+    new_id, _ = db.update(old_id, {"content": "new"})
+    deprecated_id = json.loads(_call(mcp, "ember_write", {
+        "content": "deprecated", "namespace": "visibility", **auth,
+    })["content"][0]["text"])["id"]
+    assert db.deprecate(deprecated_id)
+
+    default = json.loads(_call(mcp, "ember_query", {
+        "namespace": "visibility", **auth,
+    })["content"][0]["text"])
+    assert {record["id"] for record in default["records"]} == {new_id}
+
+    complete = json.loads(_call(mcp, "ember_query", {
+        "namespace": "visibility", "include_deprecated": True,
+        "include_superseded": True, **auth,
+    })["content"][0]["text"])
+    assert {record["id"] for record in complete["records"]} == {
+        old_id, new_id, deprecated_id,
+    }
+
+
+def test_query_is_advertised_and_requires_authentication(tmp_path: Path):
+    mcp = EmberMCP(db=EmberDB.connect(str(tmp_path / "s")))
+    listed = mcp.handle({"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
+    tool = next(t for t in listed["result"]["tools"]
+                if t["name"] == "ember_query")
+
+    assert "filters" in tool["inputSchema"]["properties"]
+    assert "session_id" in tool["inputSchema"]["properties"]
+    assert "include_superseded" in tool["inputSchema"]["properties"]
+    denied = _call(mcp, "ember_query", {"namespace": "memories"})
+    assert denied["isError"] is True
+
+
 def test_write_rejects_bad_token(tmp_path: Path):
     mcp = EmberMCP(db=EmberDB.connect(str(tmp_path / "s")))
     bad = mcp.handle({

@@ -41,7 +41,6 @@ def resolve_agent(db, agent_id: str | None, token: str | None,
 
 
 def install(app) -> None:
-    import os
     import asyncio
     import logging
     import embers.api.v1 as v1
@@ -65,19 +64,19 @@ def install(app) -> None:
 
     @app.on_event("startup")
     async def _start_maintenance():
-        interval = int(os.environ.get("EMBER_MAINTENANCE_INTERVAL_SECONDS", "0") or "0")
-        if interval <= 0:
-            return
         from ..maintenance import maintenance_loop
         import embers.api as api_mod
-        namespaces = [n.strip() for n in
-                      os.environ.get("EMBER_MAINTENANCE_NAMESPACES", "memories").split(",")
-                      if n.strip()]
+        maintenance = api_mod._get_config().maintenance
+        if not maintenance.enabled:
+            return
         logging.getLogger(__name__).info(
             "maintenance scheduler enabled: every %ss, namespaces=%s",
-            interval, namespaces)
+            maintenance.interval_seconds, list(maintenance.namespaces))
         holder["task"] = asyncio.create_task(
-            maintenance_loop(api_mod._get_protocol(), namespaces, interval))
+            maintenance_loop(
+                api_mod._get_protocol(), list(maintenance.namespaces),
+                maintenance.interval_seconds,
+            ))
 
     @app.on_event("shutdown")
     async def _stop_maintenance():

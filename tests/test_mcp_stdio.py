@@ -141,6 +141,35 @@ class TestNewlineDelimitedFraming:
         hits = json.loads(msgs[1]["result"]["content"][0]["text"])
         assert any("line two" in json.dumps(h["data"]) for h in hits)
 
+    def test_query_roundtrip_is_clean_jsonrpc(self, tmp_path: Path):
+        store = tmp_path / "s"
+        out, _, _ = _run(store, _rpc(
+            "tools/call", 1, name="ember_register", arguments={"name": "luna"}))
+        creds = json.loads(_messages(out)[0]["result"]["content"][0]["text"])
+        auth = {"agent_id": creds["agent_id"], "token": creds["token"]}
+
+        stdin = _rpc("tools/call", 2, name="ember_write", arguments={
+            "content": "query over stdio\nkeeps framing intact",
+            "namespace": "transport", "tags": ["stdio"], **auth,
+        })
+        out, _, _ = _run(store, stdin)
+        record_id = json.loads(
+            _messages(out)[0]["result"]["content"][0]["text"])["id"]
+
+        stdin = _rpc("tools/call", 3, name="ember_query", arguments={
+            "namespace": "transport", "tags": ["stdio"], **auth,
+        })
+        out, _, code = _run(store, stdin)
+        messages = _messages(out)
+        assert code == 0
+        assert len(messages) == 1
+        assert messages[0]["id"] == 3
+        payload = json.loads(messages[0]["result"]["content"][0]["text"])
+        assert payload["count"] == 1
+        assert payload["records"][0]["id"] == record_id
+        assert payload["records"][0]["data"]["content"].endswith(
+            "keeps framing intact")
+
 
 class TestTransportRobustness:
     def test_malformed_line_gets_parse_error_and_server_continues(self, tmp_path: Path):

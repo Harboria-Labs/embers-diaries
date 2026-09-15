@@ -21,6 +21,9 @@ from .core.feedback import Feedback, FeedbackOutcome, FeedbackAttribution
 from .core.agent_view import AgentView
 from .core.integrity import HASH_BACKEND, RecordIntegrityError
 from .core.errors import ConcurrentModificationError
+from .config import (
+    ConfigError, EmberConfig, MaintenanceConfig, StorageConfig, load_config,
+)
 from .engine.promotion import (
     PromotionEngine, PromotionPolicy, PromotionDecision, PromotionResult,
     PromotionOutcome,
@@ -47,4 +50,6 @@ __all__ = [
     "PromotionEngine", "PromotionPolicy", "PromotionDecision",
     "PromotionResult", "PromotionOutcome",
     "HASH_BACKEND", "RecordIntegrityError", "ConcurrentModificationError",
+    "ConfigError", "EmberConfig", "MaintenanceConfig", "StorageConfig",
+    "load_config",
 ]

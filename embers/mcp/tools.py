@@ -67,6 +67,36 @@ TOOLS = [
         },
     },
     {
+        "name": "ember_query",
+        "description": (
+            "Query records by namespace, exact field filters, and tags. "
+            "Returns complete records; pass session_id to scope the query to "
+            "records attributed to one session."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "namespace": {"type": "string"},
+                "filters": {
+                    "type": "object",
+                    "description": (
+                        "Exact EmberRecord or data-field matches. Also accepts "
+                        "record_type, confidence_min, confidence_max, and "
+                        "session_id."
+                    ),
+                },
+                "tags": {"type": "array", "items": {"type": "string"}},
+                "session_id": {"type": "string"},
+                "limit": {"type": "integer", "minimum": 1},
+                "include_deprecated": {"type": "boolean"},
+                "include_superseded": {"type": "boolean"},
+                "agent_id": {"type": "string"},
+                "token": {"type": "string"},
+            },
+            "required": [],
+        },
+    },
+    {
         "name": "ember_recall",
         "description": "Retrieve relevant memories for a query.",
         "inputSchema": {

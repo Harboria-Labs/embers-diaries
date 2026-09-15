@@ -5,7 +5,6 @@ A FastAPI server that exposes the EmberDB interface over HTTP.
 Run: uvicorn embers.api:app --port 9200
 """
 
-import os
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,6 +12,7 @@ from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 
 from ..db import EmberDB
+from ..config import EmberConfig, load_config
 from ..core.record import EmberRecord
 from ..core.annotation import Annotation
 from ..core.types import RecordType, DeprecationReason
@@ -24,13 +24,20 @@ from .session_gate import install as install_session_gate, resolve_agent
 _db: Optional[EmberDB] = None
 _protocol: Optional[MemoryProtocol] = None
 _registry: Optional[AgentRegistry] = None
+_config: Optional[EmberConfig] = None
+
+
+def _get_config() -> EmberConfig:
+    global _config
+    if _config is None:
+        _config = load_config()
+    return _config
 
 
 def _get_db() -> EmberDB:
     global _db
     if _db is None:
-        store_path = os.environ.get("EMBER_STORE", "./ember_store")
-        _db = EmberDB.connect(store_path)
+        _db = EmberDB.connect(_get_config().storage.path)
     return _db
 
 

@@ -8,11 +8,13 @@ as the REST /v1 routes. No vendor-specific logic (spec §31).
 from __future__ import annotations
 
 import json
+import argparse
 import os
 import sys
 from typing import Any
 
 from ..core.evidence import Evidence
+from ..config import EmberConfig, load_config
 from ..core.failure import Failure
 from ..core.proposal import MemoryProposal
 from ..core.types import (
@@ -40,9 +42,17 @@ def _err(msg: str) -> dict:
 
 
 class EmberMCP:
-    def __init__(self, db: EmberDB | None = None, store_path: str | None = None):
-        path = store_path or os.environ.get("EMBER_STORE", "./ember_store")
-        self.db = db or EmberDB.connect(path)
+    def __init__(self, db: EmberDB | None = None, store_path: str | None = None,
+                 config: EmberConfig | None = None,
+                 config_path: str | None = None):
+        if db is None:
+            if config is not None and (store_path is not None or config_path is not None):
+                raise ValueError(
+                    "config cannot be combined with store_path or config_path")
+            config = config or load_config(
+                config_path=config_path, storage_path=store_path)
+            db = EmberDB.connect(config.storage.path)
+        self.db = db
         self.registry = AgentRegistry(self.db)
         self.protocol = MemoryProtocol(self.db)
 
@@ -125,6 +135,28 @@ class EmberMCP:
                 args["query"], args.get("namespace"), int(args.get("top_k", 10)),
             )
             return _text([{"id": r.id, "score": s, "data": r.data} for r, s in results])
+
+        if name == "ember_query":
+            self._auth(args)
+            filters = dict(args.get("filters") or {})
+            if args.get("session_id") is not None:
+                if ("session_id" in filters
+                        and filters["session_id"] != args["session_id"]):
+                    return _err(
+                        "session_id conflicts with filters.session_id")
+                filters["session_id"] = args["session_id"]
+            records = self.db.query(
+                namespace=args.get("namespace", self.protocol.namespace),
+                filters=filters or None,
+                tags=args.get("tags"),
+                limit=int(args.get("limit", 100)),
+                include_deprecated=args.get("include_deprecated", False),
+                include_superseded=args.get("include_superseded", False),
+            )
+            return _text({
+                "count": len(records),
+                "records": [record.to_dict() for record in records],
+            })
 
         if name == "ember_recall":
             self._auth(args)
@@ -486,8 +518,13 @@ def _read() -> dict | None:
     return json.loads(body)
 
 
-def main() -> None:
-    server = EmberMCP()
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description="Ember MCP stdio server")
+    parser.add_argument("--config", help="path to an Ember TOML configuration file")
+    parser.add_argument("--store", help="override storage.path")
+    args = parser.parse_args(argv)
+    config = load_config(config_path=args.config, storage_path=args.store)
+    server = EmberMCP(config=config)
     while True:
         try:
             message = _read()
