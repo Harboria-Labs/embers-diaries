@@ -20,7 +20,11 @@ from ..storage.format import encode_index, decode_index
 
 
 try:
-    from embers._native import append_wal_line as _append_wal_line
+    from embers._native import (
+        append_wal_line as _append_wal_line,
+        checkpoint_wal as _checkpoint_wal,
+        recover_wal_lines as _recover_wal_lines,
+    )
     WAL_BACKEND = "rust-pyo3"
 except ImportError:
     WAL_BACKEND = "python-fallback"
@@ -33,6 +37,38 @@ except ImportError:
             wal_file.write(line + b"\n")
             wal_file.flush()
             os.fsync(wal_file.fileno())
+
+    def _recover_wal_lines(path: str) -> list[bytes]:
+        entries: dict[str, bytes] = {}
+        committed: set[str] = set()
+        try:
+            with open(path, "rb") as wal_file:
+                for raw_line in wal_file:
+                    line = raw_line.strip()
+                    if not line:
+                        continue
+                    try:
+                        entry = decode_index(line)
+                        wal_id = entry.get("wal_id", "")
+                        if entry.get("status") == "COMMITTED":
+                            committed.add(wal_id)
+                        elif entry.get("status") == "PENDING":
+                            entries[wal_id] = line
+                    except Exception:
+                        continue
+        except FileNotFoundError:
+            return []
+        return [line for wal_id, line in entries.items()
+                if wal_id not in committed]
+
+    def _checkpoint_wal(path: str) -> int:
+        pending = _recover_wal_lines(path)
+        with open(path, "wb") as wal_file:
+            for line in pending:
+                wal_file.write(line + b"\n")
+            wal_file.flush()
+            os.fsync(wal_file.fileno())
+        return len(pending)
 
 
 _WAL_FILENAME = "wal.jsonl"
@@ -99,29 +135,14 @@ class WriteAheadLog:
         On startup: scan WAL for PENDING entries with no COMMIT marker.
         Returns list of entries that need to be replayed.
         """
-        if not self.path.exists():
-            return []
-
-        entries: dict[str, dict] = {}
-        committed: set[str] = set()
-
-        with open(self.path, "rb") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    entry = decode_index(line)
-                    wal_id = entry.get("wal_id", "")
-                    if entry.get("status") == "COMMITTED":
-                        committed.add(wal_id)
-                    elif entry.get("status") == "PENDING":
-                        entries[wal_id] = entry
-                except Exception:
-                    continue
-
-        # Return entries that were never committed
-        pending = [e for wid, e in entries.items() if wid not in committed]
+        with self._lock:
+            lines = _recover_wal_lines(str(self.path))
+        pending = []
+        for line in lines:
+            try:
+                pending.append(decode_index(line))
+            except Exception:
+                continue
         return pending
 
     def checkpoint(self):
@@ -130,15 +151,8 @@ class WriteAheadLog:
         Only keeps entries that are still PENDING (should be none in normal operation).
         Safe to call periodically.
         """
-        pending = self.recover()
         with self._lock:
-            # Rewrite WAL with only pending entries
-            with open(self.path, "wb") as f:
-                for entry in pending:
-                    line = encode_index(entry) + b"\n"
-                    f.write(line)
-                f.flush()
-                os.fsync(f.fileno())
+            _checkpoint_wal(str(self.path))
 
     def size_bytes(self) -> int:
         return self.path.stat().st_size if self.path.exists() else 0

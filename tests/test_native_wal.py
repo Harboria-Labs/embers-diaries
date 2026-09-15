@@ -56,6 +56,23 @@ def test_python_checkpoint_keeps_native_pending_frame_compatible(tmp_path):
     assert len(wal.path.read_bytes().splitlines()) == 1
 
 
+def test_recovery_and_checkpoint_do_not_use_python_file_io(
+    tmp_path, monkeypatch,
+):
+    wal = WriteAheadLog(tmp_path)
+    pending = wal.log("write", "record-pending", {"value": 1})
+    committed = wal.log("write", "record-committed", {"value": 2})
+    wal.commit(committed.wal_id)
+
+    def reject_python_file_io(*args, **kwargs):
+        raise AssertionError("WAL recovery/checkpoint used Python file I/O")
+
+    monkeypatch.setattr(builtins, "open", reject_python_file_io)
+    assert [item["wal_id"] for item in wal.recover()] == [pending.wal_id]
+    wal.checkpoint()
+    assert [item["wal_id"] for item in wal.recover()] == [pending.wal_id]
+
+
 def test_native_pending_frame_replays_through_python_recovery(tmp_path):
     store_path = tmp_path / "store"
     store = PhysicalStore(store_path)
