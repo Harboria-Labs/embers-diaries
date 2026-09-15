@@ -222,3 +222,59 @@ class TestConcurrentWritersSerialized:
         heads = db.current_versions(rid)
         assert len(heads) == 1
         assert len(db.get_history(rid)) == n + 1  # v0 + n writes
+
+    def test_many_threads_across_handles_keep_one_complete_chain(self, tmp_path):
+        """Separate handles for one store must share the write transaction.
+
+        This is the failure mode that is easy to miss when all callers use
+        one EmberDB object: each handle used to own a different lock, so a
+        supersession sidecar could race with another handle and make a newly
+        returned head unreadable.
+        """
+        store_path = tmp_path / "shared_store"
+        first = EmberDB.connect(store_path)
+        rid = _write(first, "v0")
+        handles = [first] + [EmberDB.connect(store_path) for _ in range(3)]
+        # This is the root-cause assertion, not a probabilistic symptom check:
+        # every in-process handle for one physical store must serialize on the
+        # same transaction lock.
+        assert all(handle._writer.lock is first._writer.lock
+                   for handle in handles)
+        n = 16
+        committed = []
+        errors = []
+        result_lock = threading.Lock()
+
+        def writer(handle, tag):
+            while True:
+                try:
+                    head = handle.get_current(rid)
+                    if head is None:
+                        raise AssertionError("current version disappeared")
+                    handle.update(
+                        head.id, {"content": f"w{tag}"},
+                        expected_hash=head.content_hash)
+                    with result_lock:
+                        committed.append(tag)
+                    return
+                except ConcurrentModificationError:
+                    continue
+                except Exception as exc:
+                    with result_lock:
+                        errors.append(exc)
+                    return
+
+        threads = [threading.Thread(target=writer,
+                                    args=(handles[i % len(handles)], i))
+                   for i in range(n)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+        assert errors == []
+        assert sorted(committed) == list(range(n))
+        history = first.get_history(rid)
+        assert [record.version for record in history] == list(range(1, n + 2))
+        assert first._store.record_count() == n + 1
+        assert len({handle.get_current(rid).id for handle in handles}) == 1

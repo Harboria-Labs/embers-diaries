@@ -26,6 +26,7 @@ class RecordType(str, Enum):
     CONFLICT   = "conflict"    # A mapped contradiction between two memories (§7)
     SESSION    = "session"     # A bounded period of agent activity (§9)
     FAILURE    = "failure"     # A failed approach, shared so others don't repeat it (§13)
+    FEEDBACK   = "feedback"    # Agent-reported outcome feedback on a memory
 
 
 class MemoryType(str, Enum):
@@ -290,4 +291,5 @@ class EdgeType(str, Enum):
     REFLECTS_ON   = "reflects_on"
     DERIVED_FROM  = "derived_from"
     SIMILAR_TO    = "similar_to"
+    FEEDBACK_ON   = "feedback_on"
     CUSTOM        = "custom"

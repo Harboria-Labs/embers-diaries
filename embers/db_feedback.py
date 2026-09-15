@@ -1,32 +1,9 @@
 """Feedback methods bound onto EmberDB."""
 
-from enum import Enum
-
 from .core.record import EmberRecord
 from .core.edge import EdgeRef
-from .core import types as _types
+from .core.types import EdgeType, RecordType
 from .core.feedback import Feedback
-
-
-def _ensure_enums():
-    if not hasattr(_types.RecordType, "FEEDBACK"):
-        members = {m.name: m.value for m in _types.RecordType}
-        members["FEEDBACK"] = "feedback"
-        new_rt = Enum("RecordType", members, type=str)
-        _types.RecordType = new_rt
-        from .core import record as record_mod
-        record_mod.RecordType = new_rt
-    if not hasattr(_types.EdgeType, "FEEDBACK_ON"):
-        members = {m.name: m.value for m in _types.EdgeType}
-        members["FEEDBACK_ON"] = "feedback_on"
-        new_et = Enum("EdgeType", members, type=str)
-        _types.EdgeType = new_et
-
-
-_ensure_enums()
-RecordType = _types.RecordType
-EdgeType = _types.EdgeType
-
 
 def give_feedback(self, memory_id: str, fb: Feedback) -> str:
     target = self._reader.get(memory_id, include_deprecated=True,

@@ -71,9 +71,10 @@ class ReadEngine:
         if self._writer is None:
             return self.get(record_id)
 
-        chain = self._writer.get_supersession_chain(record_id)
-        head_id = chain[-1]
-        return self.get(head_id, include_superseded=False)
+        with self._writer.lock:
+            chain = self._writer.get_supersession_chain(record_id)
+            head_id = chain[-1]
+            return self.get(head_id, include_superseded=False)
 
     def get_history(self, record_id: str) -> list[EmberRecord]:
         """
@@ -83,13 +84,14 @@ class ReadEngine:
             r = self.get(record_id, include_superseded=True)
             return [r] if r else []
 
-        chain = self._writer.get_supersession_chain(record_id)
-        records = []
-        for rid in chain:
-            r = self.get(rid, include_deprecated=True, include_superseded=True)
-            if r:
-                records.append(r)
-        return records
+        with self._writer.lock:
+            chain = self._writer.get_supersession_chain(record_id)
+            records = []
+            for rid in chain:
+                r = self.get(rid, include_deprecated=True, include_superseded=True)
+                if r:
+                    records.append(r)
+            return records
 
     def get_at(self, record_id: str, timestamp: datetime) -> EmberRecord | None:
         """

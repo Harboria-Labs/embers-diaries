@@ -28,15 +28,25 @@ class PhysicalStore:
     Does NOT know about indexes — that's the writer/reader's job.
     """
 
+    _shared_locks: dict[str, threading.RLock] = {}
+    _shared_locks_guard = threading.RLock()
+
     def __init__(self, store_path: str | Path):
         self.root = Path(store_path)
         self.records_dir = self.root / "records"
         self.meta_dir    = self.root / "meta"
 
-        self._lock = threading.RLock()
-        self._setup()
-        self.wal = WriteAheadLog(self.root)
-        self._recover()
+        # EmberDB.connect() can be called more than once for the same store.
+        # A per-instance lock protects only one handle, so two handles could
+        # interleave WAL, record, and sidecar operations. Share one lock for
+        # every handle in this process that points at the same store.
+        key = os.path.normcase(str(self.root.resolve()))
+        with self._shared_locks_guard:
+            self._lock = self._shared_locks.setdefault(key, threading.RLock())
+        with self._lock:
+            self._setup()
+            self.wal = WriteAheadLog(self.root)
+            self._recover()
 
     def _setup(self):
         """Create directory structure if it doesn't exist."""
@@ -90,6 +100,11 @@ class PhysicalStore:
             self._increment_record_count()
 
             return record.id
+
+    @property
+    def lock(self):
+        """The process-local lock shared by all handles for this store."""
+        return self._lock
 
     def _write_record_file(self, record: EmberRecord):
         """Write a single record to its UUID.ember file. Never overwrites."""

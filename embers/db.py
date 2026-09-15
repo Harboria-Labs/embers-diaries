@@ -160,6 +160,11 @@ class EmberDB:
         """Callback after every write — keeps indexes in sync."""
         if operation in ("write", "update"):
             self._index_record(record)
+            if operation == "update" and record.supersedes:
+                # Keep the supersession map update inside WriteEngine's store
+                # transaction. Marking it after writer.update() returned left
+                # a window where concurrent readers saw an incomplete chain.
+                self._master_index.mark_superseded(record.supersedes, record.id)
 
     def _index_record(self, record: EmberRecord):
         """Add a record to all relevant indexes."""
@@ -297,9 +302,6 @@ class EmberDB:
             agent_id=agent_id, session_id=session_id,
             creation_reason=creation_reason, derived_from=derived_from,
             expected_hash=expected_hash)
-        # result = (new_id, superseded_id); under CAS the superseded id is the
-        # resolved head, so index the link off result[1], not the raw argument.
-        self._master_index.mark_superseded(result[1], result[0])
         return result
 
     def annotate(self, record_id: str, annotation: Annotation) -> str:

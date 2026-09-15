@@ -4,7 +4,6 @@ Handles all write operations: new records, supersession, deprecation, annotation
 Enforces append-only semantics — nothing is ever destroyed.
 """
 
-import threading
 from datetime import datetime, timezone
 
 from ..core.record import EmberRecord
@@ -22,8 +21,16 @@ class WriteEngine:
 
     def __init__(self, store: PhysicalStore):
         self._store = store
-        self._lock  = threading.RLock()
+        # PhysicalStore shares this lock across EmberDB handles for the same
+        # path, so version reads, writes, and supersession sidecars serialize
+        # as one transaction within the process.
+        self._lock  = store.lock
         self._write_callbacks: list = []  # notify index layer after writes
+
+    @property
+    def lock(self):
+        """The lock guarding store-level write transactions."""
+        return self._lock
 
     def register_callback(self, fn):
         """Register a function to call after every successful write."""
@@ -183,11 +190,13 @@ class WriteEngine:
         sidecar_dir.mkdir(exist_ok=True)
         sidecar = sidecar_dir / f"{old_id}.superseded"
         from ..storage.format import encode_index
-        sidecar.write_bytes(encode_index({
+        tmp = sidecar.with_suffix(".superseded.tmp")
+        tmp.write_bytes(encode_index({
             "old_id":    old_id,
             "new_id":    new_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }))
+        tmp.replace(sidecar)
 
     def get_superseded_by(self, record_id: str) -> str | None:
         """Check if a record has been superseded. Returns new_id or None."""

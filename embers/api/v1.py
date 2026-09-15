@@ -40,6 +40,29 @@ def require_agent(db, agent_id: str | None, token: str | None):
         raise HTTPException(401, str(e)) from e
 
 
+def _lobby_context(db, agent, requested_session_id: str | None,
+                   header_session_id: str | None):
+    """Resolve and authorize the session that owns a lobby board."""
+    session_id = requested_session_id or header_session_id
+    if not session_id:
+        raise HTTPException(400, "session_id required")
+    session = db.get_session(session_id)
+    if session is None:
+        raise HTTPException(401, "unknown session")
+    if session.status.value != "active":
+        raise HTTPException(401, "session is not active")
+    if session.agent_id != agent.agent_id:
+        raise HTTPException(403, "session belongs to another agent")
+    return session_id, session
+
+
+def _lobby_store():
+    # Import lazily: the API module is imported before the MCP adapter during
+    # application construction, but both surfaces must share this one store.
+    from ..mcp.lobby_surface import STORE
+    return STORE
+
+
 @router.post("/agents/register")
 async def register_agent(body: dict):
     from . import _get_db
@@ -145,6 +168,120 @@ async def get_session(
     if session is None:
         raise HTTPException(404, "session not found")
     return session.to_dict()
+
+
+@router.post("/lobby/publish")
+async def lobby_publish(
+    body: dict,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+    x_ember_session_id: str | None = Header(default=None),
+):
+    """Open a board on first publish, then add one ephemeral post."""
+    from ..lobby.store import LobbyError
+    from . import _get_db
+    db = _get_db()
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    session_id, session = _lobby_context(
+        db, agent, body.get("session_id"), x_ember_session_id)
+    store = _lobby_store()
+    try:
+        if store.board_for_session(session_id) is None:
+            store.open(
+                session_id=session_id,
+                agent_id=agent.agent_id,
+                task=body.get("task", ""),
+                namespace=body.get("namespace") or getattr(session, "namespace", "default"),
+                room=body.get("room", ""),
+            )
+        return store.publish(
+            session_id=session_id,
+            agent_id=agent.agent_id,
+            room=body.get("room", ""),
+            post_type=body.get("type", ""),
+            body=body.get("body", ""),
+            approach=body.get("approach"),
+        )
+    except LobbyError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@router.get("/lobby/updates")
+async def lobby_updates(
+    session_id: str | None = None,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+    x_ember_session_id: str | None = Header(default=None),
+):
+    """Return the current board snapshot as poll-based lobby updates."""
+    from . import _get_db
+    db = _get_db()
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    sid, _session = _lobby_context(db, agent, session_id, x_ember_session_id)
+    store = _lobby_store()
+    board = store.board_for_session(sid)
+    if board is None:
+        return {"session_id": sid, "board": None, "updates": [], "posts": []}
+    snapshot = store.snapshot(session_id=sid)
+    return {
+        "session_id": sid,
+        "board": snapshot,
+        "updates": snapshot["posts"],
+        "posts": snapshot["posts"],
+    }
+
+
+@router.get("/lobby/status")
+async def lobby_status(
+    session_id: str | None = None,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+    x_ember_session_id: str | None = Header(default=None),
+):
+    """Return whether the authenticated session has an open board."""
+    from . import _get_db
+    db = _get_db()
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    sid, _session = _lobby_context(db, agent, session_id, x_ember_session_id)
+    summary = _lobby_store().summary_for_session(sid)
+    if summary is None:
+        return {"session_id": sid, "status": "idle", "board": None}
+    return {"session_id": sid, "board": summary, **summary}
+
+
+@router.post("/lobby/promote")
+async def lobby_promote(
+    body: dict,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+    x_ember_session_id: str | None = Header(default=None),
+):
+    """Promote an ephemeral post through the existing MCP/core promotion path."""
+    from ..lobby.store import LobbyError
+    from ..mcp.lobby_surface import _promote
+    from types import SimpleNamespace
+    from . import _get_db
+    db = _get_db()
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    session_id, _session = _lobby_context(
+        db, agent, body.get("session_id"), x_ember_session_id)
+    post_id = body.get("post_id")
+    if not post_id:
+        raise HTTPException(400, "post_id required")
+    try:
+        # _promote contains the single lobby-to-core implementation used by
+        # ember_lobby; the facade supplies the same EmberDB instance.
+        result = _promote(SimpleNamespace(db=db), agent, session_id, post_id)
+        # Failure promotion is linked by EmberDB.report_failure itself. A
+        # proposal is deliberately only staged by EmberDB.propose, so mirror
+        # the MCP session-collaboration adapter and link it explicitly.
+        proposal_id = result.get("proposal_id")
+        if proposal_id:
+            db.record_discovery(
+                session_id, proposal_id, changed_by=agent.agent_id)
+        return result
+    except LobbyError as e:
+        raise HTTPException(400, str(e)) from e
 
 
 @router.post("/memory/propose")
