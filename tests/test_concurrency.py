@@ -42,6 +42,27 @@ def _physical_store_process_writer(store_path, tag, start_event, result_queue):
         result_queue.put(("error", f"{type(exc).__name__}: {exc}"))
 
 
+def _cas_process_writer(
+    store_path, record_id, expected_hash, tag, start_event, result_queue,
+):
+    """Spawn-safe CAS worker: exactly one process may advance the head."""
+    try:
+        db = EmberDB.connect(store_path)
+        if not start_event.wait(20):
+            raise TimeoutError("CAS writers did not receive the start signal")
+        try:
+            new_id, _ = db.update(
+                record_id,
+                {"content": f"process-{tag}"},
+                expected_hash=expected_hash,
+            )
+            result_queue.put(("ok", new_id))
+        except ConcurrentModificationError as exc:
+            result_queue.put(("conflict", exc.current_id))
+    except BaseException as exc:
+        result_queue.put(("error", f"{type(exc).__name__}: {exc}"))
+
+
 # ── Fixtures / helpers ──────────────────────────────────────────────────────
 
 @pytest.fixture
@@ -324,3 +345,42 @@ class TestConcurrentWritersSerialized:
         assert store.record_count() == process_count
         assert store.stats()["meta"]["record_count"] == process_count
         assert store.wal.recover() == []
+
+    def test_independent_process_cas_writers_produce_one_winner(self, tmp_path):
+        store_path = str(tmp_path / "process_cas_store")
+        db = EmberDB.connect(store_path)
+        record_id = _write(db, "v1")
+        expected_hash = _hash_of(db, record_id)
+        context = multiprocessing.get_context("spawn")
+        start_event = context.Event()
+        result_queue = context.Queue()
+        process_count = 4
+        processes = [
+            context.Process(
+                target=_cas_process_writer,
+                args=(
+                    store_path,
+                    record_id,
+                    expected_hash,
+                    tag,
+                    start_event,
+                    result_queue,
+                ),
+            )
+            for tag in range(process_count)
+        ]
+        for process in processes:
+            process.start()
+        start_event.set()
+        for process in processes:
+            process.join(30)
+
+        assert [process.exitcode for process in processes] == [0] * process_count
+        results = [result_queue.get(timeout=5) for _ in processes]
+        assert [status for status, _ in results].count("ok") == 1, results
+        assert [status for status, _ in results].count("conflict") == 3, results
+
+        reopened = EmberDB.connect(store_path)
+        assert reopened._store.record_count() == 2
+        assert len(reopened.current_versions(record_id)) == 1
+        assert reopened._store.wal.recover() == []

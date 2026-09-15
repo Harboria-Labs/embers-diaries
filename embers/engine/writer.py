@@ -13,6 +13,22 @@ from ..core.errors import ConcurrentModificationError
 from ..storage.store import PhysicalStore
 
 
+try:
+    from embers._native import (
+        get_superseded_by as _get_superseded_by,
+        get_supersession_chain as _get_supersession_chain,
+        resolve_cas_head as _resolve_cas_head,
+        write_supersession as _write_supersession,
+    )
+    VERSION_BACKEND = "rust-pyo3"
+except ImportError:
+    VERSION_BACKEND = "python-fallback"
+    _get_superseded_by = None
+    _get_supersession_chain = None
+    _resolve_cas_head = None
+    _write_supersession = None
+
+
 class WriteEngine:
     """
     The single point of entry for all writes.
@@ -104,26 +120,51 @@ class WriteEngine:
         with self._lock:
             # ── Optimistic-concurrency precondition (§6) ─────────────────────
             if expected_hash is not None:
+                if _resolve_cas_head is not None:
+                    try:
+                        head_id, actual_hash, current_version, matches = (
+                            _resolve_cas_head(
+                                str(self._store.root),
+                                old_record_id,
+                                expected_hash,
+                            )
+                        )
+                    except FileNotFoundError as error:
+                        raise KeyError(
+                            f"Record {old_record_id} not found.") from error
+                    if actual_hash is not None and not matches:
+                        raise ConcurrentModificationError(
+                            record_id=old_record_id,
+                            expected_hash=expected_hash,
+                            actual_hash=actual_hash,
+                            current_version=current_version,
+                            attempted_version=current_version + 1,
+                            current_id=head_id,
+                        )
+                    if actual_hash is not None:
+                        old_record_id = head_id
+
                 # Resolve to the current head of this lineage. If old_record_id
                 # was already superseded, the head is a later version and its
                 # hash cannot match expected_hash → conflict.
-                head_id = self.get_supersession_chain(old_record_id)[-1]
-                head = self._store.read(head_id)
-                if head is None:
-                    raise KeyError(f"Record {old_record_id} not found.")
-                actual_hash = head.content_hash or head.compute_content_hash()
-                if actual_hash != expected_hash:
-                    raise ConcurrentModificationError(
-                        record_id=old_record_id,
-                        expected_hash=expected_hash,
-                        actual_hash=actual_hash,
-                        current_version=head.version,
-                        attempted_version=head.version + 1,
-                        current_id=head_id,
-                    )
-                # Precondition holds: base the new version on the head itself,
-                # giving strict linear CAS semantics (never an accidental fork).
-                old_record_id = head_id
+                if _resolve_cas_head is None or actual_hash is None:
+                    head_id = self.get_supersession_chain(old_record_id)[-1]
+                    head = self._store.read(head_id)
+                    if head is None:
+                        raise KeyError(f"Record {old_record_id} not found.")
+                    actual_hash = head.content_hash or head.compute_content_hash()
+                    if actual_hash != expected_hash:
+                        raise ConcurrentModificationError(
+                            record_id=old_record_id,
+                            expected_hash=expected_hash,
+                            actual_hash=actual_hash,
+                            current_version=head.version,
+                            attempted_version=head.version + 1,
+                            current_id=head_id,
+                        )
+                    # Precondition holds: base the new version on the head
+                    # itself, giving strict linear CAS semantics.
+                    old_record_id = head_id
 
             old = self._store.read(old_record_id)
             if old is None:
@@ -186,20 +227,26 @@ class WriteEngine:
         Record that old_id has been superseded by new_id.
         We write a sidecar file rather than modifying the original.
         """
+        timestamp = datetime.now(timezone.utc).isoformat()
+        if _write_supersession is not None:
+            _write_supersession(str(self._store.root), old_id, new_id, timestamp)
+            return
         sidecar_dir = self._store.root / "supersessions"
         sidecar_dir.mkdir(exist_ok=True)
         sidecar = sidecar_dir / f"{old_id}.superseded"
         from ..storage.format import encode_index
         tmp = sidecar.with_suffix(".superseded.tmp")
         tmp.write_bytes(encode_index({
-            "old_id":    old_id,
-            "new_id":    new_id,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "old_id": old_id,
+            "new_id": new_id,
+            "timestamp": timestamp,
         }))
         tmp.replace(sidecar)
 
     def get_superseded_by(self, record_id: str) -> str | None:
         """Check if a record has been superseded. Returns new_id or None."""
+        if _get_superseded_by is not None:
+            return _get_superseded_by(str(self._store.root), record_id)
         sidecar = self._store.root / "supersessions" / f"{record_id}.superseded"
         if not sidecar.exists():
             return None
@@ -209,6 +256,8 @@ class WriteEngine:
 
     def get_supersession_chain(self, record_id: str) -> list[str]:
         """Follow the supersession chain from oldest to newest. Returns list of IDs."""
+        if _get_supersession_chain is not None:
+            return _get_supersession_chain(str(self._store.root), record_id)
         chain = [record_id]
         current = record_id
         seen = set()

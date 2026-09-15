@@ -24,6 +24,7 @@ from ..core.integrity import RecordIntegrityError
 try:
     from embers._native import (
         acquire_store_lock as _acquire_store_file_lock,
+        atomic_replace as _atomic_replace,
         atomic_write_new as _atomic_write_new,
     )
     STORE_LOCK_BACKEND = "rust-pyo3"
@@ -49,6 +50,20 @@ except ImportError:
                 os.fsync(temp_file.fileno())
             temp.rename(destination)
             return True
+        except Exception:
+            if temp.exists():
+                temp.unlink()
+            raise
+
+    def _atomic_replace(path: str, data: bytes) -> None:
+        destination = Path(path)
+        temp = destination.with_suffix(destination.suffix + ".tmp")
+        try:
+            with open(temp, "wb") as temp_file:
+                temp_file.write(data)
+                temp_file.flush()
+                os.fsync(temp_file.fileno())
+            temp.replace(destination)
         except Exception:
             if temp.exists():
                 temp.unlink()
@@ -221,7 +236,7 @@ class PhysicalStore:
     def _write_meta(self, meta: dict):
         from ..storage.format import encode_index
         meta_file = self.meta_dir / "store.json"
-        meta_file.write_bytes(encode_index(meta))
+        _atomic_replace(str(meta_file), encode_index(meta))
 
     def _read_meta(self) -> dict:
         from ..storage.format import decode_index

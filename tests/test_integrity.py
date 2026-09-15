@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import pytest
 
 from embers import EmberDB, EmberRecord, RecordIntegrityError
+from embers.core.integrity import _python_canonical_bytes, canonical_bytes
 from embers.storage.format import decode, encode
 
 
@@ -26,6 +27,16 @@ def test_identical_canonical_content_produces_same_hash():
     second = fixed_record(data={"nested": {"a": 1, "b": 2}, "content": "stable"})
 
     assert first.compute_content_hash() == second.compute_content_hash()
+
+
+def test_rust_canonical_encoding_matches_legacy_python_contract():
+    payload = fixed_record(data={
+        "unicode": "ember 🔥",
+        "bytes": b"\x00\xff",
+        "tuple": (True, None, -7, 0.125),
+        "nested": {"z": 1, "a": [3, 2, 1]},
+    }).canonical_hash_payload()
+    assert canonical_bytes(payload) == _python_canonical_bytes(payload)
 
 
 def test_changing_content_changes_hash():

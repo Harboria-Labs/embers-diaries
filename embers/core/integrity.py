@@ -15,9 +15,11 @@ class RecordIntegrityError(ValueError):
 
 try:
     from embers._native import BACKEND as HASH_BACKEND
+    from embers._native import canonical_record_bytes as _canonical_record_bytes
     from embers._native import sha256_hex as _sha256_hex
 except ImportError:
     HASH_BACKEND = "python-fallback"
+    _canonical_record_bytes = None
 
     def _sha256_hex(canonical_bytes: bytes) -> str:
         return hashlib.sha256(canonical_bytes).hexdigest()
@@ -42,7 +44,7 @@ def _normalize(value: Any) -> Any:
     raise TypeError(f"Unsupported canonical record value: {type(value).__name__}")
 
 
-def canonical_bytes(payload: dict[str, Any]) -> bytes:
+def _python_canonical_bytes(payload: dict[str, Any]) -> bytes:
     normalized = _normalize(payload)
     return json.dumps(
         normalized,
@@ -51,6 +53,12 @@ def canonical_bytes(payload: dict[str, Any]) -> bytes:
         separators=(",", ":"),
         sort_keys=True,
     ).encode("utf-8")
+
+
+def canonical_bytes(payload: dict[str, Any]) -> bytes:
+    if _canonical_record_bytes is not None:
+        return bytes(_canonical_record_bytes(payload))
+    return _python_canonical_bytes(payload)
 
 
 def content_hash(payload: dict[str, Any]) -> str:
