@@ -63,8 +63,16 @@ class Conflict:
     # ── Lifecycle ──────────────────────────────────────────────────────────────
     status: ConflictStatus = ConflictStatus.OPEN
     resolution: str = ""                               # how it was reconciled
+    winner_id: str = ""                                # selected memory, if any
     note: str = ""                                     # free-form context
     tags: list = field(default_factory=list)
+
+    # Storage identity is separate from the stable logical conflict identity.
+    # Lifecycle transitions create new immutable EmberRecord ids while
+    # conflict_id remains the root identity of the same triage thread.
+    record_id: str = field(default="", init=False)
+    record_version: int = field(default=1, init=False)
+    record_content_hash: str = field(default="", init=False)
 
     def __post_init__(self):
         # Symmetric: store the pair in a canonical (sorted) order so the same
@@ -99,6 +107,7 @@ class Conflict:
             "detected_by": self.detected_by,
             "status": self.status.value,
             "resolution": self.resolution,
+            "winner_id": self.winner_id,
             "note": self.note,
             "pair_fingerprint": self.pair_fingerprint(),
         }
@@ -107,6 +116,9 @@ class Conflict:
         d = self.to_record_payload()
         d["namespace"] = self.namespace
         d["tags"] = list(self.tags)
+        d["record_id"] = self.record_id or self.conflict_id
+        d["record_version"] = self.record_version
+        d["record_content_hash"] = self.record_content_hash
         return d
 
     @classmethod
@@ -121,6 +133,7 @@ class Conflict:
             detected_by   = d.get("detected_by", "system"),
             status        = ConflictStatus(d.get("status", "open")),
             resolution    = d.get("resolution", ""),
+            winner_id     = d.get("winner_id", ""),
             note          = d.get("note", ""),
             tags          = d.get("tags", []),
         )

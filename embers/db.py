@@ -755,13 +755,42 @@ class EmberDB:
 
         Returns the conflict record id. Raises KeyError if either memory is
         missing, ValueError if the two ids are equal."""
-        if not self.exists(memory_a):
+        if memory_a == memory_b:
+            raise ValueError("A memory cannot conflict with itself.")
+        record_a = self._reader.get(
+            memory_a, include_deprecated=True, include_superseded=True)
+        if record_a is None:
             raise KeyError(f"Memory {memory_a} not found.")
-        if not self.exists(memory_b):
+        record_b = self._reader.get(
+            memory_b, include_deprecated=True, include_superseded=True)
+        if record_b is None:
             raise KeyError(f"Memory {memory_b} not found.")
 
+        # The actor must be able to see both claims before Ember will disclose
+        # whether they conflict. Mapping also writes a durable conflict record
+        # and graph edge, so write access to the shared namespace is required.
+        self._ns_manager.require_read(record_a.namespace, detected_by)
+        self._ns_manager.require_read(record_b.namespace, detected_by)
+        if record_a.namespace != record_b.namespace:
+            raise ValueError(
+                "Cross-namespace conflicts are not supported: both memories "
+                "must belong to the same authorized namespace.")
+        self._ns_manager.require_write(record_a.namespace, detected_by)
+
+        if record_a.record_type not in self._DURABLE_MEMORY_TYPES:
+            raise ValueError(
+                f"{memory_a} is not a durable memory (node or document).")
+        if record_b.record_type not in self._DURABLE_MEMORY_TYPES:
+            raise ValueError(
+                f"{memory_b} is not a durable memory (node or document).")
+        conflict_type = ConflictType(conflict_type)
+        if conflict_type != ConflictType.SEMANTIC:
+            raise ValueError(
+                "Storage conflicts cannot be mapped as conflict records; "
+                "they are rejected by expected_hash optimistic concurrency.")
+
         conflict = Conflict(
-            namespace=self.get(memory_a, True, True).namespace,
+            namespace=record_a.namespace,
             memory_a=memory_a, memory_b=memory_b,
             conflict_type=conflict_type, detected_by=detected_by, note=note)
 
@@ -776,6 +805,7 @@ class EmberDB:
             record_type=RecordType.CONFLICT,
             data=conflict.to_record_payload(),
             written_by=detected_by,
+            agent_id=detected_by,
             creation_reason="semantic conflict mapped",
             tags=list(conflict.tags) + ["conflict"],
         )
@@ -787,7 +817,8 @@ class EmberDB:
                   label="contradicts")
         return cid
 
-    def get_conflict(self, conflict_id: str) -> Conflict | None:
+    def get_conflict(self, conflict_id: str,
+                     caller: str | None = None) -> Conflict | None:
         """Reconstruct a Conflict from its record (following supersession to the
         CURRENT version, so status reflects the latest transition)."""
         rec = self._reader.get_current(conflict_id)
@@ -796,26 +827,36 @@ class EmberDB:
                                    include_superseded=True)
         if rec is None or rec.record_type != RecordType.CONFLICT:
             return None
+        if caller is not None:
+            self._ns_manager.require_read(rec.namespace, caller)
         return self._conflict_from_record(rec)
 
     def _conflict_from_record(self, rec: EmberRecord) -> Conflict:
         data = dict(rec.data or {})
         c = Conflict.from_dict({**data, "namespace": rec.namespace,
                                 "tags": [t for t in rec.tags if t != "conflict"]})
+        c.record_id = rec.id
+        c.record_version = rec.version
+        c.record_content_hash = rec.content_hash or ""
         return c
 
     def _find_live_conflict(self, pair_fingerprint: str) -> Conflict | None:
         """The current, not-yet-closed conflict for a pair fingerprint, if any.
-        'Live' = status not in {RESOLVED, SUPERSEDED} — a closed conflict does
+        'Live' = status not in {RESOLVED, ACCEPTED_BOTH, SUPERSEDED} — a closed conflict does
         not block mapping a fresh one if the contradiction resurfaces."""
-        closed = {ConflictStatus.RESOLVED, ConflictStatus.SUPERSEDED}
+        closed = {
+            ConflictStatus.RESOLVED,
+            ConflictStatus.ACCEPTED_BOTH,
+            ConflictStatus.SUPERSEDED,
+        }
         for c in self.conflict_records(namespace=None):
             if c.pair_fingerprint() == pair_fingerprint and c.status not in closed:
                 return c
         return None
 
     def conflict_records(self, namespace: str | None = None,
-                         status: ConflictStatus | None = None) -> list[Conflict]:
+                         status: ConflictStatus | None = None,
+                         caller: str | None = None) -> list[Conflict]:
         """All mapped conflicts, optionally filtered by namespace and/or status.
 
         Resolves each conflict lineage to its CURRENT version so status is
@@ -824,6 +865,10 @@ class EmberDB:
         namespaces = ([namespace] if namespace is not None
                       else self._all_namespaces())
         for ns in namespaces:
+            if caller is not None and not self._ns_manager.check_read(ns, caller):
+                if namespace is not None:
+                    self._ns_manager.require_read(ns, caller)
+                continue
             for rec in self._reader.get_namespace(ns, include_deprecated=True,
                                                   limit=None):
                 if rec.record_type != RecordType.CONFLICT:
@@ -838,16 +883,28 @@ class EmberDB:
         return out
 
     def conflicts_for(self, memory_id: str,
-                     include_closed: bool = False) -> list[Conflict]:
+                     include_closed: bool = False,
+                     caller: str | None = None) -> list[Conflict]:
         """Every mapped Conflict that involves a given memory (either side).
 
         By default only live conflicts (not resolved/superseded); pass
         include_closed=True to see the full triage history for the memory."""
-        closed = {ConflictStatus.RESOLVED, ConflictStatus.SUPERSEDED}
+        memory = self._reader.get(
+            memory_id, include_deprecated=True, include_superseded=True)
+        if memory is None:
+            if caller is not None:
+                raise KeyError(f"Memory {memory_id} not found.")
+            return []
+        if caller is not None:
+            self._ns_manager.require_read(memory.namespace, caller)
+        closed = {
+            ConflictStatus.RESOLVED,
+            ConflictStatus.ACCEPTED_BOTH,
+            ConflictStatus.SUPERSEDED,
+        }
         out = []
         for c in self.conflict_records(
-                namespace=self.get(memory_id, True, True).namespace
-                if self.exists(memory_id) else None):
+                namespace=memory.namespace, caller=caller):
             if memory_id not in (c.memory_a, c.memory_b):
                 continue
             if not include_closed and c.status in closed:
@@ -858,7 +915,8 @@ class EmberDB:
     def update_conflict_status(self, conflict_id: str,
                                status: ConflictStatus,
                                resolution: str = "",
-                               changed_by: str = "system") -> tuple[str, str]:
+                               changed_by: str = "system",
+                               winner_id: str | None = None) -> tuple[str, str]:
         """Advance a conflict's lifecycle — as a NEW version (append-only, §7).
 
         A transition (open → investigating → resolved | accepted_both |
@@ -870,15 +928,46 @@ class EmberDB:
         if head is None or head.record_type != RecordType.CONFLICT:
             raise KeyError(f"Conflict {conflict_id} not found.")
         conflict = self._conflict_from_record(head)
+        self._ns_manager.require_read(head.namespace, changed_by)
+        self._ns_manager.require_write(head.namespace, changed_by)
+        status = ConflictStatus(status)
+        terminal = {
+            ConflictStatus.RESOLVED,
+            ConflictStatus.ACCEPTED_BOTH,
+            ConflictStatus.SUPERSEDED,
+        }
+        if conflict.status in terminal:
+            raise ValueError(
+                f"Conflict {conflict.conflict_id} is already closed with "
+                f"status {conflict.status.value}.")
+        if status not in {
+                ConflictStatus.INVESTIGATING,
+                ConflictStatus.RESOLVED,
+                ConflictStatus.ACCEPTED_BOTH,
+                ConflictStatus.SUPERSEDED}:
+            raise ValueError(
+                "Conflict status must be investigating, resolved, "
+                "accepted_both, or superseded.")
+        if status in terminal and not resolution.strip():
+            raise ValueError(
+                f"A resolution is required when status is {status.value}.")
+        if winner_id is not None:
+            if status != ConflictStatus.RESOLVED:
+                raise ValueError("winner_id is only valid for resolved conflicts.")
+            if winner_id not in (conflict.memory_a, conflict.memory_b):
+                raise ValueError(
+                    "winner_id must be one of the conflict's two memory ids.")
         payload = conflict.to_record_payload()
-        payload["status"] = ConflictStatus(status).value
+        payload["status"] = status.value
         if resolution:
             payload["resolution"] = resolution
+        payload["winner_id"] = winner_id or ""
         # Supersede the CURRENT head (not the original id) so repeated
         # transitions extend one linear chain rather than forking the lineage.
         return self.update(
             head.id, payload, written_by=changed_by,
-            creation_reason=f"conflict → {ConflictStatus(status).value}")
+            agent_id=changed_by,
+            creation_reason=f"conflict → {status.value}")
 
     def resolve_conflict(self, conflict_id: str, resolution: str,
                          changed_by: str = "system") -> tuple[str, str]:
@@ -1709,6 +1798,14 @@ class EmberDB:
         if operation == "write":
             return self._ns_manager.check_write(namespace, caller)
         return self._ns_manager.check_read(namespace, caller)
+
+    def require_namespace_access(self, namespace: str, caller: str,
+                                 operation: str = "read") -> None:
+        """Require namespace access and raise ``AccessDeniedError`` if denied."""
+        if operation == "write":
+            self._ns_manager.require_write(namespace, caller)
+        else:
+            self._ns_manager.require_read(namespace, caller)
 
     def grant_namespace_access(self, namespace: str, caller: str,
                                 level: str = "read"):

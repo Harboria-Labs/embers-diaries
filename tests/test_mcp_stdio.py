@@ -251,3 +251,62 @@ def test_full_evidence_pipeline_over_the_real_transport(tmp_path: Path):
     evidence = json.loads(_messages(out)[0]["result"]["content"][0]["text"])
     assert [e["source"] for e in evidence] == ["run.log"]
     assert evidence[0]["content_hash"], "evidence must arrive sealed"
+
+
+def test_conflict_tools_over_the_real_transport(tmp_path: Path):
+    """Map, list, queue, and resolve conflicts through a real stdio process."""
+    from embers import EmberDB, EmberRecord
+    from embers.identity.registry import AgentRegistry
+
+    store = tmp_path / "conflict-stdio"
+    db = EmberDB.connect(store)
+    identity, token = AgentRegistry(db).register("stdio-conflict-agent")
+
+    def memory(content):
+        return db.write(EmberRecord(
+            namespace="stdio-conflicts",
+            data={"content": content},
+            written_by=identity.agent_id,
+            agent_id=identity.agent_id,
+        ))
+
+    memory_a, memory_b = memory("postgres"), memory("mongo")
+    existing_a, existing_b = memory("ttl=60"), memory("ttl=300")
+    existing_conflict = db.map_conflict(
+        existing_a, existing_b, detected_by=identity.agent_id)
+
+    stdin = "".join([
+        _rpc("tools/call", 1, name="ember_map_conflict", arguments={
+            "memory_a": memory_a, "memory_b": memory_b,
+        }),
+        _rpc("tools/call", 2, name="ember_conflicts_for", arguments={
+            "memory_id": memory_a,
+        }),
+        _rpc("tools/call", 3, name="ember_open_conflicts", arguments={
+            "namespace": "stdio-conflicts",
+        }),
+        _rpc("tools/call", 4, name="ember_resolve_conflict", arguments={
+            "conflict_id": existing_conflict,
+            "status": "resolved",
+            "resolution": "ttl=300 is current",
+            "winner_id": existing_b,
+        }),
+    ])
+    out, _err, code = _run(store, stdin, {
+        "EMBER_AGENT_ID": identity.agent_id,
+        "EMBER_TOKEN": token,
+    })
+    assert code == 0
+    replies = _messages(out)
+    assert [reply["id"] for reply in replies] == [1, 2, 3, 4]
+
+    mapped = json.loads(replies[0]["result"]["content"][0]["text"])
+    listed = json.loads(replies[1]["result"]["content"][0]["text"])
+    queued = json.loads(replies[2]["result"]["content"][0]["text"])
+    resolved = json.loads(replies[3]["result"]["content"][0]["text"])
+    assert listed[0]["conflict_id"] == mapped["conflict_id"]
+    assert {item["conflict_id"] for item in queued} == {
+        mapped["conflict_id"], existing_conflict}
+    assert resolved["conflict_id"] == existing_conflict
+    assert resolved["record_id"] != existing_conflict
+    assert resolved["conflict"]["winner_id"] == existing_b

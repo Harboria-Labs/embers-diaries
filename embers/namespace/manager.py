@@ -19,7 +19,7 @@ from ..core.types import AccessLevel
 from ..storage.format import encode_index, decode_index
 
 
-class AccessDeniedError(Exception):
+class AccessDeniedError(PermissionError):
     """Raised when a caller lacks permission for a namespace operation."""
     pass
 

@@ -42,6 +42,8 @@ class ConcurrentModificationError(Exception):
     def to_dict(self) -> dict:
         return {
             "error": "ConcurrentModificationError",
+            "conflict_type": "storage",
+            "status": "rejected",
             "record_id": self.record_id,
             "expected_hash": self.expected_hash,
             "actual_hash": self.actual_hash,

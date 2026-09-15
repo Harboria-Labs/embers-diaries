@@ -7,10 +7,18 @@ Memory KV injection, context building, embedding pipeline.
 from .context import ContextBuilder
 from .embeddings import EmbeddingPipeline
 from .memory_protocol import MemoryProtocol
+from .conflict_protocol import (
+    conflict_payload, conflicts_for, map_conflict, open_conflicts,
+    transition_conflict,
+)
 from .conflict_policy import install as install_conflict_policy
 from .lifecycle_bind import bind as bind_lifecycle
 
 install_conflict_policy()
 bind_lifecycle(MemoryProtocol)
 
-__all__ = ["ContextBuilder", "EmbeddingPipeline", "MemoryProtocol"]
+__all__ = [
+    "ContextBuilder", "EmbeddingPipeline", "MemoryProtocol",
+    "conflict_payload", "conflicts_for", "map_conflict", "open_conflicts",
+    "transition_conflict",
+]

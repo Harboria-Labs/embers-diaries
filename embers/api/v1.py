@@ -3,13 +3,21 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Header, HTTPException, Query
+from fastapi.responses import JSONResponse
 
 from ..core.evidence import Evidence
+from ..core.errors import ConcurrentModificationError
 from ..core.failure import Failure
 from ..core.proposal import MemoryProposal
 from ..core.types import SourceType
 from ..identity.registry import AgentRegistry
 from ..integration import MemoryProtocol
+from ..integration.conflict_protocol import (
+    conflicts_for as conflict_contract_for,
+    map_conflict as conflict_contract_map,
+    open_conflicts as conflict_contract_open,
+    transition_conflict as conflict_contract_transition,
+)
 
 router = APIRouter(prefix="/v1")
 
@@ -38,6 +46,15 @@ def require_agent(db, agent_id: str | None, token: str | None):
         return _reg(db).authenticate(agent_id, token)
     except PermissionError as e:
         raise HTTPException(401, str(e)) from e
+
+
+def require_namespace(db, namespace: str, agent_id: str,
+                      operation: str = "read") -> None:
+    """Apply the configured namespace ACL to an authenticated v1 caller."""
+    try:
+        db.require_namespace_access(namespace, agent_id, operation)
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
 
 
 def _lobby_context(db, agent, requested_session_id: str | None,
@@ -98,7 +115,10 @@ async def memory_write(
     content = body.get("content")
     if content is None:
         raise HTTPException(400, "content required")
-    rid = _proto(db).remember(
+    protocol = _proto(db)
+    namespace = body.get("namespace") or protocol.namespace
+    require_namespace(db, namespace, agent.agent_id, "write")
+    rid = protocol.remember(
         content,
         tags=body.get("tags"),
         confidence=body.get("confidence", 1.0),
@@ -124,11 +144,14 @@ async def memory_recall(
 ):
     from . import _get_db
     db = _get_db()
-    require_agent(db, x_ember_agent_id, x_ember_token)
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
     query = body.get("query", "")
     if not query:
         raise HTTPException(400, "query required")
-    result = _proto(db).recall(
+    protocol = _proto(db)
+    namespace = body.get("namespace") or protocol.namespace
+    require_namespace(db, namespace, agent.agent_id)
+    result = protocol.recall(
         query,
         top_k=body.get("top_k", 10),
         namespace=body.get("namespace"),
@@ -149,11 +172,58 @@ async def memory_read(
     """Read one record through the same visibility rules as ``EmberDB.get``."""
     from . import _get_db, _serialize_record
     db = _get_db()
-    require_agent(db, x_ember_agent_id, x_ember_token)
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
     record = db.get(record_id, include_deprecated, include_superseded)
     if record is None:
         raise HTTPException(404, "Record not found")
+    require_namespace(db, record.namespace, agent.agent_id)
     return _serialize_record(record)
+
+
+@router.put("/memory/{record_id}")
+async def memory_update(
+    record_id: str,
+    body: dict,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    """CAS update; stale expected_hash returns a structured storage conflict."""
+    from . import _get_db
+    db = _get_db()
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    expected_hash = body.get("expected_hash")
+    if not expected_hash:
+        raise HTTPException(400, "expected_hash required")
+    data = body.get("data")
+    if not isinstance(data, dict):
+        raise HTTPException(400, "data must be an object")
+    record = db.get(
+        record_id, include_deprecated=True, include_superseded=True)
+    if record is None:
+        raise HTTPException(404, "Record not found")
+    try:
+        db.require_namespace_access(record.namespace, agent.agent_id, "read")
+        db.require_namespace_access(record.namespace, agent.agent_id, "write")
+        new_id, old_id = db.update(
+            record_id,
+            data,
+            written_by=agent.agent_id,
+            agent_id=agent.agent_id,
+            session_id=body.get("session_id"),
+            creation_reason=body.get("creation_reason"),
+            expected_hash=expected_hash,
+        )
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except ConcurrentModificationError as exc:
+        return JSONResponse(status_code=409, content=exc.to_dict())
+    current = db.get(new_id)
+    return {
+        "record_id": new_id,
+        "superseded_record_id": old_id,
+        "content_hash": current.content_hash,
+        "version": current.version,
+    }
 
 
 @router.post("/memory/query")
@@ -165,9 +235,11 @@ async def memory_query(
     """Run an indexed document query without duplicating query behavior."""
     from . import _get_db, _serialize_record
     db = _get_db()
-    require_agent(db, x_ember_agent_id, x_ember_token)
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    namespace = body.get("namespace", "default")
+    require_namespace(db, namespace, agent.agent_id)
     records = db.query(
-        body.get("namespace", "default"),
+        namespace,
         body.get("filters"),
         body.get("tags"),
         limit=body.get("limit", 100),
@@ -191,8 +263,16 @@ async def memory_search(
     """Run the core full-text search and preserve its relevance ordering."""
     from . import _get_db, _serialize_record
     db = _get_db()
-    require_agent(db, x_ember_agent_id, x_ember_token)
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    if namespace is not None:
+        require_namespace(db, namespace, agent.agent_id)
     results = db.search(q, namespace, top_k)
+    if namespace is None:
+        results = [
+            (record, score) for record, score in results
+            if db.check_namespace_access(
+                record.namespace, agent.agent_id, "read")
+        ]
     return {
         "query": q,
         "results": [
@@ -211,7 +291,11 @@ async def memory_history(
     """Return the complete supersession chain, oldest version first."""
     from . import _get_db, _serialize_record
     db = _get_db()
-    require_agent(db, x_ember_agent_id, x_ember_token)
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    root = db.get(
+        record_id, include_deprecated=True, include_superseded=True)
+    if root is not None:
+        require_namespace(db, root.namespace, agent.agent_id)
     return {
         "history": [
             _serialize_record(record) for record in db.get_history(record_id)
@@ -229,13 +313,131 @@ async def memory_graph(
     """Return graph neighbors up to ``depth``, matching ``ember_get_graph``."""
     from . import _get_db, _serialize_record
     db = _get_db()
-    require_agent(db, x_ember_agent_id, x_ember_token)
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    root = db.get(
+        record_id, include_deprecated=True, include_superseded=True)
+    if root is not None:
+        require_namespace(db, root.namespace, agent.agent_id)
     neighbors = db.neighbors(record_id, depth=depth)
+    neighbors = [
+        record for record in neighbors
+        if db.check_namespace_access(record.namespace, agent.agent_id, "read")
+    ]
     return {
         "record_id": record_id,
         "depth": depth,
         "neighbors": [_serialize_record(record) for record in neighbors],
     }
+
+
+@router.post("/conflicts/map")
+async def map_memory_conflict(
+    body: dict,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    """Map an authorized same-namespace semantic conflict."""
+    from . import _get_db
+    db = _get_db()
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    memory_a = body.get("memory_a")
+    memory_b = body.get("memory_b")
+    if not memory_a or not memory_b:
+        raise HTTPException(400, "memory_a and memory_b required")
+    try:
+        return conflict_contract_map(
+            db,
+            memory_a=memory_a,
+            memory_b=memory_b,
+            actor_id=agent.agent_id,
+            conflict_type=body.get("conflict_type", "semantic"),
+            note=body.get("note", ""),
+        )
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except KeyError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@router.get("/conflicts/open")
+async def open_memory_conflicts(
+    namespace: str = "memories",
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    """Open and investigating conflicts visible in one namespace."""
+    from . import _get_db
+    db = _get_db()
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    try:
+        conflicts = conflict_contract_open(
+            db, namespace=namespace, actor_id=agent.agent_id)
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    return {
+        "namespace": namespace,
+        "count": len(conflicts),
+        "conflicts": conflicts,
+    }
+
+
+@router.get("/memory/{memory_id}/conflicts")
+async def conflicts_for_memory(
+    memory_id: str,
+    include_closed: bool = False,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    """Mapped conflicts involving a memory, symmetrically on either side."""
+    from . import _get_db
+    db = _get_db()
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    try:
+        conflicts = conflict_contract_for(
+            db,
+            memory_id=memory_id,
+            include_closed=include_closed,
+            actor_id=agent.agent_id,
+        )
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except KeyError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    return {
+        "memory_id": memory_id,
+        "count": len(conflicts),
+        "conflicts": conflicts,
+    }
+
+
+@router.post("/conflicts/{conflict_id}/resolve")
+async def resolve_memory_conflict(
+    conflict_id: str,
+    body: dict,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    """Append an authenticated conflict lifecycle decision."""
+    from . import _get_db
+    db = _get_db()
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    try:
+        return conflict_contract_transition(
+            db,
+            conflict_id=conflict_id,
+            actor_id=agent.agent_id,
+            status=body.get("status", "resolved"),
+            resolution=body.get("resolution", ""),
+            winner_id=body.get("winner_id"),
+        )
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except KeyError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
 
 
 @router.post("/sessions")

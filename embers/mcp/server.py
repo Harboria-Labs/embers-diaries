@@ -15,15 +15,21 @@ from typing import Any
 
 from ..core.evidence import Evidence
 from ..config import EmberConfig, load_config
+from ..core.errors import ConcurrentModificationError
 from ..core.failure import Failure
 from ..core.proposal import MemoryProposal
 from ..core.types import (
-    MemoryStatus, PromotionMethod, ProposalStatus, SourceType, ConflictType,
-    ConflictStatus,
+    MemoryStatus, PromotionMethod, ProposalStatus, SourceType,
 )
 from ..db import EmberDB
 from ..identity.registry import AgentRegistry
 from ..integration import MemoryProtocol
+from ..integration.conflict_protocol import (
+    conflicts_for as conflict_contract_for,
+    map_conflict as conflict_contract_map,
+    open_conflicts as conflict_contract_open,
+    transition_conflict as conflict_contract_transition,
+)
 from .tools import TOOLS
 
 PROTOCOL = "2024-11-05"
@@ -91,6 +97,9 @@ class EmberMCP:
 
         if name == "ember_write":
             agent = self._auth(args)
+            namespace = args.get("namespace") or self.protocol.namespace
+            self.db.require_namespace_access(
+                namespace, agent.agent_id, "write")
             content = args["content"]
             subject = args.get("subject")
             if subject is not None:
@@ -107,17 +116,55 @@ class EmberMCP:
             if args.get("session_id") and self.db.get_session(args["session_id"]):
                 self.db.record_memory_write(
                     args["session_id"], rid, changed_by=agent.agent_id)
+            possible_conflicts = []
+            if self.db.check_namespace_access(
+                    namespace, agent.agent_id, "read"):
+                possible_conflicts = (
+                    getattr(self.protocol, "_last_conflict_hints", []) or [])
             return _text({
                 "id": rid,
                 "agent_id": agent.agent_id,
-                "possible_conflicts": getattr(self.protocol, "_last_conflict_hints", []) or [],
+                "possible_conflicts": possible_conflicts,
+            })
+
+        if name == "ember_update":
+            agent = self._auth(args)
+            record = self.db.get(
+                args["record_id"], include_deprecated=True,
+                include_superseded=True)
+            if record is None:
+                return _err("not found")
+            self.db.require_namespace_access(
+                record.namespace, agent.agent_id, "read")
+            self.db.require_namespace_access(
+                record.namespace, agent.agent_id, "write")
+            try:
+                new_id, old_id = self.db.update(
+                    args["record_id"],
+                    args["data"],
+                    written_by=agent.agent_id,
+                    agent_id=agent.agent_id,
+                    session_id=args.get("session_id"),
+                    creation_reason=args.get("creation_reason"),
+                    expected_hash=args["expected_hash"],
+                )
+            except ConcurrentModificationError as exc:
+                return _err(json.dumps(exc.to_dict()))
+            current = self.db.get(new_id)
+            return _text({
+                "record_id": new_id,
+                "superseded_record_id": old_id,
+                "content_hash": current.content_hash,
+                "version": current.version,
             })
 
         if name == "ember_read":
-            self._auth(args)
+            agent = self._auth(args)
             rec = self.db.get(args["record_id"], True, True)
             if rec is None:
                 return _err("not found")
+            self.db.require_namespace_access(
+                rec.namespace, agent.agent_id, "read")
             return _text({
                 "id": rec.id,
                 "namespace": rec.namespace,
@@ -130,14 +177,27 @@ class EmberMCP:
             })
 
         if name == "ember_search":
-            self._auth(args)
+            agent = self._auth(args)
+            namespace = args.get("namespace")
+            if namespace is not None:
+                self.db.require_namespace_access(
+                    namespace, agent.agent_id, "read")
             results = self.db.search(
-                args["query"], args.get("namespace"), int(args.get("top_k", 10)),
+                args["query"], namespace, int(args.get("top_k", 10)),
             )
+            if namespace is None:
+                results = [
+                    (record, score) for record, score in results
+                    if self.db.check_namespace_access(
+                        record.namespace, agent.agent_id, "read")
+                ]
             return _text([{"id": r.id, "score": s, "data": r.data} for r, s in results])
 
         if name == "ember_query":
-            self._auth(args)
+            agent = self._auth(args)
+            namespace = args.get("namespace", self.protocol.namespace)
+            self.db.require_namespace_access(
+                namespace, agent.agent_id, "read")
             filters = dict(args.get("filters") or {})
             if args.get("session_id") is not None:
                 if ("session_id" in filters
@@ -146,7 +206,7 @@ class EmberMCP:
                         "session_id conflicts with filters.session_id")
                 filters["session_id"] = args["session_id"]
             records = self.db.query(
-                namespace=args.get("namespace", self.protocol.namespace),
+                namespace=namespace,
                 filters=filters or None,
                 tags=args.get("tags"),
                 limit=int(args.get("limit", 100)),
@@ -159,7 +219,10 @@ class EmberMCP:
             })
 
         if name == "ember_recall":
-            self._auth(args)
+            agent = self._auth(args)
+            namespace = args.get("namespace") or self.protocol.namespace
+            self.db.require_namespace_access(
+                namespace, agent.agent_id, "read")
             result = self.protocol.recall(
                 args["query"],
                 top_k=int(args.get("top_k", 10)),
@@ -169,14 +232,31 @@ class EmberMCP:
             return _text(result)
 
         if name == "ember_get_history":
-            self._auth(args)
+            agent = self._auth(args)
+            root = self.db.get(
+                args["record_id"], include_deprecated=True,
+                include_superseded=True)
+            if root is not None:
+                self.db.require_namespace_access(
+                    root.namespace, agent.agent_id, "read")
             hist = self.db.get_history(args["record_id"])
             return _text([{"id": r.id, "data": r.data} for r in hist])
 
         if name == "ember_get_graph":
-            self._auth(args)
+            agent = self._auth(args)
+            root = self.db.get(
+                args["record_id"], include_deprecated=True,
+                include_superseded=True)
+            if root is not None:
+                self.db.require_namespace_access(
+                    root.namespace, agent.agent_id, "read")
             neighbors = self.db.neighbors(
                 args["record_id"], depth=int(args.get("depth", 1)))
+            neighbors = [
+                record for record in neighbors
+                if self.db.check_namespace_access(
+                    record.namespace, agent.agent_id, "read")
+            ]
             return _text([{"id": r.id, "data": r.data} for r in neighbors])
 
         if name == "ember_get_session":
@@ -317,95 +397,53 @@ class EmberMCP:
 
         if name == "ember_map_conflict":
             agent = self._auth(args)
-            ctype = ConflictType(args.get("conflict_type", "semantic"))
-            cid = self.db.map_conflict(
-                args["memory_a"], args["memory_b"],
-                detected_by=agent.agent_id,
-                conflict_type=ctype,
-                note=args.get("note", ""))
-            return _text({"conflict_id": cid})
+            return _text(conflict_contract_map(
+                self.db,
+                memory_a=args["memory_a"],
+                memory_b=args["memory_b"],
+                actor_id=agent.agent_id,
+                conflict_type=args.get("conflict_type", "semantic"),
+                note=args.get("note", ""),
+            ))
 
         if name == "ember_conflicts_for":
-            self._auth(args)
-            conflicts = self.db.conflicts_for(
-                args["memory_id"],
-                include_closed=args.get("include_closed", False))
-            return _text([{
-                "conflict_id": c.conflict_id,
-                "namespace": c.namespace,
-                "memory_a": c.memory_a,
-                "memory_b": c.memory_b,
-                "conflict_type": c.conflict_type.value,
-                "status": c.status.value,
-                "detected_by": c.detected_by,
-                "resolution": c.resolution,
-                "note": c.note,
-            } for c in conflicts])
+            agent = self._auth(args)
+            return _text(conflict_contract_for(
+                self.db,
+                memory_id=args["memory_id"],
+                include_closed=args.get("include_closed", False),
+                actor_id=agent.agent_id,
+            ))
 
         if name == "ember_open_conflicts":
-            self._auth(args)
-            ns = args.get("namespace") or self.protocol.namespace
-            queue = {ConflictStatus.OPEN, ConflictStatus.INVESTIGATING}
-            found = []
-            for c in self.db.conflict_records(namespace=ns):
-                if c.status in queue:
-                    found.append({
-                        "conflict_id": c.conflict_id,
-                        "namespace": c.namespace,
-                        "memory_a": c.memory_a,
-                        "memory_b": c.memory_b,
-                        "conflict_type": c.conflict_type.value,
-                        "status": c.status.value,
-                        "detected_by": c.detected_by,
-                        "resolution": c.resolution,
-                        "note": c.note,
-                    })
-            return _text(found)
+            agent = self._auth(args)
+            return _text(conflict_contract_open(
+                self.db,
+                namespace=args.get("namespace") or self.protocol.namespace,
+                actor_id=agent.agent_id,
+            ))
 
         if name == "ember_resolve_conflict":
             agent = self._auth(args)
-            raw = (args.get("status") or "resolved").lower()
-            mapping = {
-                "investigating": ConflictStatus.INVESTIGATING,
-                "resolved": ConflictStatus.RESOLVED,
-                "accepted_both": ConflictStatus.ACCEPTED_BOTH,
-                "dismissed": ConflictStatus.SUPERSEDED,
-            }
-            status = mapping.get(raw)
-            if status is None:
-                return _err(
-                    "status must be investigating | resolved | accepted_both | dismissed")
-            note = args.get("resolution") or ""
-            if args.get("winner_id"):
-                note = (note + f" winner={args['winner_id']}").strip()
-            if raw == "dismissed" and "dismissed" not in note.lower():
-                note = (note + " dismissed: not a conflict").strip()
-            new_id, old_id = self.db.update_conflict_status(
-                args["conflict_id"], status, note, changed_by=agent.agent_id)
-            return _text({
-                "conflict_id": new_id,
-                "superseded": old_id,
-                "status": status.value,
-            })
+            return _text(conflict_contract_transition(
+                self.db,
+                conflict_id=args["conflict_id"],
+                actor_id=agent.agent_id,
+                status=args.get("status") or "resolved",
+                resolution=args.get("resolution") or "",
+                winner_id=args.get("winner_id"),
+            ))
 
         if name == "ember_reflect":
-            self._auth(args)
+            agent = self._auth(args)
+            ns = args.get("namespace") or self.protocol.namespace
+            self.db.require_namespace_access(ns, agent.agent_id, "read")
+            self.db.require_namespace_access(ns, agent.agent_id, "write")
             annotations = self.protocol.reflect(
                 namespace=args.get("namespace"),
                 limit=int(args.get("limit", 50)))
-            ns = args.get("namespace") or self.protocol.namespace
-            queue = {ConflictStatus.OPEN, ConflictStatus.INVESTIGATING}
-            open_conflicts = []
-            for c in self.db.conflict_records(namespace=ns):
-                if c.status in queue:
-                    open_conflicts.append({
-                        "conflict_id": c.conflict_id,
-                        "namespace": c.namespace,
-                        "memory_a": c.memory_a,
-                        "memory_b": c.memory_b,
-                        "status": c.status.value,
-                        "note": c.note,
-                    })
+            open_conflicts = conflict_contract_open(
+                self.db, namespace=ns, actor_id=agent.agent_id)
             return _text({
                 "reflections": len(annotations),
                 "annotations": [

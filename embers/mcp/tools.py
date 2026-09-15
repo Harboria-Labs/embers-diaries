@@ -67,6 +67,27 @@ TOOLS = [
         },
     },
     {
+        "name": "ember_update",
+        "description": (
+            "Create a new immutable version of a memory using expected_hash "
+            "as an optimistic-concurrency precondition. A stale hash returns "
+            "a structured storage conflict and writes nothing."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "record_id": {"type": "string"},
+                "data": {"type": "object"},
+                "expected_hash": {"type": "string"},
+                "session_id": {"type": "string"},
+                "creation_reason": {"type": "string"},
+                "agent_id": {"type": "string"},
+                "token": {"type": "string"},
+            },
+            "required": ["record_id", "data", "expected_hash"],
+        },
+    },
+    {
         "name": "ember_query",
         "description": (
             "Query records by namespace, exact field filters, and tags. "
@@ -312,7 +333,7 @@ TOOLS = [
     },
     {
         "name": "ember_map_conflict",
-        "description": ("Map a SEMANTIC (or STORAGE) contradiction between two "
+        "description": ("Map a SEMANTIC contradiction between two "
                         "existing memories (spec §7). Neither memory is modified "
                         "or destroyed — this records a CONFLICT record (status "
                         "OPEN) and draws a symmetric contradicts edge between "
@@ -325,8 +346,8 @@ TOOLS = [
             "properties": {
                 "memory_a": {"type": "string"},
                 "memory_b": {"type": "string"},
-                "conflict_type": {"type": "string",
-                    "description": "semantic (default) or storage"},
+                "conflict_type": {"type": "string", "enum": ["semantic"],
+                    "description": "semantic; storage races use ember_update"},
                 "note": {"type": "string"},
                 "agent_id": {"type": "string"},
                 "token": {"type": "string"},
