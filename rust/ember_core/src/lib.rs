@@ -4,7 +4,7 @@ use pyo3::exceptions::{PyTypeError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::{PyBool, PyBytes, PyDict, PyFloat, PyInt, PyList, PyString, PyTuple};
 use pyo3::IntoPyObjectExt;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
@@ -14,6 +14,267 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 static TEMP_FILE_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct GraphEdge {
+    target: String,
+    edge_type: String,
+    weight: f64,
+    edge_id: String,
+    label: String,
+    #[serde(default)]
+    metadata: Value,
+}
+
+#[derive(Default, Deserialize, Serialize)]
+struct GraphState {
+    #[serde(default)]
+    outgoing: HashMap<String, Vec<GraphEdge>>,
+    #[serde(default)]
+    incoming: HashMap<String, Vec<GraphEdge>>,
+}
+
+fn load_graph(path: &Path) -> io::Result<GraphState> {
+    match fs::read(path) {
+        Ok(bytes) => serde_json::from_slice(&bytes)
+            .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error)),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(GraphState::default()),
+        Err(error) => Err(error),
+    }
+}
+
+fn save_graph(path: &Path, graph: &GraphState) -> PyResult<()> {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    let bytes = serde_json::to_vec(graph)
+        .map_err(|error| PyValueError::new_err(format!("invalid graph state: {error}")))?;
+    atomic_replace_file(path, &bytes)?;
+    Ok(())
+}
+
+fn acquire_graph_lock(path: &Path) -> io::Result<File> {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    let lock_path = path.with_extension("json.lock");
+    let file = OpenOptions::new()
+        .create(true)
+        .read(true)
+        .write(true)
+        .truncate(false)
+        .open(lock_path)?;
+    file.lock()?;
+    Ok(file)
+}
+
+#[pyfunction]
+#[pyo3(signature = (path, from_id, to_id, edge_type, weight, edge_id, label, metadata_json))]
+fn graph_add_edge(
+    path: &str,
+    from_id: &str,
+    to_id: &str,
+    edge_type: &str,
+    weight: f64,
+    edge_id: &str,
+    label: &str,
+    metadata_json: &[u8],
+) -> PyResult<()> {
+    let path = Path::new(path);
+    let _guard = acquire_graph_lock(path)?;
+    let mut graph = load_graph(path)?;
+    let metadata: Value = serde_json::from_slice(metadata_json)
+        .map_err(|error| PyValueError::new_err(format!("invalid graph metadata: {error}")))?;
+    graph
+        .outgoing
+        .entry(from_id.to_owned())
+        .or_default()
+        .push(GraphEdge {
+            target: to_id.to_owned(),
+            edge_type: edge_type.to_owned(),
+            weight,
+            edge_id: edge_id.to_owned(),
+            label: label.to_owned(),
+            metadata: metadata.clone(),
+        });
+    graph
+        .incoming
+        .entry(to_id.to_owned())
+        .or_default()
+        .push(GraphEdge {
+            target: from_id.to_owned(),
+            edge_type: edge_type.to_owned(),
+            weight,
+            edge_id: edge_id.to_owned(),
+            label: label.to_owned(),
+            metadata,
+        });
+    save_graph(path, &graph)
+}
+
+#[pyfunction]
+#[pyo3(signature = (path, from_id, to_id, edge_type=None))]
+fn graph_remove_edge(
+    path: &str,
+    from_id: &str,
+    to_id: &str,
+    edge_type: Option<&str>,
+) -> PyResult<()> {
+    let path = Path::new(path);
+    let _guard = acquire_graph_lock(path)?;
+    let mut graph = load_graph(path)?;
+    if let Some(edges) = graph.outgoing.get_mut(from_id) {
+        edges.retain(|edge| {
+            !(edge.target == to_id && edge_type.is_none_or(|kind| edge.edge_type == kind))
+        });
+    }
+    if let Some(edges) = graph.incoming.get_mut(to_id) {
+        edges.retain(|edge| {
+            !(edge.target == from_id && edge_type.is_none_or(|kind| edge.edge_type == kind))
+        });
+    }
+    save_graph(path, &graph)
+}
+
+fn graph_edges<'a>(graph: &'a GraphState, node: &str, direction: &str) -> Vec<&'a GraphEdge> {
+    let mut edges = Vec::new();
+    if matches!(direction, "outgoing" | "both") {
+        edges.extend(graph.outgoing.get(node).into_iter().flatten());
+    }
+    if matches!(direction, "incoming" | "both") {
+        edges.extend(graph.incoming.get(node).into_iter().flatten());
+    }
+    edges
+}
+
+#[pyfunction]
+#[pyo3(signature = (path, operation, node_id="", other_id="", depth=1, edge_type=None, direction="outgoing"))]
+fn graph_query(
+    path: &str,
+    operation: &str,
+    node_id: &str,
+    other_id: &str,
+    depth: usize,
+    edge_type: Option<&str>,
+    direction: &str,
+) -> PyResult<Vec<u8>> {
+    if !matches!(direction, "outgoing" | "incoming" | "both") {
+        return Err(PyValueError::new_err(
+            "direction must be outgoing, incoming, or both",
+        ));
+    }
+    let graph = load_graph(Path::new(path))?;
+    let answer = match operation {
+        "neighbors" => {
+            let mut visited = HashSet::new();
+            let mut frontier = vec![node_id.to_owned()];
+            let mut result = Vec::new();
+            let mut emitted = HashSet::new();
+            for _ in 0..depth {
+                let mut next = Vec::new();
+                for node in frontier {
+                    if !visited.insert(node.clone()) {
+                        continue;
+                    }
+                    for edge in graph_edges(&graph, &node, direction) {
+                        if edge_type.is_some_and(|kind| edge.edge_type != kind) {
+                            continue;
+                        }
+                        if !visited.contains(&edge.target) {
+                            if emitted.insert(edge.target.clone()) {
+                                result.push(edge.target.clone());
+                            }
+                            next.push(edge.target.clone());
+                        }
+                    }
+                }
+                frontier = next;
+            }
+            serde_json::to_value(result).unwrap()
+        }
+        "path" => {
+            if node_id == other_id {
+                serde_json::json!([node_id])
+            } else {
+                let mut visited = HashSet::from([node_id.to_owned()]);
+                let mut queue = std::collections::VecDeque::from([(
+                    node_id.to_owned(),
+                    vec![node_id.to_owned()],
+                )]);
+                let mut found: Option<Vec<String>> = None;
+                while let Some((current, current_path)) = queue.pop_front() {
+                    if current_path.len() > depth {
+                        break;
+                    }
+                    for edge in graph.outgoing.get(&current).into_iter().flatten() {
+                        let mut candidate = current_path.clone();
+                        candidate.push(edge.target.clone());
+                        if edge.target == other_id {
+                            found = Some(candidate);
+                            break;
+                        }
+                        if visited.insert(edge.target.clone()) {
+                            queue.push_back((edge.target.clone(), candidate));
+                        }
+                    }
+                    if found.is_some() {
+                        break;
+                    }
+                }
+                serde_json::to_value(found).unwrap()
+            }
+        }
+        "subgraph" => {
+            let mut nodes = HashSet::new();
+            let mut frontier = vec![node_id.to_owned()];
+            let mut edges = Vec::new();
+            for _ in 0..depth {
+                let mut next = Vec::new();
+                for node in frontier {
+                    if !nodes.insert(node.clone()) {
+                        continue;
+                    }
+                    for edge in graph.outgoing.get(&node).into_iter().flatten() {
+                        let mut value = serde_json::to_value(edge).unwrap();
+                        value
+                            .as_object_mut()
+                            .unwrap()
+                            .insert("from".to_owned(), Value::String(node.clone()));
+                        edges.push(value);
+                        if !nodes.contains(&edge.target) {
+                            next.push(edge.target.clone());
+                        }
+                    }
+                }
+                frontier = next;
+            }
+            nodes.extend(frontier);
+            serde_json::json!({"nodes": nodes, "edges": edges})
+        }
+        "edges" => serde_json::to_value(graph_edges(&graph, node_id, direction)).unwrap(),
+        "connected" => serde_json::to_value(
+            graph
+                .outgoing
+                .get(node_id)
+                .into_iter()
+                .flatten()
+                .filter(|edge| edge_type.is_none_or(|kind| edge.edge_type == kind))
+                .map(|edge| edge.target.clone())
+                .collect::<Vec<_>>(),
+        )
+        .unwrap(),
+        "degree" => Value::from(graph_edges(&graph, node_id, direction).len()),
+        "stats" => {
+            let mut nodes: HashSet<&String> = graph.outgoing.keys().collect();
+            nodes.extend(graph.incoming.keys());
+            let edges: usize = graph.outgoing.values().map(Vec::len).sum();
+            serde_json::json!({"nodes": nodes.len(), "edges": edges})
+        }
+        _ => return Err(PyValueError::new_err("unknown graph operation")),
+    };
+    serde_json::to_vec(&answer)
+        .map_err(|error| PyValueError::new_err(format!("graph result encoding failed: {error}")))
+}
 
 #[pyfunction]
 fn sha256_hex(canonical_bytes: &[u8]) -> String {
@@ -291,6 +552,181 @@ fn atomic_write_new(path: &str, data: &[u8]) -> PyResult<bool> {
 fn atomic_replace(path: &str, data: &[u8]) -> PyResult<()> {
     atomic_replace_file(Path::new(path), data)?;
     Ok(())
+}
+
+#[pyfunction]
+fn validate_provenance(
+    author: &str,
+    agent_id: Option<&str>,
+    session_id: Option<&str>,
+    creation_reason: Option<&str>,
+    derived_from: Vec<String>,
+    enforce_attribution: bool,
+) -> PyResult<()> {
+    let _structured_provenance = (session_id, creation_reason, derived_from);
+    let has_agent = agent_id.is_some_and(|value| !value.is_empty() && value != "system");
+    let has_author = !author.is_empty() && author != "system";
+    if enforce_attribution && !has_agent && !has_author {
+        return Err(PyValueError::new_err(
+            "This store enforces agent attribution (Feature #8): a durable write must carry an agent_id. Write via db.as_agent(agent_id) or set record.agent_id / written_by.",
+        ));
+    }
+    Ok(())
+}
+
+#[pyfunction]
+fn validate_session_transition(current_status: &str, target_status: &str) -> PyResult<()> {
+    if current_status != "active" {
+        return Err(PyValueError::new_err(format!(
+            "Session is already closed with status {current_status}."
+        )));
+    }
+    if !matches!(target_status, "completed" | "abandoned") {
+        return Err(PyValueError::new_err(
+            "Session status must be completed or abandoned.",
+        ));
+    }
+    Ok(())
+}
+
+#[pyfunction]
+fn validate_session_activity(current_status: &str) -> PyResult<()> {
+    if current_status != "active" {
+        return Err(PyValueError::new_err(format!(
+            "Session is already closed with status {current_status}."
+        )));
+    }
+    Ok(())
+}
+
+#[pyfunction]
+fn validate_conflict_transition(
+    current_status: &str,
+    target_status: &str,
+    resolution: &str,
+    winner_id: Option<&str>,
+    memory_a: &str,
+    memory_b: &str,
+) -> PyResult<()> {
+    if matches!(current_status, "resolved" | "accepted_both" | "superseded") {
+        return Err(PyValueError::new_err(format!(
+            "Conflict is already closed with status {current_status}."
+        )));
+    }
+    let terminal = matches!(target_status, "resolved" | "accepted_both" | "superseded");
+    if target_status != "investigating" && !terminal {
+        return Err(PyValueError::new_err(
+            "Conflict status must be investigating, resolved, accepted_both, or superseded.",
+        ));
+    }
+    if terminal && resolution.trim().is_empty() {
+        return Err(PyValueError::new_err(format!(
+            "A resolution is required when status is {target_status}."
+        )));
+    }
+    if let Some(winner) = winner_id {
+        if target_status != "resolved" {
+            return Err(PyValueError::new_err(
+                "winner_id is only valid for resolved conflicts.",
+            ));
+        }
+        if winner != memory_a && winner != memory_b {
+            return Err(PyValueError::new_err(
+                "winner_id must be one of the conflict's two memory ids.",
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[pyfunction]
+fn write_record_transaction(
+    root: &str,
+    wal_id: &str,
+    pending_timestamp: &str,
+    commit_timestamp: &str,
+    record_id: &str,
+    data_json: &[u8],
+    record_bytes: &[u8],
+) -> PyResult<bool> {
+    let root = Path::new(root);
+    let data: Value = serde_json::from_slice(data_json)
+        .map_err(|error| PyValueError::new_err(format!("invalid record WAL data: {error}")))?;
+    append_json(
+        &root.join("wal.jsonl"),
+        &PendingWalEntry {
+            wal_id,
+            operation: "write",
+            record_id,
+            data,
+            status: "PENDING",
+            timestamp: pending_timestamp,
+        },
+    )?;
+    let created = atomic_write_new_file(
+        &root.join("records").join(format!("{record_id}.ember")),
+        record_bytes,
+    )?;
+    append_json(
+        &root.join("wal.jsonl"),
+        &CommittedWalEntry {
+            wal_id,
+            status: "COMMITTED",
+            timestamp: commit_timestamp,
+        },
+    )?;
+    Ok(created)
+}
+
+#[derive(Deserialize)]
+struct RecoveryWalEntry {
+    wal_id: String,
+    operation: String,
+    record_id: String,
+    data: Value,
+}
+
+#[pyfunction]
+fn recover_record_transactions(root: &str, commit_timestamp: &str) -> PyResult<Vec<u8>> {
+    let root = Path::new(root);
+    let mut recovered = Vec::new();
+    let mut failed = Vec::new();
+    for line in pending_wal_lines(&root.join("wal.jsonl"))? {
+        let attempt = (|| -> PyResult<Option<String>> {
+            let entry: RecoveryWalEntry = serde_json::from_slice(&line).map_err(|error| {
+                PyValueError::new_err(format!("invalid pending WAL entry: {error}"))
+            })?;
+            if entry.operation != "write" {
+                return Ok(None);
+            }
+            let mut record_bytes = Vec::new();
+            rmpv::encode::write_value(&mut record_bytes, &json_to_msgpack(entry.data)).map_err(
+                |error| PyValueError::new_err(format!("record encoding failed: {error}")),
+            )?;
+            atomic_write_new_file(
+                &root
+                    .join("records")
+                    .join(format!("{}.ember", entry.record_id)),
+                &record_bytes,
+            )?;
+            append_json(
+                &root.join("wal.jsonl"),
+                &CommittedWalEntry {
+                    wal_id: &entry.wal_id,
+                    status: "COMMITTED",
+                    timestamp: commit_timestamp,
+                },
+            )?;
+            Ok(Some(entry.record_id))
+        })();
+        match attempt {
+            Ok(Some(record_id)) => recovered.push(record_id),
+            Ok(None) => {}
+            Err(error) => failed.push(error.to_string()),
+        }
+    }
+    serde_json::to_vec(&serde_json::json!({"recovered": recovered, "failed": failed}))
+        .map_err(|error| PyValueError::new_err(format!("recovery report encoding failed: {error}")))
 }
 
 fn supersession_path(root: &Path, record_id: &str) -> PathBuf {
@@ -701,6 +1137,15 @@ fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(encode_record, module)?)?;
     module.add_function(wrap_pyfunction!(decode_record, module)?)?;
     module.add_function(wrap_pyfunction!(canonical_record_bytes, module)?)?;
+    module.add_function(wrap_pyfunction!(graph_add_edge, module)?)?;
+    module.add_function(wrap_pyfunction!(graph_remove_edge, module)?)?;
+    module.add_function(wrap_pyfunction!(graph_query, module)?)?;
+    module.add_function(wrap_pyfunction!(validate_provenance, module)?)?;
+    module.add_function(wrap_pyfunction!(validate_session_transition, module)?)?;
+    module.add_function(wrap_pyfunction!(validate_session_activity, module)?)?;
+    module.add_function(wrap_pyfunction!(validate_conflict_transition, module)?)?;
+    module.add_function(wrap_pyfunction!(write_record_transaction, module)?)?;
+    module.add_function(wrap_pyfunction!(recover_record_transactions, module)?)?;
     module.add_class::<StoreFileLock>()?;
     module.add("BACKEND", "rust-pyo3")?;
     Ok(())

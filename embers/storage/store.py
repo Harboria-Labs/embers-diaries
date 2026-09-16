@@ -11,7 +11,9 @@ Directory layout:
 """
 
 import os
+import json
 import threading
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -26,6 +28,8 @@ try:
         acquire_store_lock as _acquire_store_file_lock,
         atomic_replace as _atomic_replace,
         atomic_write_new as _atomic_write_new,
+        recover_record_transactions as _recover_record_transactions,
+        write_record_transaction as _write_record_transaction,
     )
     STORE_LOCK_BACKEND = "rust-pyo3"
 except ImportError:
@@ -68,6 +72,9 @@ except ImportError:
             if temp.exists():
                 temp.unlink()
             raise
+
+    _recover_record_transactions = None
+    _write_record_transaction = None
 
 
 class _StoreTransactionLock:
@@ -149,6 +156,15 @@ class PhysicalStore:
 
     def _recover(self):
         """Replay any uncommitted WAL entries on startup."""
+        if _recover_record_transactions is not None:
+            report = json.loads(bytes(_recover_record_transactions(
+                str(self.root), datetime.now(timezone.utc).isoformat())))
+            recovered = report.get("recovered", [])
+            if recovered:
+                print(f"[EmberStore] Recovered {len(recovered)} uncommitted WAL entries.")
+            for error in report.get("failed", []):
+                print(f"[EmberStore] Recovery failed: {error}")
+            return
         pending = self.wal.recover()
         if pending:
             print(f"[EmberStore] Recovering {len(pending)} uncommitted WAL entries...")
@@ -170,6 +186,17 @@ class PhysicalStore:
         """
         with self._lock:
             record_dict = record.to_dict()
+
+            if _write_record_transaction is not None:
+                now = datetime.now(timezone.utc).isoformat()
+                _write_record_transaction(
+                    str(self.root), str(uuid.uuid4()), now,
+                    datetime.now(timezone.utc).isoformat(), record.id,
+                    json.dumps(record_dict, ensure_ascii=False,
+                               separators=(",", ":")).encode("utf-8"),
+                    encode(record_dict))
+                self._increment_record_count()
+                return record.id
 
             # Step 1: Log to WAL (PENDING)
             wal_entry = self.wal.log("write", record.id, record_dict)

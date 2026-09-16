@@ -39,6 +39,12 @@ from .index.vector import VectorIndex
 from .index.fulltext import FullTextIndex
 from .query.engine import QueryEngine
 from .namespace.manager import NamespaceManager
+from embers._native import (
+    validate_conflict_transition as _validate_conflict_transition,
+    validate_provenance as _validate_provenance,
+    validate_session_activity as _validate_session_activity,
+    validate_session_transition as _validate_session_transition,
+)
 
 
 def _safe_print(text: str) -> None:
@@ -234,17 +240,10 @@ class EmberDB:
         enforcement it must be rejected — otherwise the default would quietly
         attribute everything to one fake "system" author.
         """
-        if not self._enforce_attribution:
-            return
-        agent = record.agent_id
-        author = record.written_by
-        has_agent = agent and agent != "system"
-        has_author = author and author != "system"
-        if not (has_agent or has_author):
-            raise ValueError(
-                "This store enforces agent attribution (Feature #8): a durable "
-                "write must carry an agent_id. Write via db.as_agent(agent_id) "
-                "or set record.agent_id / written_by.")
+        _validate_provenance(
+            record.written_by, record.agent_id, record.session_id,
+            record.creation_reason, list(record.derived_from),
+            self._enforce_attribution)
 
     def as_agent(self, agent_id: str, session_id: str | None = None) -> AgentView:
         """Feature #8 — get a per-agent handle onto this shared store.
@@ -931,32 +930,9 @@ class EmberDB:
         self._ns_manager.require_read(head.namespace, changed_by)
         self._ns_manager.require_write(head.namespace, changed_by)
         status = ConflictStatus(status)
-        terminal = {
-            ConflictStatus.RESOLVED,
-            ConflictStatus.ACCEPTED_BOTH,
-            ConflictStatus.SUPERSEDED,
-        }
-        if conflict.status in terminal:
-            raise ValueError(
-                f"Conflict {conflict.conflict_id} is already closed with "
-                f"status {conflict.status.value}.")
-        if status not in {
-                ConflictStatus.INVESTIGATING,
-                ConflictStatus.RESOLVED,
-                ConflictStatus.ACCEPTED_BOTH,
-                ConflictStatus.SUPERSEDED}:
-            raise ValueError(
-                "Conflict status must be investigating, resolved, "
-                "accepted_both, or superseded.")
-        if status in terminal and not resolution.strip():
-            raise ValueError(
-                f"A resolution is required when status is {status.value}.")
-        if winner_id is not None:
-            if status != ConflictStatus.RESOLVED:
-                raise ValueError("winner_id is only valid for resolved conflicts.")
-            if winner_id not in (conflict.memory_a, conflict.memory_b):
-                raise ValueError(
-                    "winner_id must be one of the conflict's two memory ids.")
+        _validate_conflict_transition(
+            conflict.status.value, status.value, resolution, winner_id,
+            conflict.memory_a, conflict.memory_b)
         payload = conflict.to_record_payload()
         payload["status"] = status.value
         if resolution:
@@ -1050,6 +1026,7 @@ class EmberDB:
                          changed_by: str = "system") -> str:
         """Log a discovery/proposal id against a session's curated account."""
         session = self._require_session(session_id)
+        _validate_session_activity(session.status.value)
         if discovery_id not in session.discoveries:
             session.discoveries.append(discovery_id)
         return self._update_session(session, changed_by, "session discovery logged")
@@ -1058,6 +1035,7 @@ class EmberDB:
                        changed_by: str = "system") -> str:
         """Log a failure id (§13) against a session's curated account."""
         session = self._require_session(session_id)
+        _validate_session_activity(session.status.value)
         if failure_id not in session.failures:
             session.failures.append(failure_id)
         return self._update_session(session, changed_by, "session failure logged")
@@ -1066,6 +1044,7 @@ class EmberDB:
                             changed_by: str = "system") -> str:
         """Log a durable memory id against a session's curated account."""
         session = self._require_session(session_id)
+        _validate_session_activity(session.status.value)
         if memory_id not in session.memory_writes:
             session.memory_writes.append(memory_id)
         return self._update_session(session, changed_by, "session memory write logged")
@@ -1076,12 +1055,14 @@ class EmberDB:
         """Close a session (COMPLETED or ABANDONED) with a summary and an
         `ended_at` timestamp — as a new append-only version."""
         session = self._require_session(session_id)
-        session.status = SessionStatus(status)
+        status = SessionStatus(status)
+        _validate_session_transition(session.status.value, status.value)
+        session.status = status
         session.ended_at = datetime.utcnow()
         if summary:
             session.summary = summary
         return self._update_session(
-            session, changed_by, f"session → {SessionStatus(status).value}")
+            session, changed_by, f"session → {status.value}")
 
     def _require_session(self, session_id: str) -> Session:
         session = self.get_session(session_id)

@@ -11,6 +11,10 @@ Ember stores agent memory as an append-only record log. Updates create a new ver
 
 ## Install
 
+Published wheels include the Rust core. Installing directly from source needs
+a current Rust toolchain; `pip` invokes Maturin and builds `embers._native`
+automatically.
+
 ```bash
 pip install git+https://github.com/ticketguy/embers-diaries.git
 ```
@@ -220,8 +224,8 @@ These are Ember's own product rules. They are implemented as first-class types, 
 
 | Component | Status |
 |-----------|--------|
-| Core record engine (write/read/supersession/WAL) | Implemented |
-| Index layer (graph/timeline/vector/full-text) | Implemented |
+| Core record engine (write/read/supersession/WAL) | Implemented; correctness-critical transactions are Rust-owned |
+| Index layer (graph/timeline/vector/full-text) | Implemented; causal graph storage and traversal are Rust-owned |
 | Query engine (document/graph/similarity/BM25) | Implemented |
 | Namespaces & access control | Implemented |
 | Cognitive layer (decay/conflicts/consolidation/episodes/reflection) | Implemented (heuristic engines) |
@@ -233,6 +237,7 @@ These are Ember's own product rules. They are implemented as first-class types, 
 Run the suite for the current count:
 
 ```bash
+# Compiles and installs the Rust extension in editable mode.
 pip install -e ".[dev]"
 pytest tests/ -v
 ```

@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
 
 [project]
 name = "embers-diaries"
@@ -43,8 +43,12 @@ dev = [
 [project.scripts]
 ember-mcp = "embers.mcp.server:main"
 
-[tool.setuptools.packages.find]
-include = ["embers*"]
+[tool.maturin]
+manifest-path = "rust/ember_core/Cargo.toml"
+python-source = "."
+python-packages = ["embers"]
+module-name = "embers._native"
+bindings = "pyo3"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
