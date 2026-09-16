@@ -92,11 +92,44 @@ def test_lobby_rejects_another_agents_session(client):
     assert response.status_code == 403
 
 
+def test_http_agent_can_corroborate_and_close(client):
+    author = _auth(client)
+    started = client.post("/v1/sessions", headers=author,
+                          json={"task": "consensus board", "namespace": "rest"})
+    sid = started.json()["session_id"]
+    post = client.post("/v1/lobby/publish", headers=author, json={
+        "session_id": sid, "task": "consensus board", "room": "task",
+        "type": "discovery", "body": "parser streams",
+    }).json()
+
+    other = _auth(client)
+    other_session = client.post("/v1/sessions", headers=other,
+                                json={"task": "consensus board", "namespace": "rest"})
+    other_sid = other_session.json()["session_id"]
+    client.post("/v1/lobby/publish", headers=other, json={
+        "session_id": other_sid, "task": "consensus board", "room": "task",
+        "type": "question", "body": "did you see the stream?",
+    })
+
+    marked = client.post("/v1/lobby/corroborate", headers=other, json={
+        "session_id": other_sid, "post_id": post["post_id"],
+    })
+    assert marked.status_code == 200, marked.text
+    assert any(row.get("agent_id") == other["X-Ember-Agent-Id"]
+               for row in marked.json().get("corroborations", []))
+
+    closed = client.post("/v1/lobby/close", headers=author, json={"session_id": sid})
+    assert closed.status_code == 200, closed.text
+    assert closed.json()["status"] == "closed"
+
+
 @pytest.mark.parametrize("method,path", [
     ("post", "/v1/lobby/publish"),
     ("get", "/v1/lobby/updates"),
     ("get", "/v1/lobby/status"),
     ("post", "/v1/lobby/promote"),
+    ("post", "/v1/lobby/corroborate"),
+    ("post", "/v1/lobby/close"),
 ])
 def test_lobby_routes_require_authentication(client, method, path):
     kwargs = {"json": {}} if method == "post" else {}

@@ -50,7 +50,9 @@ def install(app) -> None:
     bind_feedback(EmberDB)
     v1.require_agent = resolve_agent
     from .feedback_routes import router as feedback_router
+    from .http_parity import install as install_http_parity
     app.include_router(feedback_router)
+    install_http_parity(app)
 
     @app.middleware("http")
     async def bind_session_header(request, call_next):
