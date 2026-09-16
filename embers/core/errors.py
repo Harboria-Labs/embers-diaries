@@ -8,6 +8,26 @@ failure and retry intelligently, rather than a bare message string.
 from __future__ import annotations
 
 
+class StorageLimitError(Exception):
+    """A configured storage quota rejected a write before it touched the WAL."""
+
+    def __init__(self, limit: str, maximum: int, attempted: int):
+        self.limit = limit
+        self.maximum = maximum
+        self.attempted = attempted
+        super().__init__(
+            f"Configured {limit} limit is {maximum} bytes; "
+            f"the attempted value is {attempted} bytes")
+
+    def to_dict(self) -> dict:
+        return {
+            "error": "StorageLimitError",
+            "limit": self.limit,
+            "maximum_bytes": self.maximum,
+            "attempted_bytes": self.attempted,
+        }
+
+
 class ConcurrentModificationError(Exception):
     """Optimistic-concurrency precondition failed (spec §6).
 

@@ -1,0 +1,70 @@
+# Ember configuration. Copy to config.toml, pass --config, or set EMBER_CONFIG.
+# Precedence: built-in defaults < TOML < EMBER_* environment < CLI/overrides.
+
+[storage]
+path = "./ember_store"
+# Quotas count encoded immutable record files. Zero means unlimited.
+max_store_bytes = 0
+max_record_bytes = 0
+
+[maintenance]
+# Zero disables scheduled maintenance.
+interval_seconds = 0
+namespaces = ["memories"]
+
+[api]
+rest_enabled = true
+mcp_enabled = true
+# Loopback is the secure default. Authentication remains mandatory.
+host = "127.0.0.1"
+port = 9200
+cors_origins = []
+
+[lobby]
+enabled = true
+# Zero means unlimited/no expiry. The lobby stays ephemeral and outside the WAL.
+max_agents = 0
+message_ttl_seconds = 0
+presence_timeout_seconds = 60
+heartbeat_interval_seconds = 20
+max_message_bytes = 0
+
+[search]
+# These are replaceable policy seams; the current lookup design is not frozen.
+semantic_enabled = true
+max_results = 100
+default_threshold = 0.0
+max_context_tokens = 4096
+
+[evidence]
+require_evidence = true
+minimum_items = 1
+min_confidence = 0.70
+verified_confidence = 0.85
+
+[retention]
+# Current defaults only. Research may replace the decay policy later.
+raw_memory = 0.01
+skill_memory = 0.005
+failure_memory = 0.0
+episodic_memory = 0.02
+connective_memory = 0.005
+reflective_memory = 0.01
+unscoped_memory = 0.01
+
+[logging]
+level = "WARNING"
+# Omit file to log to stderr.
+# file = "./ember.log"
+max_bytes = 10485760
+backup_count = 5
+
+[native]
+# "embedded" is supported. "process" is reserved and fails fast until native
+# IPC is implemented, so selecting it can never silently use another transport.
+transport = "embedded"
+endpoint = "local://ember-core"
+connect_timeout_seconds = 5.0
+request_timeout_seconds = 30.0
+startup_timeout_seconds = 30.0
+max_frame_bytes = 16777216

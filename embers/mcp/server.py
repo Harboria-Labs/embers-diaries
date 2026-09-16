@@ -24,6 +24,8 @@ from ..core.types import (
 from ..db import EmberDB
 from ..identity.registry import AgentRegistry
 from ..integration import MemoryProtocol
+from ..engine.promotion import PromotionPolicy
+from ..logging_config import configure_logging
 from ..integration.conflict_protocol import (
     conflicts_for as conflict_contract_for,
     map_conflict as conflict_contract_map,
@@ -51,16 +53,40 @@ class EmberMCP:
     def __init__(self, db: EmberDB | None = None, store_path: str | None = None,
                  config: EmberConfig | None = None,
                  config_path: str | None = None):
+        if config is None and db is not None:
+            config = EmberConfig()
         if db is None:
             if config is not None and (store_path is not None or config_path is not None):
                 raise ValueError(
                     "config cannot be combined with store_path or config_path")
             config = config or load_config(
                 config_path=config_path, storage_path=store_path)
-            db = EmberDB.connect(config.storage.path)
+            config.require_runtime_supported()
+            if not config.api.mcp_enabled:
+                raise ValueError("api.mcp_enabled is false")
+            policy = PromotionPolicy(
+                min_confidence=config.evidence.min_confidence,
+                verified_confidence=config.evidence.verified_confidence,
+                require_evidence=config.evidence.require_evidence,
+                minimum_evidence_items=config.evidence.minimum_items,
+            )
+            db = EmberDB.connect(
+                config.storage.path,
+                promotion_policy=policy,
+                max_store_bytes=config.storage.max_store_bytes,
+                max_record_bytes=config.storage.max_record_bytes,
+                runtime_config=config,
+            )
+        else:
+            config.require_runtime_supported()
+            if not config.api.mcp_enabled:
+                raise ValueError("api.mcp_enabled is false")
         self.db = db
+        self.config = config
         self.registry = AgentRegistry(self.db)
         self.protocol = MemoryProtocol(self.db)
+        from .lobby_surface import STORE
+        STORE.configure(config.lobby)
 
     def _auth(self, args: dict):
         agent_id = args.get("agent_id") or os.environ.get("EMBER_AGENT_ID")
@@ -562,6 +588,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--store", help="override storage.path")
     args = parser.parse_args(argv)
     config = load_config(config_path=args.config, storage_path=args.store)
+    configure_logging(config.logging)
     server = EmberMCP(config=config)
     while True:
         try:

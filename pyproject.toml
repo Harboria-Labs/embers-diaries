@@ -42,6 +42,7 @@ dev = [
 
 [project.scripts]
 ember-mcp = "embers.mcp.server:main"
+ember-api = "embers.api_cli:main"
 
 [tool.maturin]
 manifest-path = "rust/ember_core/Cargo.toml"

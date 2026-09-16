@@ -64,6 +64,8 @@ class PromotionPolicy:
                             (this band is what encodes "promotion ≠ true")
         require_evidence    an ungrounded proposal (no Evidence) cannot
                             auto-promote — a bare assertion is not enough
+        minimum_evidence_items number of evidence items needed when evidence
+                            is required
         consensus_threshold distinct corroborating agents needed in CONSENSUS
         trusted_agents      None ⇒ trust every agent; otherwise a proposal's
                             agent_id must be in this set to auto-promote
@@ -73,6 +75,7 @@ class PromotionPolicy:
     min_confidence: float = 0.7
     verified_confidence: float = 0.85
     require_evidence: bool = True
+    minimum_evidence_items: int = 1
     consensus_threshold: int = 2
     trusted_agents: set | None = None
     risk_confidence: float = 0.5
@@ -202,10 +205,16 @@ class PromotionEngine:
         automatic and hybrid so the gate logic lives in exactly one place."""
         p = self.policy
         conflict = self._has_conflicting_memory(proposal)
+        evidence_count = len(proposal.evidence)
+        evidence_reason = (
+            f"{evidence_count} evidence item(s), need {p.minimum_evidence_items}"
+            if evidence_count else
+            f"no evidence (need {p.minimum_evidence_items} item(s))"
+        )
         return [
-            (not p.require_evidence or proposal.is_grounded(),
-             "grounded in evidence" if proposal.is_grounded()
-             else "no evidence (bare assertion)"),
+            (not p.require_evidence
+             or evidence_count >= p.minimum_evidence_items,
+             evidence_reason),
             (proposal.confidence >= p.min_confidence,
              f"confidence {proposal.confidence:.2f} "
              f"{'≥' if proposal.confidence >= p.min_confidence else '<'} "
@@ -243,8 +252,15 @@ class PromotionEngine:
         threshold = self.policy.consensus_threshold
         reasons = [f"{n} distinct corroborating agent(s), need {threshold}"]
         # Even under consensus, an ungrounded proposal cannot promote.
-        if self.policy.require_evidence and not proposal.is_grounded():
-            reasons.append("no evidence (bare assertion)")
+        evidence_count = len(proposal.evidence)
+        if (self.policy.require_evidence
+                and evidence_count < self.policy.minimum_evidence_items):
+            reasons.append((
+                f"{evidence_count} evidence item(s), need "
+                f"{self.policy.minimum_evidence_items}"
+            ) if evidence_count else (
+                f"no evidence (need {self.policy.minimum_evidence_items} item(s))"
+            ))
             return PromotionDecision(
                 proposal.proposal_id, PromotionOutcome.HOLD, self.mode,
                 reasons=reasons)

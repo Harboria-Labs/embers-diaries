@@ -26,6 +26,7 @@ from ..cognitive.episodic import EpisodicSegmenter
 from ..cognitive.reflection import ReflectionEngine
 from .context import ContextBuilder
 from .embeddings import EmbeddingPipeline
+from ..config import RetentionConfig, SearchConfig
 
 
 class MemoryProtocol:
@@ -47,9 +48,22 @@ class MemoryProtocol:
                  embed_fn: Callable | None = None,
                  embedding_dimension: int = 256,
                  default_namespace: str = "memories",
-                 max_context_tokens: int = 4096):
+                 max_context_tokens: int | None = None,
+                 search_config: SearchConfig | None = None,
+                 retention_config: RetentionConfig | None = None):
         self.db = db
         self.namespace = default_namespace
+        runtime_config = getattr(db, "_runtime_config", None)
+        self.search_config = (
+            search_config
+            or getattr(runtime_config, "search", None)
+            or SearchConfig()
+        )
+        retention = (
+            retention_config
+            or getattr(runtime_config, "retention", None)
+            or RetentionConfig()
+        )
 
         self.decay = DecayEngine()
         self.consolidation = ConsolidationEngine()
@@ -57,7 +71,21 @@ class MemoryProtocol:
         self.reflection = ReflectionEngine(self.decay, None)
 
         self.embeddings = EmbeddingPipeline(embed_fn, embedding_dimension)
-        self.context_builder = ContextBuilder(self.decay, max_context_tokens)
+        self.context_builder = ContextBuilder(
+            self.decay,
+            max_context_tokens if max_context_tokens is not None
+            else self.search_config.max_context_tokens,
+        )
+
+        self._decay_rate_by_type = {
+            MemoryType.FAILURE: retention.failure_memory,
+            MemoryType.SKILL: retention.skill_memory,
+            MemoryType.CONNECTIVE: retention.connective_memory,
+            MemoryType.REFLECTIVE: retention.reflective_memory,
+            MemoryType.RAW: retention.raw_memory,
+            MemoryType.UNSCOPED: retention.unscoped_memory,
+            MemoryType.EPISODIC: retention.episodic_memory,
+        }
 
         self._write_count = 0
         self._last_conflict_hints: list[dict] = []
@@ -121,7 +149,7 @@ class MemoryProtocol:
 
         if decay_rate is None:
             try:
-                resolved_decay_rate = self._DEFAULT_DECAY_RATE_BY_TYPE[MemoryType(data["memory_type"])]
+                resolved_decay_rate = self._decay_rate_by_type[MemoryType(data["memory_type"])]
             except ValueError:
                 resolved_decay_rate = 0.01
         else:
@@ -151,15 +179,21 @@ class MemoryProtocol:
                top_k: int = 10,
                namespace: str | None = None,
                room: str | None = None,
-               threshold: float = 0.0,
+               threshold: float | None = None,
                include_annotations: bool = True,
                format: str = "text") -> str | list[dict]:
         """Retrieve relevant memories. room filters by stored room only."""
         ns = namespace or self.namespace
 
-        query_embedding = self.embeddings.embed_text(query)
-        vector_results = self.db.similar(
-            query_embedding, namespace=ns, top_k=top_k * 2, threshold=threshold)
+        top_k = min(top_k, self.search_config.max_results)
+        threshold = (self.search_config.default_threshold
+                     if threshold is None else threshold)
+        vector_results = []
+        if self.search_config.semantic_enabled:
+            query_embedding = self.embeddings.embed_text(query)
+            vector_results = self.db.similar(
+                query_embedding, namespace=ns, top_k=top_k * 2,
+                threshold=threshold)
         text_results = self.db.search(query, namespace=ns, top_k=top_k * 2)
 
         candidates: dict[str, tuple[EmberRecord, float]] = {}

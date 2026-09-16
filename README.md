@@ -103,8 +103,38 @@ protocol.verify(record_id, status="verified", note="Confirmed by user")
 Start the server:
 ```bash
 pip install "embers-diaries[api]"
-EMBER_STORE=./my_store uvicorn embers.api:app --port 9200
+ember-api --config config.toml
 ```
+
+`ember-api` consumes the configured host, port, REST/MCP enable flags, CORS
+allow-list, logging, storage limits, search policy, evidence gates, retention
+rates, and lobby limits. The default host is loopback. Binding another host
+emits a security warning; agent authentication is not configurable off.
+
+## Configuration
+
+Copy [`config.example.toml`](config.example.toml) to `config.toml`. Values are
+resolved in this order: built-in defaults, TOML, `EMBER_*` environment
+variables, then explicit CLI/programmatic overrides. Unknown names and invalid
+cross-field combinations fail at startup instead of being ignored.
+
+```bash
+# HTTP REST + MCP endpoint
+ember-api --config config.toml --host 127.0.0.1 --port 9200
+
+# MCP over stdio
+ember-mcp --config config.toml --store ./one-off-store
+```
+
+Storage format, WAL synchronization, append-only behavior, CAS conflict
+rejection, authentication, and locking are deliberately not switches: they are
+correctness/security invariants. `native.transport = "process"` is documented
+for the coming native-IPC boundary but currently fails fast; only `embedded`
+is supported.
+
+The retention/decay rates and lookup controls are policy seams. Their defaults
+preserve today's behavior, but they are not presented as final algorithms while
+the related research is still underway.
 
 Endpoints:
 

@@ -94,7 +94,7 @@ path = "selected-store"
         ("[storage]\npath = ''\n", "storage.path"),
         ("[maintenance]\ninterval_seconds = -1\n", "interval_seconds"),
         ("[maintenance]\nnamespaces = []\n", "namespaces"),
-        ("[search]\nmax_results = 10\n", "unsupported"),
+        ("[search]\nmax_results = 0\n", "max_results"),
         ("[storage]\nformat = 'msgpack'\n", "unsupported"),
     ],
 )

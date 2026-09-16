@@ -21,6 +21,7 @@ from ..storage.format import encode, decode
 from ..engine.wal import WriteAheadLog
 from ..core.record import EmberRecord
 from ..core.integrity import RecordIntegrityError
+from ..core.errors import StorageLimitError
 
 
 try:
@@ -120,8 +121,11 @@ class PhysicalStore:
     _shared_locks: dict[str, _StoreTransactionLock] = {}
     _shared_locks_guard = threading.RLock()
 
-    def __init__(self, store_path: str | Path):
+    def __init__(self, store_path: str | Path, *, max_store_bytes: int = 0,
+                 max_record_bytes: int = 0):
         self.root = Path(store_path)
+        self.max_store_bytes = max_store_bytes
+        self.max_record_bytes = max_record_bytes
         self.root.mkdir(parents=True, exist_ok=True)
         self.records_dir = self.root / "records"
         self.meta_dir    = self.root / "meta"
@@ -186,6 +190,8 @@ class PhysicalStore:
         """
         with self._lock:
             record_dict = record.to_dict()
+            raw = encode(record_dict)
+            self._check_write_limits(len(raw))
 
             if _write_record_transaction is not None:
                 now = datetime.now(timezone.utc).isoformat()
@@ -194,7 +200,7 @@ class PhysicalStore:
                     datetime.now(timezone.utc).isoformat(), record.id,
                     json.dumps(record_dict, ensure_ascii=False,
                                separators=(",", ":")).encode("utf-8"),
-                    encode(record_dict))
+                    raw)
                 self._increment_record_count()
                 return record.id
 
@@ -202,7 +208,7 @@ class PhysicalStore:
             wal_entry = self.wal.log("write", record.id, record_dict)
 
             # Step 2: Write the record file
-            self._write_record_file(record)
+            self._write_record_file(record, raw)
 
             # Step 3: Mark WAL entry as COMMITTED
             self.wal.commit(wal_entry.wal_id)
@@ -217,14 +223,26 @@ class PhysicalStore:
         """The process-local lock shared by all handles for this store."""
         return self._lock
 
-    def _write_record_file(self, record: EmberRecord):
+    def _write_record_file(self, record: EmberRecord, raw: bytes | None = None):
         """Write a single record to its UUID.ember file. Never overwrites."""
         record_file = self.records_dir / f"{record.id}.ember"
-        raw = encode(record.to_dict())
+        raw = raw if raw is not None else encode(record.to_dict())
         # Rust publishes the fully synced temp file without ever overwriting an
         # existing immutable record. False means recovery found it already
         # present, which is the expected idempotent replay case.
         _atomic_write_new(str(record_file), raw)
+
+    def _check_write_limits(self, encoded_size: int) -> None:
+        if self.max_record_bytes and encoded_size > self.max_record_bytes:
+            raise StorageLimitError(
+                "storage.max_record_bytes", self.max_record_bytes, encoded_size)
+        if self.max_store_bytes:
+            current = sum(
+                path.stat().st_size for path in self.records_dir.glob("*.ember"))
+            attempted = current + encoded_size
+            if attempted > self.max_store_bytes:
+                raise StorageLimitError(
+                    "storage.max_store_bytes", self.max_store_bytes, attempted)
 
     # ── Read ──────────────────────────────────────────────────────────────────
 

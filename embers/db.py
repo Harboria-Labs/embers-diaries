@@ -88,14 +88,22 @@ class EmberDB:
     def __init__(self, store_path: str | Path,
                  promotion_mode: PromotionMode = PromotionMode.AUTOMATIC,
                  promotion_policy: PromotionPolicy | None = None,
-                 enforce_attribution: bool = False):
+                 enforce_attribution: bool = False,
+                 max_store_bytes: int = 0,
+                 max_record_bytes: int = 0,
+                 runtime_config=None):
         self._path = Path(store_path)
+        self._runtime_config = runtime_config
         # Feature #8: when True, every durable write must carry an agent_id
         # (directly or via an AgentView). Defaults to False so unattributed
         # writes keep working — changing the default would silently invalidate
         # existing stores (§15).
         self._enforce_attribution = enforce_attribution
-        self._store = PhysicalStore(self._path)
+        self._store = PhysicalStore(
+            self._path,
+            max_store_bytes=max_store_bytes,
+            max_record_bytes=max_record_bytes,
+        )
         self._writer = WriteEngine(self._store)
 
         # Index layer — MasterIndex is constructed before ReadEngine so it can
@@ -137,7 +145,10 @@ class EmberDB:
     def connect(cls, store_path: str | Path,
                 promotion_mode: PromotionMode = PromotionMode.AUTOMATIC,
                 promotion_policy: PromotionPolicy | None = None,
-                enforce_attribution: bool = False) -> "EmberDB":
+                enforce_attribution: bool = False,
+                max_store_bytes: int = 0,
+                max_record_bytes: int = 0,
+                runtime_config=None) -> "EmberDB":
         """Connect to (or create) an Ember's Diaries store.
 
         `promotion_mode` selects how the Promotion Engine decides whether a
@@ -147,7 +158,10 @@ class EmberDB:
         an agent; off by default for backward compatibility."""
         return cls(store_path, promotion_mode=promotion_mode,
                    promotion_policy=promotion_policy,
-                   enforce_attribution=enforce_attribution)
+                   enforce_attribution=enforce_attribution,
+                   max_store_bytes=max_store_bytes,
+                   max_record_bytes=max_record_bytes,
+                   runtime_config=runtime_config)
 
     def _rebuild_indexes_if_needed(self):
         """On startup, rebuild indexes from store if they're empty."""
@@ -1705,15 +1719,26 @@ class EmberDB:
     def search(self, query_text: str, namespace: str | None = None,
                top_k: int = 10) -> list[tuple[EmberRecord, float]]:
         """Full-text BM25 search."""
+        search_config = getattr(self._runtime_config, "search", None)
+        if search_config is not None:
+            top_k = min(top_k, search_config.max_results)
         return self._query_engine.search(query_text, namespace, top_k)
 
     def similar(self, embedding: list[float],
                 namespace: str | None = None,
                 top_k: int = 10,
-                threshold: float = 0.0) -> list[tuple[EmberRecord, float]]:
+                threshold: float | None = None) -> list[tuple[EmberRecord, float]]:
         """Vector similarity search."""
+        search_config = getattr(self._runtime_config, "search", None)
+        if search_config is not None:
+            if not search_config.semantic_enabled:
+                return []
+            top_k = min(top_k, search_config.max_results)
+            if threshold is None:
+                threshold = search_config.default_threshold
         return self._query_engine.similar(
-            embedding, namespace, top_k, threshold)
+            embedding, namespace, top_k,
+            0.0 if threshold is None else threshold)
 
     # ── Graph ─────────────────────────────────────────────────────────────────
 

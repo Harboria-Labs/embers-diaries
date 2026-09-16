@@ -20,9 +20,11 @@ from .core.failure import Failure
 from .core.feedback import Feedback, FeedbackOutcome, FeedbackAttribution
 from .core.agent_view import AgentView
 from .core.integrity import HASH_BACKEND, RecordIntegrityError
-from .core.errors import ConcurrentModificationError
+from .core.errors import ConcurrentModificationError, StorageLimitError
 from .config import (
-    ConfigError, EmberConfig, MaintenanceConfig, StorageConfig, load_config,
+    ApiConfig, ConfigError, EmberConfig, EvidenceConfig, LobbyConfig,
+    LoggingConfig, MaintenanceConfig, NativeConfig, RetentionConfig,
+    SearchConfig, StorageConfig, load_config,
 )
 from .engine.promotion import (
     PromotionEngine, PromotionPolicy, PromotionDecision, PromotionResult,
@@ -50,6 +52,8 @@ __all__ = [
     "PromotionEngine", "PromotionPolicy", "PromotionDecision",
     "PromotionResult", "PromotionOutcome",
     "HASH_BACKEND", "RecordIntegrityError", "ConcurrentModificationError",
-    "ConfigError", "EmberConfig", "MaintenanceConfig", "StorageConfig",
+    "StorageLimitError", "ApiConfig", "ConfigError", "EmberConfig",
+    "EvidenceConfig", "LobbyConfig", "LoggingConfig", "MaintenanceConfig",
+    "NativeConfig", "RetentionConfig", "SearchConfig", "StorageConfig",
     "load_config",
 ]

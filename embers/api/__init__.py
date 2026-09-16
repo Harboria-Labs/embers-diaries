@@ -13,7 +13,10 @@ from contextlib import asynccontextmanager
 
 from ..db import EmberDB
 from ..config import EmberConfig, load_config
+from ..engine.promotion import PromotionPolicy
+from ..logging_config import configure_logging
 from ..core.record import EmberRecord
+from ..core.errors import StorageLimitError
 from ..core.annotation import Annotation
 from ..core.types import RecordType, DeprecationReason
 from ..identity.registry import AgentRegistry
@@ -24,7 +27,7 @@ from .session_gate import install as install_session_gate, resolve_agent
 _db: Optional[EmberDB] = None
 _protocol: Optional[MemoryProtocol] = None
 _registry: Optional[AgentRegistry] = None
-_config: Optional[EmberConfig] = None
+_config: Optional[EmberConfig] = load_config()
 
 
 def _get_config() -> EmberConfig:
@@ -37,7 +40,23 @@ def _get_config() -> EmberConfig:
 def _get_db() -> EmberDB:
     global _db
     if _db is None:
-        _db = EmberDB.connect(_get_config().storage.path)
+        config = _get_config()
+        config.require_runtime_supported()
+        policy = PromotionPolicy(
+            min_confidence=config.evidence.min_confidence,
+            verified_confidence=config.evidence.verified_confidence,
+            require_evidence=config.evidence.require_evidence,
+            minimum_evidence_items=config.evidence.minimum_items,
+        )
+        _db = EmberDB.connect(
+            config.storage.path,
+            promotion_policy=policy,
+            max_store_bytes=config.storage.max_store_bytes,
+            max_record_bytes=config.storage.max_record_bytes,
+            runtime_config=config,
+        )
+        from ..mcp.lobby_surface import STORE
+        STORE.configure(config.lobby)
     return _db
 
 
@@ -64,6 +83,7 @@ def _legacy_agent(request: Request):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    configure_logging(_get_config().logging)
     _get_db()
     yield
 
@@ -74,6 +94,18 @@ app = FastAPI(
     description="Cognitive database engine for AI memory systems. Nothing is ever deleted.",
     lifespan=lifespan,
 )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=list(_get_config().api.cors_origins),
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.exception_handler(StorageLimitError)
+async def storage_limit_error(_request: Request, exc: StorageLimitError):
+    status = 413 if exc.limit.endswith("max_record_bytes") else 507
+    return JSONResponse(exc.to_dict(), status_code=status)
 
 _LEGACY_PROTECTED_PREFIXES = (
     "/records", "/namespaces", "/search", "/query", "/graph",
@@ -85,6 +117,20 @@ _PUBLIC_PATHS = {"/health", "/docs", "/redoc", "/openapi.json"}
 def _is_legacy_protected(path: str) -> bool:
     return any(path == prefix or path.startswith(prefix + "/")
                for prefix in _LEGACY_PROTECTED_PREFIXES)
+
+
+@app.middleware("http")
+async def require_enabled_surface(request: Request, call_next):
+    path = request.url.path.rstrip("/") or "/"
+    config = _get_config().api
+    if path == "/mcp" and not config.mcp_enabled:
+        return JSONResponse(
+            {"detail": "MCP HTTP surface is disabled"}, status_code=503)
+    if (path not in _PUBLIC_PATHS and path != "/mcp"
+            and not config.rest_enabled):
+        return JSONResponse(
+            {"detail": "REST surface is disabled"}, status_code=503)
+    return await call_next(request)
 
 
 @app.middleware("http")
