@@ -236,7 +236,7 @@ async def memory_query(
     from . import _get_db, _serialize_record
     db = _get_db()
     agent = require_agent(db, x_ember_agent_id, x_ember_token)
-    namespace = body.get("namespace", "default")
+    namespace = body.get("namespace") or _proto(db).namespace
     require_namespace(db, namespace, agent.agent_id)
     records = db.query(
         namespace,

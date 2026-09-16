@@ -93,6 +93,24 @@ def test_read_query_and_search_mirror_core_results(api_client):
     assert isinstance(searched.json()["results"][0]["score"], float)
 
 
+def test_query_without_namespace_uses_the_protocol_namespace(api_client):
+    client, api = api_client
+    auth = _register(client)
+    written = client.post(
+        "/v1/memory/write",
+        headers=auth,
+        json={"content": "protocol-default query target"},
+    )
+    assert written.status_code == 200, written.text
+    record_id = written.json()["id"]
+    assert api._db.get(record_id).namespace == "memories"
+
+    queried = client.post(
+        "/v1/memory/query", headers=auth, json={"limit": 100})
+    assert queried.status_code == 200, queried.text
+    assert record_id in {record["id"] for record in queried.json()["records"]}
+
+
 def test_read_and_query_honor_superseded_visibility(api_client):
     client, api = api_client
     from embers.core.types import DeprecationReason
