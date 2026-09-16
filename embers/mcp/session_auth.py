@@ -62,7 +62,15 @@ def _patch_auth() -> None:
         agent_id = args.get("agent_id") or os.environ.get("EMBER_AGENT_ID")
         token = args.get("token") or os.environ.get("EMBER_TOKEN")
         if agent_id and token:
-            return self.registry.authenticate(agent_id, token)
+            ident = self.registry.authenticate(agent_id, token)
+            sid = args.get("session_id")
+            if sid:
+                session = self.db.get_session(sid)
+                if session is None:
+                    raise PermissionError("unknown session")
+                if session.agent_id != ident.agent_id:
+                    raise PermissionError("session belongs to another agent")
+            return ident
 
         sid = args.get("session_id")
         if sid:

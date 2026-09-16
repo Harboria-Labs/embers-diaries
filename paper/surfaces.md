@@ -18,11 +18,16 @@ Not a design doc. What you can call.
 - GET /v1/memory/{id}/lifecycle
 - POST /v1/maintenance
 - GET /v1/sessions/{id}/work
+- POST /v1/lobby/publish
+- GET /v1/lobby/updates
+- GET /v1/lobby/status
+- POST /v1/lobby/promote
+- POST /v1/lobby/corroborate
+- POST /v1/lobby/close
+- GET /v1/memory/proposals (includes evidence + evidence_authors)
 
 Auth: register once, start session, then `X-Ember-Session-Id` or agent+token.
 
 ## Still not here
 
-- User config file
 - Lobby websocket
-- Scheduler default-on (must set EMBER_MAINTENANCE_INTERVAL_SECONDS)
