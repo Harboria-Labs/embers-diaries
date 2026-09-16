@@ -40,7 +40,6 @@ def test_register_start_then_write_with_session_id(mcp):
     sid = started["session_id"]
     assert started["agent_id"] == agent_id
 
-    # Same process still requires session_id. HTTP shares one EmberMCP.
     bare = mcp.call_tool("ember_write", {"content": "no id after start"})
     assert bare["isError"]
 
@@ -79,8 +78,23 @@ def test_session_id_resumes_on_new_mcp(tmp_path: Path):
     assert rec.session_id == started["session_id"]
 
 
+def test_token_plus_foreign_session_is_rejected(mcp):
+    first = json.loads(mcp.call_tool("ember_register", {"name": "owner"})["content"][0]["text"])
+    owned = json.loads(mcp.call_tool("ember_start_session", {
+        "agent_id": first["agent_id"], "token": first["token"],
+    })["content"][0]["text"])
+    second = json.loads(mcp.call_tool("ember_register", {"name": "other"})["content"][0]["text"])
+    result = mcp.call_tool("ember_write", {
+        "content": "should not land",
+        "agent_id": second["agent_id"],
+        "token": second["token"],
+        "session_id": owned["session_id"],
+    })
+    assert result["isError"]
+    assert "session" in result["content"][0]["text"].lower()
+
+
 def test_shared_instance_does_not_auth_the_next_caller(mcp):
-    """HTTP /mcp uses one EmberMCP. Last start_session must not authenticate a bare write."""
     a = json.loads(mcp.call_tool("ember_register", {"name": "agent-a"})["content"][0]["text"])
     mcp.call_tool("ember_start_session", {
         "agent_id": a["agent_id"], "token": a["token"],
