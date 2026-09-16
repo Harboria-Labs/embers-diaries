@@ -6,6 +6,7 @@ from ..core.evidence import Evidence
 from ..core.failure import Failure
 from ..core.proposal import MemoryProposal
 from ..core.types import SourceType
+from ..lobby.context import resolve_namespace
 from ..lobby.store import LobbyError, LobbyStore
 from . import server
 
@@ -89,11 +90,20 @@ def _dispatch(mcp, agent, args: dict) -> dict:
     if not sid:
         raise PermissionError("Pass session_id, or agent_id and token on ember_start_session.")
     if action == "open":
+        # The board takes its namespace from the session, not from this
+        # adapter's protocol default — otherwise an agent working in
+        # namespace X opens a board in "memories" and its promoted posts are
+        # filed there instead. resolve_namespace() is the same rule /v1 uses,
+        # so an MCP agent and an HTTP agent on one task share one board.
         return STORE.open(
             session_id=sid,
             agent_id=agent.agent_id,
             task=args.get("task", ""),
-            namespace=args.get("namespace") or getattr(mcp.protocol, "namespace", "default"),
+            namespace=resolve_namespace(
+                args.get("namespace"),
+                mcp.db.get_session(sid),
+                getattr(mcp.protocol, "namespace", "default"),
+            ),
             room=args.get("room", ""),
         )
     if action == "publish":

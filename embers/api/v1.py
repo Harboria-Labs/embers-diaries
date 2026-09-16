@@ -452,7 +452,14 @@ async def start_session(
     sid = db.start_session(
         agent_id=agent.agent_id,
         task=body.get("task", ""),
-        namespace=body.get("namespace", "default"),
+        # Default to the protocol namespace, exactly as ember_start_session
+        # does. This route used to hardcode "default" while every other /v1
+        # route (memory/write, memory/recall) already defaulted to the
+        # protocol namespace — so a REST session claimed one namespace while
+        # the same agent's writes went to another, and a REST agent could
+        # never join an MCP agent's lobby board for the same task because
+        # boards are keyed on task+namespace+room.
+        namespace=body.get("namespace") or _proto(db).namespace,
     )
     return {"session_id": sid, "agent_id": agent.agent_id}
 
@@ -480,6 +487,7 @@ async def lobby_publish(
     x_ember_session_id: str | None = Header(default=None),
 ):
     """Open a board on first publish, then add one ephemeral post."""
+    from ..lobby.context import resolve_namespace
     from ..lobby.store import LobbyError
     from . import _get_db
     db = _get_db()
@@ -493,7 +501,9 @@ async def lobby_publish(
                 session_id=session_id,
                 agent_id=agent.agent_id,
                 task=body.get("task", ""),
-                namespace=body.get("namespace") or getattr(session, "namespace", "default"),
+                # Same rule as the MCP adapter — see embers/lobby/context.py.
+                namespace=resolve_namespace(
+                    body.get("namespace"), session, _proto(db).namespace),
                 room=body.get("room", ""),
             )
         return store.publish(
