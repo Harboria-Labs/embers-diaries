@@ -52,7 +52,14 @@ def get_feedback(self, feedback_id: str):
     return Feedback.from_dict(rec.data)
 
 
+def relevance_journal(self, **configuration):
+    """Explicitly configure SDK resolution; never accept policy from an untrusted caller."""
+    from .cognitive.feedback_durable import DurableRelevanceJournal
+    return DurableRelevanceJournal(self, **configuration)
+
+
 def bind(EmberDB):
     EmberDB.give_feedback = give_feedback
     EmberDB.feedback_for = feedback_for
     EmberDB.get_feedback = get_feedback
+    EmberDB.relevance_journal = relevance_journal

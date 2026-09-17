@@ -44,26 +44,28 @@ def test_query_filters_complete_records_by_session_and_tag(tmp_path: Path):
     db = EmberDB.connect(str(tmp_path / "s"))
     mcp = EmberMCP(db=db)
     agent_id, token = _agent(mcp)
+    session_a = db.start_session(agent_id=agent_id, task="query-a", namespace="project")
+    session_b = db.start_session(agent_id=agent_id, task="query-b", namespace="project")
 
     wanted_id = json.loads(_call(mcp, "ember_write", {
         "content": "session finding", "namespace": "project",
-        "session_id": "session-a", "tags": ["parser", "verified"],
+        "session_id": session_a, "tags": ["parser", "verified"],
         "creation_reason": "focused MCP query test",
         "agent_id": agent_id, "token": token,
     })["content"][0]["text"])["id"]
     _call(mcp, "ember_write", {
         "content": "different session", "namespace": "project",
-        "session_id": "session-b", "tags": ["parser"],
+        "session_id": session_b, "tags": ["parser"],
         "agent_id": agent_id, "token": token,
     })
     _call(mcp, "ember_write", {
         "content": "different namespace", "namespace": "other",
-        "session_id": "session-a", "tags": ["parser", "verified"],
+        "session_id": session_a, "tags": ["parser", "verified"],
         "agent_id": agent_id, "token": token,
     })
 
     queried = _call(mcp, "ember_query", {
-        "namespace": "project", "session_id": "session-a",
+        "namespace": "project", "session_id": session_a,
         "filters": {"content": "session finding"},
         "tags": ["verified"], "limit": 5,
         "agent_id": agent_id, "token": token,
@@ -73,7 +75,7 @@ def test_query_filters_complete_records_by_session_and_tag(tmp_path: Path):
     body = json.loads(queried["content"][0]["text"])
     assert body["count"] == 1
     assert [record["id"] for record in body["records"]] == [wanted_id]
-    assert body["records"][0]["session_id"] == "session-a"
+    assert body["records"][0]["session_id"] == session_a
     assert body["records"][0]["creation_reason"] == "focused MCP query test"
     assert body["records"][0]["content_hash"]
 
