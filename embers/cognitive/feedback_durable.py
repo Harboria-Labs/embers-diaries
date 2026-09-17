@@ -173,6 +173,7 @@ class DurableRelevanceJournal:
                 raise ValueError("credit source must be addressed by a cited report")
 
     def resolve(self, decision, *, actor, request_id, expected_revision):
+        self._db.require_namespace_access(self._namespace, actor, "write")
         with self._db._writer.lock:
             journal, previous_hash = self._load()
             before = len(journal.history())

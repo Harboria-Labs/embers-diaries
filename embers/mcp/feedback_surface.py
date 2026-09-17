@@ -11,6 +11,34 @@ _INSTALLED = False
 
 _TOOLS = [
     {
+        "name": "ember_resolve_relevance",
+        "description": "Resolve or correct a scoped outcome using a preconfigured resolver policy. Does not change truth. Requires request_id and expected_revision.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "namespace": {"type": "string"}, "context_id": {"type": "string"},
+                "decision": {"type": "object"}, "request_id": {"type": "string"},
+                "expected_revision": {"type": "integer", "minimum": 0},
+                "agent_id": {"type": "string"}, "token": {"type": "string"},
+                "session_id": {"type": "string"},
+            },
+            "required": ["namespace", "context_id", "decision", "request_id", "expected_revision"],
+        },
+    },
+    {
+        "name": "ember_relevance_state",
+        "description": "Read contextual learned memory biases, typed pair strengths and unresolved dependencies. No truth promotion.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "namespace": {"type": "string"}, "context_id": {"type": "string"},
+                "agent_id": {"type": "string"}, "token": {"type": "string"},
+                "session_id": {"type": "string"},
+            },
+            "required": ["namespace", "context_id"],
+        },
+    },
+    {
         "name": "ember_feedback",
         "description": (
             "Report what happened after using a durable memory. "
@@ -107,6 +135,19 @@ def install() -> None:
     orig = server.EmberMCP._call
 
     def _call(self, name: str, args: dict):
+        if name == "ember_resolve_relevance":
+            from ..integration.feedback_service import resolve
+            agent = self._auth(args)
+            return _text(resolve(
+                self.db, args["namespace"], args["context_id"], agent.agent_id,
+                {key: args[key] for key in ("decision", "request_id", "expected_revision")},
+            ))
+        if name == "ember_relevance_state":
+            from ..integration.feedback_service import projection
+            agent = self._auth(args)
+            return _text(projection(
+                self.db, args["namespace"], args["context_id"], agent.agent_id,
+            ))
         if name == "ember_feedback":
             agent = self._auth(args)
             fb = Feedback.from_submission(

@@ -55,7 +55,12 @@ def get_feedback(self, feedback_id: str):
 def relevance_journal(self, **configuration):
     """Explicitly configure SDK resolution; never accept policy from an untrusted caller."""
     from .cognitive.feedback_durable import DurableRelevanceJournal
-    return DurableRelevanceJournal(self, **configuration)
+    service = DurableRelevanceJournal(self, **configuration)
+    with self._writer.lock:
+        if not hasattr(self, "_relevance_services"):
+            self._relevance_services = {}
+        self._relevance_services[(configuration["namespace"], configuration["context_id"])] = service
+    return service
 
 
 def bind(EmberDB):
