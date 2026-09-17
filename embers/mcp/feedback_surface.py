@@ -15,7 +15,10 @@ _TOOLS = [
         "description": (
             "Report what happened after using a durable memory. "
             "outcome required. attribution optional and always YOUR diagnosis. "
-            "Ember does not change the memory. Pass session_id. "
+            "Ember stores reports only; it does not learn or verify from them yet. "
+            "For explicit channels use schema_version=2, channel, outcome_id, "
+            "context_id and context. Relevance needs signal; correctness needs supporting_refs. "
+            "Pass session_id. "
             "Not valid on lobby posts or proposals."
         ),
         "inputSchema": {
@@ -23,6 +26,13 @@ _TOOLS = [
             "properties": {
                 "memory_id": {"type": "string"},
                 "outcome": {"type": "string"},
+                "schema_version": {"type": "integer", "enum": [1, 2]},
+                "channel": {"type": "string", "enum": ["relevance", "correctness"]},
+                "outcome_id": {"type": "string"},
+                "context_id": {"type": "string"},
+                "context": {"type": "object"},
+                "signal": {"type": "number", "minimum": -1, "maximum": 1},
+                "supporting_refs": {"type": "array", "items": {"type": "string"}},
                 "usefulness": {"type": "number"},
                 "accuracy": {"type": "number"},
                 "attribution": {"type": "string"},
@@ -99,15 +109,8 @@ def install() -> None:
     def _call(self, name: str, args: dict):
         if name == "ember_feedback":
             agent = self._auth(args)
-            fb = Feedback(
-                memory_id=args["memory_id"],
-                agent_id=agent.agent_id,
-                outcome=FeedbackOutcome(args["outcome"]),
-                usefulness=args.get("usefulness"),
-                accuracy=args.get("accuracy"),
-                attribution=(FeedbackAttribution(args["attribution"])
-                             if args.get("attribution") else None),
-                note=args.get("note", ""),
+            fb = Feedback.from_submission(
+                args["memory_id"], agent.agent_id, args,
                 session_id=args.get("session_id"),
             )
             fid = self.db.give_feedback(args["memory_id"], fb)

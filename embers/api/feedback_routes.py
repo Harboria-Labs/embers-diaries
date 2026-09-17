@@ -34,15 +34,8 @@ async def give_feedback(
     if not outcome:
         raise HTTPException(400, "outcome required")
     try:
-        fb = Feedback(
-            memory_id=memory_id,
-            agent_id=agent.agent_id,
-            outcome=FeedbackOutcome(outcome),
-            usefulness=body.get("usefulness"),
-            accuracy=body.get("accuracy"),
-            attribution=(FeedbackAttribution(body["attribution"])
-                         if body.get("attribution") else None),
-            note=body.get("note", ""),
+        fb = Feedback.from_submission(
+            memory_id, agent.agent_id, body,
             session_id=body.get("session_id") or x_ember_session_id,
         )
         fid = db.give_feedback(memory_id, fb)

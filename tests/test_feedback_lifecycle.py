@@ -107,3 +107,59 @@ def test_mcp_feedback_session_and_work_view(mcp):
         "active", "verified", "reinforced", "weakening", "stale",
         "disputed", "archived",
     }
+
+
+def test_mcp_explicit_channel_round_trip(mcp):
+    reg = _body(mcp.call_tool("ember_register", {"name": "split-feedback"}))
+    started = _body(mcp.call_tool("ember_start_session", {
+        "agent_id": reg["agent_id"], "token": reg["token"], "task": "channel test",
+    }))
+    sid = started["session_id"]
+    written = _body(mcp.call_tool("ember_write", {
+        "content": "contextual information", "session_id": sid, "room": "task",
+    }))
+    args = {
+        "memory_id": written["id"], "session_id": sid,
+        "schema_version": 2, "channel": "relevance", "outcome": "useful",
+        "outcome_id": "task-result", "context_id": "task-context",
+        "context": {"task": "channel test"}, "signal": .5,
+    }
+    result = _body(mcp.call_tool("ember_feedback", args))
+    stored = mcp.db.get_feedback(result["feedback_id"])
+    assert stored.channel == "relevance"
+    assert stored.agent_id == reg["agent_id"]
+    assert stored.signal == .5
+    invalid = dict(args, accuracy=.9)
+    assert mcp.call_tool("ember_feedback", invalid)["isError"]
+
+
+def test_rest_explicit_channel_round_trip(db, monkeypatch):
+    import asyncio
+    from types import SimpleNamespace
+    pytest.importorskip("fastapi")
+    from fastapi import HTTPException
+    from embers.api import feedback_routes
+
+    monkeypatch.setattr(feedback_routes, "_db", lambda: db)
+    monkeypatch.setattr(feedback_routes, "_agent",
+                        lambda *_: SimpleNamespace(agent_id="authenticated"))
+    mid = db.write(EmberRecord(namespace="memories", data={"content": "claim"}))
+    body = {
+        "schema_version": 2, "channel": "correctness", "outcome": "contradicted",
+        "outcome_id": "observation", "context_id": "task",
+        "context": {"task": "check"}, "supporting_refs": ["trace-1"],
+        "agent_id": "spoofed",
+    }
+    result = asyncio.run(feedback_routes.give_feedback(
+        mid, body, "authenticated", "token", None,
+    ))
+    stored = db.get_feedback(result["feedback_id"])
+    assert stored.agent_id == "authenticated"
+    assert stored.channel == "correctness"
+    assert stored.signal is None
+    assert db.get(mid).confidence == 1.0
+    with pytest.raises(HTTPException) as error:
+        asyncio.run(feedback_routes.give_feedback(
+            mid, dict(body, signal=1), "authenticated", "token", None,
+        ))
+    assert error.value.status_code == 400

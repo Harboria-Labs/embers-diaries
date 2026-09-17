@@ -6,6 +6,9 @@ from .core.types import EdgeType, RecordType
 from .core.feedback import Feedback
 
 def give_feedback(self, memory_id: str, fb: Feedback) -> str:
+    fb.validate()
+    if fb.memory_id != memory_id:
+        raise ValueError("feedback memory_id must match the target")
     target = self._reader.get(memory_id, include_deprecated=True,
                               include_superseded=True)
     if target is None:
