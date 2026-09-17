@@ -1,6 +1,6 @@
-# Explicit feedback and Candidate 04: first implementation slice
+# Explicit feedback and Candidate 04: implementation progress
 
-Status: experimental, report-only integration. No automatic learning or live deployment.
+Status: experimental, report-only API integration plus an in-process canonical relevance journal. No automatic learning in live recall or deployment.
 Base reviewed: c63f7338bb52ecb1a3f24d5a07a019cfc5a0bc19.
 
 ## Included
@@ -79,8 +79,9 @@ but is not claimed to converge to a fixed value.
 
 ## Required before automatic learning or production use
 
-1. Authorized canonical outcome resolution, duplicate handling, typed pair/group
-   credit, correction revisions and dependency-aware deterministic replay.
+1. Connect the in-process canonical journal to authenticated, namespace-scoped
+   durable resolution commands. Preserve raw reports, resolve pending disputes,
+   validate target versions and bind context identity before accepting decisions.
 2. Durable projection generations, recovery and visible lag. Never learn by
    simply iterating over raw feedback_for results.
 3. Integrate kernels into versioned experimental recall with exposure neutrality,
@@ -103,10 +104,90 @@ In a checkout with Python >=3.10 and the Rust toolchain:
 
 ```sh
 python -m pip install -e ".[dev,api]"
-python -m pytest tests/test_split_feedback.py tests/test_feedback_lifecycle.py
+python -m pytest tests/test_split_feedback.py tests/test_feedback_lifecycle.py tests/test_feedback_replay.py
 python -m pytest
 cargo test --manifest-path rust/ember_core/Cargo.toml
 ```
 
 Use an isolated store for live acceptance testing. Do not merge based on the
 presence of tests alone.
+
+## Second slice: canonical relevance journal
+
+Implemented in embers.cognitive.feedback_replay. This is an explicitly invoked,
+in-process component, not a new public endpoint or a persistent transaction
+manager. Existing feedback endpoints still store raw reports only.
+
+- A RelevanceDecision assigns at most one unit of total absolute credit across
+  memory versions and typed directed pairs. Pending groups/disagreements and
+  retracted outcomes have no credit.
+- Only configured resolver identities may submit decisions. The embedding
+  caller must authenticate those identities; a string allowlist is not a
+  substitute for transport authentication or namespace/target permission checks.
+- One outcome ID has one effective head. Separate agent reports do not produce
+  separate contributions unless the resolver incorrectly assigns different
+  underlying outcome IDs; Ember cannot infer real-world identity by itself.
+- Reusing a committed request ID with identical content returns its original
+  receipt, including after correction. Changed content with that request fails.
+  Identical current decisions are no-ops. No-op requests do not create receipts;
+  after a later correction they may return a revision conflict on retry.
+- Corrections require the current expected revision. An in-process lock serializes
+  competing corrections. This does not provide inter-process consistency.
+- Corrections retain immutable revision history and replace the effective
+  contribution at the original outcome position. Replay starts from zero,
+  applying the bounded kernels in that stable order.
+- Dependencies reference exact earlier outcome revisions in the same scoped
+  journal. Cycles and forward references are rejected. A changed parent makes
+  dependent learning inactive until explicitly revalidated, transitively.
+  Independent outcomes continue to contribute.
+- project() returns detached memory biases, signed pair states, source generation,
+  rates, model version and effective/inactive outcomes. It cannot write truth.
+- from_history() validates and rebuilds typed in-memory history under supplied
+  configuration. It is not serialization, disk recovery or model migration.
+  Use the same recorded rates, scope and resolver policy for identical replay.
+
+Example (the agent/resolver supplies the decision):
+
+```python
+from embers.cognitive.feedback_replay import (
+    Credit, RelevanceDecision, RelevanceJournal,
+)
+
+journal = RelevanceJournal(
+    namespace="memories", context_id="training-debug",
+    authorized_resolvers=frozenset({"authenticated-resolver"}),
+    memory_rate=0.25, pair_rate=0.25,  # experimental, not production defaults
+)
+decision = RelevanceDecision(
+    outcome_id="run-204-result", status="accepted",
+    credits=(Credit("memory-A-v1", 1.0),),
+    report_ids=("stored-feedback-record-id",),
+    reason="Memory A identified the observed failure cause",
+)
+journal.resolve(
+    decision, actor="authenticated-resolver",
+    request_id="resolution-request-1", expected_revision=0,
+)
+assert journal.project().memory_bias["memory-A-v1"] == 0.25
+```
+
+### Why replay matters
+
+Five positive updates of 0.25 saturate at 1. If the first outcome is corrected
+to negative, replay produces -0.25+0.25+0.25+0.25+0.25 = 0.75.
+Simply subtracting the old update from the final clipped value gives the wrong
+answer for many such histories.
+
+### Remaining limits
+
+History, outcome heads and request receipts currently grow in RAM; replay is
+linear in effective outcomes and runs under a process-local lock. Do not use
+this implementation as the production bounded-storage service. Durable atomic
+commands, byte admission, checkpoints, recovery and live API/recall wiring are
+the next integration work.
+
+The tests added for this slice cover retries, conflicting request reuse,
+saturated-history corrections, transitive dependency invalidation, revalidation,
+pending group credit, typed pairs, context isolation, concurrent corrections,
+history rebuild and invalid data. They remain unexecuted in the authoring
+session because the execution workspace is unavailable.
