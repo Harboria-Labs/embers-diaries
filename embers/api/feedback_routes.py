@@ -34,15 +34,8 @@ async def give_feedback(
     if not outcome:
         raise HTTPException(400, "outcome required")
     try:
-        fb = Feedback(
-            memory_id=memory_id,
-            agent_id=agent.agent_id,
-            outcome=FeedbackOutcome(outcome),
-            usefulness=body.get("usefulness"),
-            accuracy=body.get("accuracy"),
-            attribution=(FeedbackAttribution(body["attribution"])
-                         if body.get("attribution") else None),
-            note=body.get("note", ""),
+        fb = Feedback.from_submission(
+            memory_id, agent.agent_id, body,
             session_id=body.get("session_id") or x_ember_session_id,
         )
         fid = db.give_feedback(memory_id, fb)
@@ -115,3 +108,42 @@ async def session_work(
         "failures": list(session.failures),
         "feedback": feedback_ids,
     }
+
+
+@router.post("/relevance/{namespace}/{context_id}/resolve")
+async def resolve_relevance(
+    namespace: str, context_id: str, body: dict,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    from ..integration.feedback_service import resolve
+    from ..cognitive.feedback_replay import RevisionConflict
+    db = _db()
+    agent = _agent(db, x_ember_agent_id, x_ember_token)
+    try:
+        return resolve(db, namespace, context_id, agent.agent_id, body)
+    except PermissionError as error:
+        raise HTTPException(403, str(error)) from error
+    except KeyError as error:
+        raise HTTPException(404, str(error)) from error
+    except RevisionConflict as error:
+        raise HTTPException(409, str(error)) from error
+    except ValueError as error:
+        raise HTTPException(400, str(error)) from error
+
+
+@router.get("/relevance/{namespace}/{context_id}")
+async def relevance_projection(
+    namespace: str, context_id: str,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    from ..integration.feedback_service import projection
+    db = _db()
+    agent = _agent(db, x_ember_agent_id, x_ember_token)
+    try:
+        return projection(db, namespace, context_id, agent.agent_id)
+    except PermissionError as error:
+        raise HTTPException(403, str(error)) from error
+    except KeyError as error:
+        raise HTTPException(404, str(error)) from error

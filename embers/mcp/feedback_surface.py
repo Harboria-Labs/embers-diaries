@@ -11,11 +11,42 @@ _INSTALLED = False
 
 _TOOLS = [
     {
+        "name": "ember_resolve_relevance",
+        "description": "Resolve or correct a scoped outcome using a preconfigured resolver policy. Does not change truth. Requires request_id and expected_revision.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "namespace": {"type": "string"}, "context_id": {"type": "string"},
+                "decision": {"type": "object"}, "request_id": {"type": "string"},
+                "expected_revision": {"type": "integer", "minimum": 0},
+                "agent_id": {"type": "string"}, "token": {"type": "string"},
+                "session_id": {"type": "string"},
+            },
+            "required": ["namespace", "context_id", "decision", "request_id", "expected_revision"],
+        },
+    },
+    {
+        "name": "ember_relevance_state",
+        "description": "Read contextual learned memory biases, typed pair strengths and unresolved dependencies. No truth promotion.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "namespace": {"type": "string"}, "context_id": {"type": "string"},
+                "agent_id": {"type": "string"}, "token": {"type": "string"},
+                "session_id": {"type": "string"},
+            },
+            "required": ["namespace", "context_id"],
+        },
+    },
+    {
         "name": "ember_feedback",
         "description": (
             "Report what happened after using a durable memory. "
             "outcome required. attribution optional and always YOUR diagnosis. "
-            "Ember does not change the memory. Pass session_id. "
+            "Ember stores reports only; it does not learn or verify from them yet. "
+            "For explicit channels use schema_version=2, channel, outcome_id, "
+            "context_id and context. Relevance needs signal; correctness needs supporting_refs. "
+            "Pass session_id. "
             "Not valid on lobby posts or proposals."
         ),
         "inputSchema": {
@@ -23,6 +54,13 @@ _TOOLS = [
             "properties": {
                 "memory_id": {"type": "string"},
                 "outcome": {"type": "string"},
+                "schema_version": {"type": "integer", "enum": [1, 2]},
+                "channel": {"type": "string", "enum": ["relevance", "correctness"]},
+                "outcome_id": {"type": "string"},
+                "context_id": {"type": "string"},
+                "context": {"type": "object"},
+                "signal": {"type": "number", "minimum": -1, "maximum": 1},
+                "supporting_refs": {"type": "array", "items": {"type": "string"}},
                 "usefulness": {"type": "number"},
                 "accuracy": {"type": "number"},
                 "attribution": {"type": "string"},
@@ -97,17 +135,23 @@ def install() -> None:
     orig = server.EmberMCP._call
 
     def _call(self, name: str, args: dict):
+        if name == "ember_resolve_relevance":
+            from ..integration.feedback_service import resolve
+            agent = self._auth(args)
+            return _text(resolve(
+                self.db, args["namespace"], args["context_id"], agent.agent_id,
+                {key: args[key] for key in ("decision", "request_id", "expected_revision")},
+            ))
+        if name == "ember_relevance_state":
+            from ..integration.feedback_service import projection
+            agent = self._auth(args)
+            return _text(projection(
+                self.db, args["namespace"], args["context_id"], agent.agent_id,
+            ))
         if name == "ember_feedback":
             agent = self._auth(args)
-            fb = Feedback(
-                memory_id=args["memory_id"],
-                agent_id=agent.agent_id,
-                outcome=FeedbackOutcome(args["outcome"]),
-                usefulness=args.get("usefulness"),
-                accuracy=args.get("accuracy"),
-                attribution=(FeedbackAttribution(args["attribution"])
-                             if args.get("attribution") else None),
-                note=args.get("note", ""),
+            fb = Feedback.from_submission(
+                args["memory_id"], agent.agent_id, args,
                 session_id=args.get("session_id"),
             )
             fid = self.db.give_feedback(args["memory_id"], fb)
