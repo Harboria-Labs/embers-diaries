@@ -1,3 +1,4 @@
+from embers._native import atomic_replace as _quota_atomic_replace
 """
 Ember's Diaries — Master Index
 O(1) lookups by record ID, namespace index, tag index.
@@ -92,7 +93,7 @@ class MasterIndex:
                 "persisted_at": datetime.utcnow().isoformat(),
             }
             index_file = self._path / "master.json"
-            index_file.write_bytes(encode_index(data))
+            _quota_atomic_replace(str(index_file), encode_index(data))
 
     def index_record(self, record_id: str, namespace: str, record_type: str,
                      created_at: str, tags: list[str], written_by: str = "system",

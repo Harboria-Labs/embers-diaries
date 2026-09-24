@@ -50,3 +50,15 @@ def projection(db, namespace, context_id, actor):
         for (source, target, relation), value in sorted(result.pair_state.items())
     ]
     return output
+
+
+def candidate_recall(db, namespace, context_id, actor, body):
+    db.require_namespace_access(namespace, actor, "write")
+    service = getattr(db, "_candidate_services", {}).get((namespace, context_id))
+    if service is None:
+        raise KeyError("candidate recall is not configured for this context")
+    if not isinstance(body, dict) or set(body) - {"query_id", "direct_scores", "elapsed", "format"}:
+        raise ValueError("unsupported recall fields")
+    if not {"query_id", "direct_scores", "elapsed"} <= set(body):
+        raise ValueError("query_id, direct_scores and elapsed are required")
+    return service.recall(actor=actor, **body)

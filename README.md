@@ -292,3 +292,18 @@ pytest tests/ -v
 MIT
 
 Built by 0xticketguy / Harboria Labs.
+
+### Experimental contextual memory (Candidate 04)
+
+See [the live-test guide](docs/feedback-candidate-04.md) for the opt-in server,
+feedback equations, guarantees and limitations.
+
+- **Memory record:** a structured, versioned object with identity, content,
+  provenance, evidence, epistemic status, retrieval state and history; some
+  state is stored in linked records rather than rewriting the original.
+- **Relevance:** usefulness for a declared task context; it does not imply truth.
+- **LADC:** bounded transfer between active and latent activation capacity.
+- **Pairing:** a learned directional, typed relationship between memory versions.
+- **Outcome:** the underlying experience receiving credit, not each repeated report.
+- **Attention budget:** a limit on rendered context tokens, separate from storage.
+- **SPRT:** adjacent statistical verification research, not relevance reinforcement.

@@ -147,3 +147,22 @@ async def relevance_projection(
         raise HTTPException(403, str(error)) from error
     except KeyError as error:
         raise HTTPException(404, str(error)) from error
+
+
+@router.post("/relevance/{namespace}/{context_id}/recall")
+async def candidate_recall_route(
+    namespace: str, context_id: str, body: dict,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    from ..integration.feedback_service import candidate_recall
+    db = _db()
+    agent = _agent(db, x_ember_agent_id, x_ember_token)
+    try:
+        return candidate_recall(db, namespace, context_id, agent.agent_id, body)
+    except PermissionError as error:
+        raise HTTPException(403, str(error)) from error
+    except KeyError as error:
+        raise HTTPException(404, str(error)) from error
+    except ValueError as error:
+        raise HTTPException(400, str(error)) from error

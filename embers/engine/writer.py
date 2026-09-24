@@ -11,6 +11,7 @@ from ..core.annotation import Annotation
 from ..core.types import DeprecationReason
 from ..core.errors import ConcurrentModificationError
 from ..storage.store import PhysicalStore
+from embers._native import atomic_replace as _quota_atomic_replace
 
 
 try:
@@ -57,7 +58,12 @@ class WriteEngine:
             try:
                 fn(record, operation)
             except Exception as e:
-                print(f"[WriteEngine] Callback error: {e}")
+                import warnings
+                warnings.warn(
+                    f"Record {record.id} is durable but a derived-index callback failed: {e}. "
+                    "Rebuild indexes before relying on indexed retrieval.", RuntimeWarning,
+                    stacklevel=2,
+                )
 
     # ── Primary write ─────────────────────────────────────────────────────────
 
@@ -293,7 +299,7 @@ class WriteEngine:
                 count = decode_index(sidecar.read_bytes()).get("access_count", 0)
             count += 1
             now = datetime.now(timezone.utc)
-            sidecar.write_bytes(encode_index({
+            _quota_atomic_replace(str(sidecar), encode_index({
                 "record_id":     record_id,
                 "access_count":  count,
                 "last_accessed": now.isoformat(),
@@ -334,7 +340,7 @@ class WriteEngine:
             dep_dir.mkdir(exist_ok=True)
             sidecar = dep_dir / f"{record_id}.deprecated"
             from ..storage.format import encode_index
-            sidecar.write_bytes(encode_index({
+            _quota_atomic_replace(str(sidecar), encode_index({
                 "record_id":  record_id,
                 "reason":     reason.value,
                 "note":       note,
@@ -370,9 +376,9 @@ class WriteEngine:
             # Append to per-record annotation file
             ann_file = ann_dir / f"{record_id}.annotations.jsonl"
             from ..storage.format import encode_index
-            with open(ann_file, "ab") as f:
-                line = encode_index(annotation.to_dict()) + b"\n"
-                f.write(line)
+            line = encode_index(annotation.to_dict()) + b"\n"
+            existing = ann_file.read_bytes() if ann_file.exists() else b""
+            _quota_atomic_replace(str(ann_file), existing + line)
 
             # Notify — pass a stub record for the callback
             record = self._store.read(record_id)

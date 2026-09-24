@@ -75,6 +75,7 @@ class EmberMCP:
                 promotion_policy=policy,
                 max_store_bytes=config.storage.max_store_bytes,
                 max_record_bytes=config.storage.max_record_bytes,
+                max_total_bytes=config.storage.max_total_bytes,
                 runtime_config=config,
             )
         else:

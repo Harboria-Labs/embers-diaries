@@ -246,3 +246,18 @@ def test_rest_resolution_and_correction_conflict(db, monkeypatch):
         "memories", "debug", "resolver", "token",
     ))
     assert state["memory_bias"] == {mid: .25}
+
+
+def test_candidate_recall_mcp_authenticated(mcp):
+    from embers.integration.candidate_recall import CandidateRecall
+    reg = _body(mcp.call_tool('ember_register', {'name': 'candidate'}))
+    auth = {'agent_id': reg['agent_id'], 'token': reg['token']}
+    mid = _body(mcp.call_tool('ember_write', {'content': 'useful clue', 'namespace': 'memories', **auth}))['id']
+    journal = mcp.db.relevance_journal(namespace='memories', context_id='debug', context={'task': 'debug'},
+        authorized_resolvers=frozenset({reg['agent_id']}), memory_rate=.25, pair_rate=.25)
+    CandidateRecall(journal, token_counter=lambda text: len(text.split()), tokenizer_id='words-fixture')
+    args = dict(namespace='memories', context_id='debug', query_id='q', direct_scores={mid: 1}, elapsed=2, **auth)
+    result = _body(mcp.call_tool('ember_candidate_recall', args))
+    assert result['selected_ids'] == [mid]
+    assert _body(mcp.call_tool('ember_candidate_recall', args)) == result
+    assert mcp.call_tool('ember_candidate_recall', dict(args, token='bad'))['isError']

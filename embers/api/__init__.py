@@ -53,6 +53,7 @@ def _get_db() -> EmberDB:
             promotion_policy=policy,
             max_store_bytes=config.storage.max_store_bytes,
             max_record_bytes=config.storage.max_record_bytes,
+            max_total_bytes=config.storage.max_total_bytes,
             runtime_config=config,
         )
         from ..mcp.lobby_surface import STORE

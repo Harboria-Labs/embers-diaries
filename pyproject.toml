@@ -17,6 +17,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+experimental = ["tiktoken>=0.7,<1", "fastapi>=0.110,<1", "uvicorn>=0.29,<1"]
 vector = [
     "numpy>=1.26.0,<3.0.0",
 ]

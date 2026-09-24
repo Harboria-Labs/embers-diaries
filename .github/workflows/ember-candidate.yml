@@ -22,7 +22,7 @@ jobs:
       - name: Require native engine
         run: python -c "from embers import _native; print(_native.__file__)"
       - name: Feedback and replay regressions
-        run: python -m pytest -q tests/test_split_feedback.py tests/test_feedback_replay.py tests/test_feedback_lifecycle.py tests/test_feedback_durable.py
+        run: python -m pytest -q tests/test_split_feedback.py tests/test_feedback_replay.py tests/test_feedback_lifecycle.py tests/test_feedback_durable.py tests/test_candidate_recall.py tests/test_total_store_quota.py
       - name: Full regression suite
         run: python -m pytest -q
       - name: Rust type and build checks

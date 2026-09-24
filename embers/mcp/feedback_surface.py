@@ -10,6 +10,14 @@ from .server import _text, _err
 _INSTALLED = False
 
 _TOOLS = [
+    {"name": "ember_candidate_recall",
+     "description": "Experimental contextual recall using agent-scored memory IDs, LADC and learned directional pairs. Persists activation only; does not reinforce or verify memories. elapsed is explicit model time.",
+     "inputSchema": {"type": "object", "properties": {
+         "namespace": {"type": "string"}, "context_id": {"type": "string"},
+         "query_id": {"type": "string"}, "direct_scores": {"type": "object", "additionalProperties": {"type": "number", "minimum": 0, "maximum": 1}},
+         "elapsed": {"type": "number", "minimum": 0}, "format": {"type": "string", "enum": ["structured", "text", "messages"]},
+         "agent_id": {"type": "string"}, "token": {"type": "string"}, "session_id": {"type": "string"}},
+         "required": ["namespace", "context_id", "query_id", "direct_scores", "elapsed"]}},
     {
         "name": "ember_resolve_relevance",
         "description": "Resolve or correct a scoped outcome using a preconfigured resolver policy. Does not change truth. Requires request_id and expected_revision.",
@@ -135,6 +143,11 @@ def install() -> None:
     orig = server.EmberMCP._call
 
     def _call(self, name: str, args: dict):
+        if name == "ember_candidate_recall":
+            from ..integration.feedback_service import candidate_recall
+            agent = self._auth(args)
+            return _text(candidate_recall(self.db, args["namespace"], args["context_id"], agent.agent_id,
+                {key: args[key] for key in ("query_id", "direct_scores", "elapsed", "format") if key in args}))
         if name == "ember_resolve_relevance":
             from ..integration.feedback_service import resolve
             agent = self._auth(args)
