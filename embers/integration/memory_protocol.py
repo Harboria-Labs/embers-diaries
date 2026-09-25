@@ -112,12 +112,15 @@ class MemoryProtocol:
                  agent_id: str | None = None,
                  session_id: str | None = None,
                  creation_reason: str | None = None,
-                 derived_from: list | None = None) -> str:
+                 derived_from: list | None = None,
+                 primary_context: str | None = None) -> str:
         """Store a new memory. Agent sets kind and room on write.
 
         Kind ≠ room. Unknown or missing labels become unscoped.
         Ember does not guess. Recall must not invent a room later.
         """
+        from ..core.primary_context import validate_context
+        validate_context(primary_context)
         ns = namespace or self.namespace
 
         try:
@@ -129,7 +132,13 @@ class MemoryProtocol:
         except ValueError:
             resolved_room = MemoryRoom.UNSCOPED.value
 
-        data = content if isinstance(content, dict) else {"content": str(content)}
+        data = dict(content) if isinstance(content, dict) else {"content": str(content)}
+        if "primary_context" in data:
+            validate_context(data["primary_context"])
+            if primary_context is not None and data["primary_context"] != primary_context:
+                raise ValueError("conflicting primary contexts")
+        elif primary_context is not None:
+            data["primary_context"] = primary_context
         if "memory_type" not in data:
             data["memory_type"] = resolved_type
         else:
@@ -181,8 +190,14 @@ class MemoryProtocol:
                room: str | None = None,
                threshold: float | None = None,
                include_annotations: bool = True,
-               format: str = "text") -> str | list[dict]:
-        """Retrieve relevant memories. room filters by stored room only."""
+               format: str = "text",
+               primary_context: str | None = None,
+               inspect_context: bool = False) -> str | list[dict] | dict:
+        """Retrieve memories; primary_context is observable metadata, not a filter."""
+        from ..core.primary_context import validate_context
+        validate_context(primary_context)
+        if type(inspect_context) is not bool:
+            raise ValueError("inspect_context must be boolean")
         ns = namespace or self.namespace
 
         top_k = min(top_k, self.search_config.max_results)
@@ -242,16 +257,34 @@ class MemoryProtocol:
             except Exception:
                 pass
 
+        def observed(result):
+            if not inspect_context and primary_context is None:
+                return result
+            if format == "raw":
+                emitted = {r.id for r in result}
+            elif format == "structured":
+                emitted = {r["id"] for r in result}
+            elif format == "messages":
+                emitted = {r["metadata"]["ember_record_id"] for r in result}
+            else:
+                emitted = set(self.context_builder.get_last_injected())
+            return {"query": query, "primary_context": primary_context,
+                    "context_policy": "agent-supplied-pass-through-v1",
+                    "candidates": [{"id": r.id, "primary_context": (r.data.get("primary_context") if isinstance(r.data, dict) else None)}
+                                   for r, _ in candidates.values()],
+                    "results": [{"id": r.id, "primary_context": (r.data.get("primary_context") if isinstance(r.data, dict) else None)}
+                                for r in records if r.id in emitted], "memories": result}
+
         if format == "raw":
-            return records
+            return observed(records)
         elif format == "messages":
-            return self.context_builder.build_message_context(records)
+            return observed(self.context_builder.build_message_context(records))
         elif format == "structured":
             rows = self.context_builder.build_structured_context(records)
-            return self._stamp_conflicts(rows)
+            return observed(self._stamp_conflicts(rows))
         else:
-            return self.context_builder.build_text_context(
-                records, include_annotations=include_annotations)
+            return observed(self.context_builder.build_text_context(
+                records, include_annotations=include_annotations))
 
     def verify(self, record_id: str,
                status: str = "verified",
@@ -324,7 +357,7 @@ class MemoryProtocol:
 
     _DURABLE_MEMORY_TYPES = frozenset({RecordType.NODE, RecordType.DOCUMENT})
     _CONFLICT_SKIP_KEYS = frozenset({
-        "subject", "content", "memory_type", "room", "verify_status",
+        "subject", "content", "memory_type", "room", "verify_status", "primary_context",
     })
 
     def _check_conflicts(self, new_record: EmberRecord):

@@ -307,3 +307,7 @@ feedback equations, guarantees and limitations.
 - **Outcome:** the underlying experience receiving credit, not each repeated report.
 - **Attention budget:** a limit on rendered context tokens, separate from storage.
 - **SPRT:** adjacent statistical verification research, not relevance reinforcement.
+
+[Primary-context Contract 01](docs/primary-context-contract-01.md) adds optional
+agent-supplied context to write/recall and retrieval context to feedback. It is
+observable metadata, with no inferred context, hard context filter or new score.

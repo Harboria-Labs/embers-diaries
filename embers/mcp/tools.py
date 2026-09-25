@@ -469,3 +469,13 @@ TOOLS = [
         },
     },
 ]
+
+# Contract 01 metadata is separate from query text and room filters.
+for _tool in TOOLS:
+    if _tool["name"] in ("ember_write", "ember_recall"):
+        _tool["inputSchema"]["properties"]["primary_context"] = {
+            "type": ["string", "null"],
+            "description": "Optional exact agent-supplied primary context. No inference, merging or context filtering."}
+    if _tool["name"] == "ember_recall":
+        _tool["inputSchema"]["properties"]["inspect_context"] = {
+            "type": "boolean", "description": "Return query/context, candidate/result IDs with their stored contexts, and memories. Use true to inspect unset context."}

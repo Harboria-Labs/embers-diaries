@@ -64,6 +64,7 @@ _TOOLS = [
                 "outcome": {"type": "string"},
                 "schema_version": {"type": "integer", "enum": [1, 2]},
                 "channel": {"type": "string", "enum": ["relevance", "correctness"]},
+                "retrieval_context": {"type": ["string", "null"], "description": "Exact context from the recall response; never inferred from the target memory. Agent-reported metadata, not learning authority."},
                 "outcome_id": {"type": "string"},
                 "context_id": {"type": "string"},
                 "context": {"type": "object"},

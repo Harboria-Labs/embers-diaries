@@ -118,8 +118,21 @@ async def memory_write(
     protocol = _proto(db)
     namespace = body.get("namespace") or protocol.namespace
     require_namespace(db, namespace, agent.agent_id, "write")
+    if body.get("subject") is not None:
+        content = dict(content) if isinstance(content, dict) else {"content": content}
+        content["subject"] = body["subject"]
+    from ..core.primary_context import validate_context
+    try:
+        validate_context(body.get("primary_context"))
+        if isinstance(content, dict):
+            validate_context(content.get("primary_context"))
+            if body.get("primary_context") is not None and "primary_context" in content and content["primary_context"] != body["primary_context"]:
+                raise ValueError("conflicting primary contexts")
+    except ValueError as error:
+        raise HTTPException(400, str(error)) from error
     rid = protocol.remember(
         content,
+        primary_context=body.get("primary_context"),
         tags=body.get("tags"),
         confidence=body.get("confidence", 1.0),
         namespace=body.get("namespace"),
@@ -151,14 +164,23 @@ async def memory_recall(
     protocol = _proto(db)
     namespace = body.get("namespace") or protocol.namespace
     require_namespace(db, namespace, agent.agent_id)
+    from ..core.primary_context import validate_context
+    try:
+        validate_context(body.get("primary_context"))
+        if type(body.get("inspect_context", False)) is not bool:
+            raise ValueError("inspect_context must be boolean")
+    except ValueError as error:
+        raise HTTPException(400, str(error)) from error
     result = protocol.recall(
         query,
+        primary_context=body.get("primary_context"),
+        inspect_context=body.get("inspect_context", False),
         top_k=body.get("top_k", 10),
         namespace=body.get("namespace"),
         room=body.get("room"),
         format=body.get("format", "structured"),
     )
-    return {"query": query, "memories": result}
+    return result if isinstance(result, dict) and "context_policy" in result else {"query": query, "memories": result}
 
 
 @router.get("/memory/read/{record_id}")

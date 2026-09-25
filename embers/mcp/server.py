@@ -139,6 +139,7 @@ class EmberMCP:
                 session_id=args.get("session_id"),
                 creation_reason=args.get("creation_reason"),
                 tags=args.get("tags"),
+                primary_context=args.get("primary_context"),
             )
             if args.get("session_id") and self.db.get_session(args["session_id"]):
                 self.db.record_memory_write(
@@ -255,6 +256,8 @@ class EmberMCP:
                 top_k=int(args.get("top_k", 10)),
                 namespace=args.get("namespace"),
                 format="structured",
+                primary_context=args.get("primary_context"),
+                inspect_context=args.get("inspect_context", False),
             )
             return _text(result)
 

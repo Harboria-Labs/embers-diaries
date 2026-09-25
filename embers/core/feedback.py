@@ -51,6 +51,7 @@ class Feedback:
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     # Version 2 is explicit, report-only input. It does not authorize learning.
+    retrieval_context: str | None = None
     schema_version: int = 1
     channel: FeedbackChannel | None = None
     outcome_id: str | None = None
@@ -60,6 +61,8 @@ class Feedback:
     supporting_refs: list[str] = field(default_factory=list)
 
     def validate(self) -> None:
+        from .primary_context import validate_context
+        validate_context(self.retrieval_context)
         if type(self.schema_version) is not int or self.schema_version not in (1, 2):
             raise ValueError("unsupported feedback schema_version")
         if self.schema_version == 1:
@@ -132,6 +135,8 @@ class Feedback:
             "timestamp": self.timestamp.isoformat(),
         }
 
+        if self.retrieval_context is not None:
+            result["retrieval_context"] = self.retrieval_context
         if self.schema_version == 2:
             result.update(
                 schema_version=2,
@@ -156,7 +161,7 @@ class Feedback:
                 "memory_id", "agent_id", "token", "session_id", "outcome",
                 "schema_version", "channel", "outcome_id", "context_id",
                 "context", "signal", "supporting_refs", "note", "attribution",
-                "usefulness", "accuracy",
+                "usefulness", "accuracy", "retrieval_context",
             }
             unknown = set(body) - allowed
             if unknown:
@@ -168,6 +173,7 @@ class Feedback:
             attribution=(FeedbackAttribution(body["attribution"])
                          if body.get("attribution") else None),
             note=body.get("note", ""), session_id=session_id,
+            retrieval_context=body.get("retrieval_context"),
             schema_version=version, channel=body.get("channel"),
             outcome_id=body.get("outcome_id"), context_id=body.get("context_id"),
             context=body.get("context"), signal=body.get("signal"),
@@ -180,6 +186,7 @@ class Feedback:
     def from_dict(cls, d: dict) -> "Feedback":
         ts = d.get("timestamp")
         return cls(
+            retrieval_context=d.get("retrieval_context"),
             schema_version=d.get("schema_version", 1),
             channel=d.get("channel"),
             outcome_id=d.get("outcome_id"), context_id=d.get("context_id"),
