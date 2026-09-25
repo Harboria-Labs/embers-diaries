@@ -3,12 +3,24 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from functools import wraps
+from threading import RLock
 import uuid
 
 from ..config import LobbyConfig
+from .realtime import LobbyEventBroker
 
 ALLOWED_ROOMS = {"project", "task"}
 ALLOWED_TYPES = {"failure", "discovery", "question"}
+
+
+def _locked(method):
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        with self._lock:
+            return method(self, *args, **kwargs)
+    return wrapper
+
 
 
 class LobbyError(ValueError):
@@ -17,18 +29,24 @@ class LobbyError(ValueError):
 
 class LobbyStore:
     def __init__(self, config: LobbyConfig | None = None):
+        self._lock = RLock()
         self.config = config or LobbyConfig()
         self.boards: dict[str, dict] = {}
         self.by_session: dict[str, str] = {}
+        self.events = LobbyEventBroker()
 
+    @_locked
     def configure(self, config: LobbyConfig) -> None:
         """Apply process configuration without discarding active boards."""
         self.config = config
 
+    @_locked
     def reset(self) -> None:
         self.boards.clear()
         self.by_session.clear()
+        self.events.reset()
 
+    @_locked
     def board_for_session(self, session_id: str | None) -> dict | None:
         self._ensure_enabled()
         if not session_id:
@@ -42,6 +60,7 @@ class LobbyStore:
         self._expire_posts(board)
         return board
 
+    @_locked
     def summary_for_session(self, session_id: str | None) -> dict | None:
         if not self.config.enabled:
             return None
@@ -57,6 +76,7 @@ class LobbyStore:
             "posts": len(board["posts"]),
         }
 
+    @_locked
     def open(self, *, session_id: str, agent_id: str, task: str,
              namespace: str, room: str) -> dict:
         self._ensure_enabled()
@@ -79,7 +99,10 @@ class LobbyStore:
                 board["participants"].add(session_id)
                 self.by_session[session_id] = board["board_id"]
                 self._touch(board, session_id, agent_id)
-                return self._public(board)
+                joined = self._public(board)
+                self._emit(board, "lobby.participant_joined", {
+                    "agent_id": agent_id, "session_id": session_id})
+                return joined
         board = {
             "board_id": str(uuid.uuid4()),
             "task": task,
@@ -95,8 +118,11 @@ class LobbyStore:
         self._touch(board, session_id, agent_id)
         self.boards[board["board_id"]] = board
         self.by_session[session_id] = board["board_id"]
-        return self._public(board)
+        opened = self._public(board)
+        self._emit(board, "lobby.opened", {"board": opened})
+        return opened
 
+    @_locked
     def publish(self, *, session_id: str, agent_id: str, room: str,
                 post_type: str, body: str, approach: str | None) -> dict:
         board = self.board_for_session(session_id)
@@ -137,8 +163,11 @@ class LobbyStore:
         board["participants"].add(session_id)
         self.by_session[session_id] = board["board_id"]
         self._touch(board, session_id, agent_id)
-        return dict(post)
+        published = dict(post)
+        self._emit(board, "lobby.post_published", {"post": published})
+        return published
 
+    @_locked
     def corroborate(self, *, session_id: str, agent_id: str, post_id: str) -> dict:
         board, post = self._find_post(session_id, post_id)
         if post["session_id"] == session_id or post["agent_id"] == agent_id:
@@ -155,16 +184,24 @@ class LobbyStore:
         board["participants"].add(session_id)
         self.by_session[session_id] = board["board_id"]
         self._touch(board, session_id, agent_id)
-        return dict(post)
+        corroborated = dict(post)
+        self._emit(board, "lobby.post_corroborated", {
+            "post": corroborated, "agent_id": agent_id,
+            "session_id": session_id})
+        return corroborated
 
+    @_locked
     def heartbeat(self, *, session_id: str, agent_id: str) -> dict:
         """Refresh ephemeral presence; future real-time transport can call this."""
         board = self.board_for_session(session_id)
         if board is None:
             raise LobbyError("no open board for this session")
         self._touch(board, session_id, agent_id)
-        return dict(board["presence"][session_id])
+        presence = dict(board["presence"][session_id])
+        self._emit(board, "lobby.presence_updated", {"presence": presence})
+        return presence
 
+    @_locked
     def leave(self, *, session_id: str) -> None:
         """Remove a session from presence without closing the shared board."""
         board = self.board_for_session(session_id)
@@ -173,20 +210,29 @@ class LobbyStore:
         board["participants"].discard(session_id)
         board["presence"].pop(session_id, None)
         self.by_session.pop(session_id, None)
+        self._emit(board, "lobby.participant_left", {"session_id": session_id})
 
+    @_locked
     def snapshot(self, *, session_id: str) -> dict:
         board = self.board_for_session(session_id)
         if board is None:
             raise LobbyError("no open board for this session")
         return self._public(board)
 
+    @_locked
     def take_post(self, *, session_id: str, post_id: str) -> dict:
         _board, post = self._find_post(session_id, post_id)
         return post
 
+    @_locked
     def mark_promoted(self, post: dict, proposal_id: str) -> None:
         post["promoted_to"] = proposal_id
+        board = self.boards.get(post["board_id"])
+        if board is not None:
+            self._emit(board, "lobby.post_promoted", {
+                "post_id": post["post_id"], "promoted_to": proposal_id})
 
+    @_locked
     def close(self, *, session_id: str) -> dict:
         board = self.board_for_session(session_id)
         if board is None:
@@ -203,11 +249,13 @@ class LobbyStore:
         for sid in list(board["participants"]):
             if self.by_session.get(sid) == board["board_id"]:
                 del self.by_session[sid]
-        return {
+        result = {
             "board_id": board["board_id"],
             "status": "closed",
             "unpromoted_failures": unpromoted_failures,
         }
+        self._emit(board, "lobby.closed", result)
+        return result
 
     def _find_post(self, session_id: str, post_id: str) -> tuple[dict, dict]:
         board = self.board_for_session(session_id)
@@ -270,3 +318,6 @@ class LobbyStore:
             "heartbeat_interval_seconds": self.config.heartbeat_interval_seconds,
             "posts": [dict(p) for p in board["posts"]],
         }
+
+    def _emit(self, board: dict, event_type: str, data: dict) -> None:
+        self.events.publish(board["board_id"], event_type, data)
