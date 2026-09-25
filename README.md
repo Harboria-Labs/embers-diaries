@@ -311,3 +311,7 @@ feedback equations, guarantees and limitations.
 [Primary-context Contract 01](docs/primary-context-contract-01.md) adds optional
 agent-supplied context to write/recall and retrieval context to feedback. It is
 observable metadata, with no inferred context, hard context filter or new score.
+
+Candidate 04 now initializes during **normal server startup** on the test branch.
+Use `python -m uvicorn embers.api:app --port 9200`; a second server is unnecessary.
+See the live-test guide for the private test-agent credentials and encoding defaults.

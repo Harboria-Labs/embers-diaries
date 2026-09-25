@@ -78,6 +78,8 @@ class EmberMCP:
                 max_total_bytes=config.storage.max_total_bytes,
                 runtime_config=config,
             )
+            from ..integration.server_memory import prepare_memory_services
+            prepare_memory_services(db, config.storage.path)
         else:
             config.require_runtime_supported()
             if not config.api.mcp_enabled:

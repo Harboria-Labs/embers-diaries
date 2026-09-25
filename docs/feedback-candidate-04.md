@@ -4,41 +4,54 @@ This opt-in implementation connects durable relevance resolution, directional
 pairings, active/latent transfer, and bounded context rendering. Legacy recall
 remains available. Use the experimental launcher for the integrated path.
 
-## Start a live test
+## Start one server
 
-From a checkout of branch `codex/ember-split-feedback-candidate04`, with Python
-3.10+ and a current stable Rust toolchain installed:
-
-```sh
-python -m pip install -e '.[experimental,dev]' httpx
-python -m embers.experimental_server --encoding cl100k_base
-```
-
-`cl100k_base` is an example tokenizer. Choose the encoding for your test model.
-The tokenizer may download its vocabulary on first use. The server listens on
-`127.0.0.1:9200`, with MCP at `/mcp` and REST under `/v1`. It creates a separate
-`ember-experimental-store` with a 256 MiB managed logical-byte limit and saves
-private resolver credentials in `ember-experimental-credentials.json` outside
-that store. Reuse these paths on restart. Do not commit or publish credentials.
-The server never prints the token. On Windows, restrict the credential file's
-ACL to your account; the POSIX creation mode is not a Windows ACL guarantee.
-
-In another terminal:
+On the updated test branch, install dependencies and use normal startup:
 
 ```sh
-python examples/candidate_live_smoke.py
+python -m pip install -e '.[all]'
+python -m uvicorn embers.api:app --host 127.0.0.1 --port 9200
 ```
 
-This writes a test memory, calls MCP and REST recall, reports usefulness,
-resolves that outcome and checks retry protection. It prints PASS on success.
-To connect remotely through your existing tunnel, point it at port 9200 and
-use its HTTPS URL ending in `/mcp`. Keep the resolver credentials private.
+The normal HTTP server now prepares Candidate 04 alongside the regular APIs.
+It uses the configured Ember store (`EMBER_STORE` or storage.path), without
+silently switching stores or changing storage limits. MCP stays at `/mcp`.
+The stdio entry point also prepares the services when it opens its own store.
+An embedded caller supplying an already-open DB still controls its own setup.
 
-The configured namespace is `memories`; context ID is `live-test`; its exact
-context descriptor is `{"task":"live-test"}`. This is a test context, not a
-universal context inferred from wording. Applications configure other contexts
-with `db.relevance_journal(...)` and `CandidateRecall(...)` at trusted startup.
-HTTP callers cannot configure resolver authority or token counters.
+Startup registers/reuses the `memories` / `live-test` test context and its
+feedback-authorized agent. The private credentials file is next to the store,
+named `<store-name>-candidate-credentials.json`; its path is logged, never its
+token. Use that existing identity for learning tests. An ordinary newly
+registered agent is not automatically allowed to resolve someone else's feedback.
+Keep this file private; on Windows restrict its ACL to your account.
+
+“Resolver” means an authorized feedback decision-maker, not another model or
+server. Tokenization only measures context length. The default test encoding is
+`cl100k_base`; set `EMBER_TOKEN_ENCODING` before first setup to use another
+supported encoding. Its vocabulary may download on first use. This default does
+not assert that every connected model uses that tokenizer. Persisted policies
+reject silent encoding changes; migration remains explicit.
+
+Run against this same server:
+
+```sh
+python examples/candidate_live_smoke.py --credentials ember_store-candidate-credentials.json
+python examples/primary_context_live_smoke.py
+```
+
+Adjust the credentials path to the one logged at startup. These scripts write
+test records. For a disposable test store, set `EMBER_STORE` before normal
+startup. The legacy experimental launcher remains an optional wrapper for a
+separate-store fixture; it is no longer required and should not run alongside
+your normal server. It uses the same setup helper.
+
+If storage limits prevent creating bootstrap records, startup reports Candidate
+04 as blocked while retaining ordinary server access; it never bypasses quotas.
+Other setup failures (such as invalid saved credentials) fail visibly.
+
+Context descriptors remain explicit: the preconfigured descriptor is
+`{"task":"live-test"}`. This is not automatic semantic context resolution.
 
 ## Agent workflow
 

@@ -45,3 +45,5 @@ rust/**/target/
 embers/_native*.so
 ember-experimental-store/
 ember-experimental-credentials.json
+
+*-candidate-credentials.json
