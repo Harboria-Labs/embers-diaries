@@ -91,6 +91,7 @@ class EmberDB:
                  enforce_attribution: bool = False,
                  max_store_bytes: int = 0,
                  max_record_bytes: int = 0,
+                 max_total_bytes: int = 0,
                  runtime_config=None):
         self._path = Path(store_path)
         self._runtime_config = runtime_config
@@ -103,6 +104,7 @@ class EmberDB:
             self._path,
             max_store_bytes=max_store_bytes,
             max_record_bytes=max_record_bytes,
+            max_total_bytes=max_total_bytes,
         )
         self._writer = WriteEngine(self._store)
 
@@ -148,6 +150,7 @@ class EmberDB:
                 enforce_attribution: bool = False,
                 max_store_bytes: int = 0,
                 max_record_bytes: int = 0,
+                 max_total_bytes: int = 0,
                 runtime_config=None) -> "EmberDB":
         """Connect to (or create) an Ember's Diaries store.
 
@@ -161,6 +164,7 @@ class EmberDB:
                    enforce_attribution=enforce_attribution,
                    max_store_bytes=max_store_bytes,
                    max_record_bytes=max_record_bytes,
+            max_total_bytes=max_total_bytes,
                    runtime_config=runtime_config)
 
     def _rebuild_indexes_if_needed(self):
@@ -202,12 +206,13 @@ class EmberDB:
             record.id, record.namespace, record.created_at.isoformat())
 
         # Full-text index
-        self._fulltext_index.add(
-            record.id, record.data, record.namespace,
-            extra_text=" ".join(record.tags))
+        if record.retrieval_candidate:
+            self._fulltext_index.add(
+                record.id, record.data, record.namespace,
+                extra_text=" ".join(record.tags))
 
         # Vector index (if record has embedding)
-        if record.embedding:
+        if record.embedding and record.retrieval_candidate:
             self._vector_index.add(record.id, record.embedding, record.namespace)
 
         # Graph index (if record has connections)
@@ -230,6 +235,10 @@ class EmberDB:
                 edge_id=f"df:{record.id}:{target_id}", label="derived_from")
 
     # ── Write ─────────────────────────────────────────────────────────────────
+
+    def storage_usage(self) -> dict:
+        """Logical bytes under the store root, not RAM or allocated blocks."""
+        return self._store.byte_usage()
 
     def write(self, record: EmberRecord) -> str:
         """

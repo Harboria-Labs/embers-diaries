@@ -40,3 +40,10 @@ rust/**/target/
 
 # Local raw feature spec — intentionally NOT committed.
 /features update
+
+# Local native build and isolated experimental server data
+embers/_native*.so
+ember-experimental-store/
+ember-experimental-credentials.json
+
+*-candidate-credentials.json

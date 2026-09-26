@@ -48,13 +48,17 @@ def _get_db() -> EmberDB:
             require_evidence=config.evidence.require_evidence,
             minimum_evidence_items=config.evidence.minimum_items,
         )
-        _db = EmberDB.connect(
+        db = EmberDB.connect(
             config.storage.path,
             promotion_policy=policy,
             max_store_bytes=config.storage.max_store_bytes,
             max_record_bytes=config.storage.max_record_bytes,
+            max_total_bytes=config.storage.max_total_bytes,
             runtime_config=config,
         )
+        from ..integration.server_memory import prepare_memory_services
+        prepare_memory_services(db, config.storage.path)
+        _db = db
         from ..mcp.lobby_surface import STORE
         STORE.configure(config.lobby)
     return _db

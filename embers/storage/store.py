@@ -31,6 +31,8 @@ try:
         atomic_write_new as _atomic_write_new,
         recover_record_transactions as _recover_record_transactions,
         write_record_transaction as _write_record_transaction,
+        configure_store_quota as _configure_store_quota,
+        store_byte_usage as _store_byte_usage,
     )
     STORE_LOCK_BACKEND = "rust-pyo3"
 except ImportError:
@@ -122,7 +124,7 @@ class PhysicalStore:
     _shared_locks_guard = threading.RLock()
 
     def __init__(self, store_path: str | Path, *, max_store_bytes: int = 0,
-                 max_record_bytes: int = 0):
+                 max_record_bytes: int = 0, max_total_bytes: int = 0):
         self.root = Path(store_path)
         self.max_store_bytes = max_store_bytes
         self.max_record_bytes = max_record_bytes
@@ -139,6 +141,12 @@ class PhysicalStore:
             self._lock = self._shared_locks.setdefault(
                 key, _StoreTransactionLock(self.root / ".ember.lock"))
         with self._lock:
+            if type(max_total_bytes) is not int or max_total_bytes < 0:
+                raise ValueError("max_total_bytes must be a nonnegative integer")
+            if max_total_bytes:
+                if STORE_LOCK_BACKEND != "rust-pyo3":
+                    raise RuntimeError("total-store quota requires native storage")
+                _configure_store_quota(str(self.root), max_total_bytes)
             self._setup()
             self.wal = WriteAheadLog(self.root)
             self._recover()
@@ -195,13 +203,16 @@ class PhysicalStore:
 
             if _write_record_transaction is not None:
                 now = datetime.now(timezone.utc).isoformat()
+                from ..storage.format import encode_index
+                meta = self._read_meta()
+                meta["record_count"] = meta.get("record_count", 0) + 1
+                meta["last_write"] = now
                 _write_record_transaction(
                     str(self.root), str(uuid.uuid4()), now,
                     datetime.now(timezone.utc).isoformat(), record.id,
                     json.dumps(record_dict, ensure_ascii=False,
                                separators=(",", ":")).encode("utf-8"),
-                    raw)
-                self._increment_record_count()
+                    raw, encode_index(meta))
                 return record.id
 
             # Step 1: Log to WAL (PENDING)
@@ -295,6 +306,16 @@ class PhysicalStore:
         meta["record_count"] = meta.get("record_count", 0) + 1
         meta["last_write"] = datetime.now(timezone.utc).isoformat()
         self._write_meta(meta)
+
+    def byte_usage(self) -> dict:
+        if STORE_LOCK_BACKEND != "rust-pyo3":
+            raise RuntimeError("native storage usage unavailable")
+        with self._lock:
+            used, limit = _store_byte_usage(str(self.root))
+            return {"managed_logical_bytes": used, "max_total_bytes": limit,
+                    "remaining_bytes": None if limit is None else max(0, limit - used),
+                    "unit": "bytes", "includes": "all files below store root",
+                    "excludes": "filesystem allocation overhead, RAM and external paths"}
 
     def stats(self) -> dict:
         meta = self._read_meta()

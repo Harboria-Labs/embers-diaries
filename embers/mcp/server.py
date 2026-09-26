@@ -75,8 +75,11 @@ class EmberMCP:
                 promotion_policy=policy,
                 max_store_bytes=config.storage.max_store_bytes,
                 max_record_bytes=config.storage.max_record_bytes,
+                max_total_bytes=config.storage.max_total_bytes,
                 runtime_config=config,
             )
+            from ..integration.server_memory import prepare_memory_services
+            prepare_memory_services(db, config.storage.path)
         else:
             config.require_runtime_supported()
             if not config.api.mcp_enabled:
@@ -138,6 +141,7 @@ class EmberMCP:
                 session_id=args.get("session_id"),
                 creation_reason=args.get("creation_reason"),
                 tags=args.get("tags"),
+                primary_context=args.get("primary_context"),
             )
             if args.get("session_id") and self.db.get_session(args["session_id"]):
                 self.db.record_memory_write(
@@ -244,6 +248,13 @@ class EmberMCP:
                 "records": [record.to_dict() for record in records],
             })
 
+        if name == "ember_orient":
+            agent = self._auth(args)
+            namespace = args.get("namespace") or self.protocol.namespace
+            self.db.require_namespace_access(namespace, agent.agent_id, "read")
+            return _text(self.protocol.orient(args["clues"], namespace,
+                hints=args.get("hints"), limits=args.get("limits"), signals=args.get("signals")))
+
         if name == "ember_recall":
             agent = self._auth(args)
             namespace = args.get("namespace") or self.protocol.namespace
@@ -254,6 +265,8 @@ class EmberMCP:
                 top_k=int(args.get("top_k", 10)),
                 namespace=args.get("namespace"),
                 format="structured",
+                primary_context=args.get("primary_context"),
+                inspect_context=args.get("inspect_context", False),
             )
             return _text(result)
 

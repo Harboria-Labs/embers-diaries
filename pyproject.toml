@@ -12,11 +12,13 @@ license = {text = "MIT"}
 authors = [{name = "ticket", email = "ticketguy@gmail.com"}]
 
 dependencies = [
+    "tiktoken>=0.7,<1",
     "msgpack>=1.0.8,<2.0.0",
     "tomli>=2.0.1; python_version < '3.11'",
 ]
 
 [project.optional-dependencies]
+experimental = ["tiktoken>=0.7,<1", "fastapi>=0.110,<1", "uvicorn>=0.29,<1"]
 vector = [
     "numpy>=1.26.0,<3.0.0",
 ]
