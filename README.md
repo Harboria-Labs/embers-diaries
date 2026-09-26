@@ -315,3 +315,7 @@ observable metadata, with no inferred context, hard context filter or new score.
 Candidate 04 now initializes during **normal server startup** on the test branch.
 Use `python -m uvicorn embers.api:app --port 9200`; a second server is unnecessary.
 See the live-test guide for the private test-agent credentials and encoding defaults.
+
+[Context orientation Contract 02](docs/context-orientation-contract-02.md) adds
+`ember_orient`: rough clues return a bounded subject/context map with representative
+memories and explicit field/relationship signals. The agent chooses the context.

@@ -479,3 +479,25 @@ for _tool in TOOLS:
     if _tool["name"] == "ember_recall":
         _tool["inputSchema"]["properties"]["inspect_context"] = {
             "type": "boolean", "description": "Return query/context, candidate/result IDs with their stored contexts, and memories. Use true to inspect unset context."}
+
+
+TOOLS.append({
+    "name": "ember_orient",
+    "description": "Read-only Contract 02: find likely existing subjects, contexts and bounded memory previews from rough clues. Returns lexical/relationship signals, applied limits and IDs. The agent chooses the working context; no context merging, rewriting or learning.",
+    "inputSchema": {"type": "object", "properties": {
+        "clues": {"type": "string", "description": "Rough keywords/fragments, up to 2048 UTF-8 bytes; not a primary context."},
+        "namespace": {"type": "string"},
+        "hints": {"type": "object", "additionalProperties": False, "properties": {
+            "subject": {"type": ["string", "null"]}, "primary_context": {"type": ["string", "null"]}}},
+        "limits": {"type": "object", "additionalProperties": False, "properties": {
+            "subjects": {"type": "integer", "minimum": 1, "maximum": 20},
+            "contexts": {"type": "integer", "minimum": 1, "maximum": 40},
+            "memories_per_context": {"type": "integer", "minimum": 1, "maximum": 10},
+            "records": {"type": "integer", "minimum": 1, "maximum": 100},
+            "candidates": {"type": "integer", "minimum": 1, "maximum": 500},
+            "relationships": {"type": "integer", "minimum": 1, "maximum": 100},
+            "preview_chars": {"type": "integer", "minimum": 1, "maximum": 1000},
+            "response_bytes": {"type": "integer", "minimum": 4096, "maximum": 131072}}},
+        "signals": {"type": "array", "uniqueItems": True, "items": {"type": "string", "enum": ["subject", "primary_context", "content", "tags", "relations"]}},
+        "agent_id": {"type": "string"}, "token": {"type": "string"}, "session_id": {"type": "string"}},
+        "required": ["clues"]}})

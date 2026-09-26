@@ -286,6 +286,13 @@ class MemoryProtocol:
             return observed(self.context_builder.build_text_context(
                 records, include_annotations=include_annotations))
 
+    def orient(self, clues: str, namespace: str | None = None, *, hints=None,
+               limits=None, signals=None) -> dict:
+        """Read-only Contract 02 orientation; the agent selects the context."""
+        from .orientation import orient
+        return orient(self.db, clues=clues, namespace=namespace or self.namespace,
+                      hints=hints, limits=limits, signals=signals)
+
     def verify(self, record_id: str,
                status: str = "verified",
                note: str = "",

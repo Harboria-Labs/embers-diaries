@@ -248,6 +248,13 @@ class EmberMCP:
                 "records": [record.to_dict() for record in records],
             })
 
+        if name == "ember_orient":
+            agent = self._auth(args)
+            namespace = args.get("namespace") or self.protocol.namespace
+            self.db.require_namespace_access(namespace, agent.agent_id, "read")
+            return _text(self.protocol.orient(args["clues"], namespace,
+                hints=args.get("hints"), limits=args.get("limits"), signals=args.get("signals")))
+
         if name == "ember_recall":
             agent = self._auth(args)
             namespace = args.get("namespace") or self.protocol.namespace

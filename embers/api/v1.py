@@ -875,3 +875,24 @@ async def list_failures(
     else:
         found = db.failures()
     return {"failures": [f.to_dict() for f in found]}
+
+
+@router.post("/memory/orient")
+async def memory_orient(
+    body: dict,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    from . import _get_db
+    db = _get_db()
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    protocol = _proto(db)
+    namespace = body.get("namespace") or protocol.namespace
+    require_namespace(db, namespace, agent.agent_id)
+    if set(body) - {"clues", "namespace", "hints", "limits", "signals"}:
+        raise HTTPException(400, "unsupported orientation fields")
+    try:
+        return protocol.orient(body.get("clues"), namespace, hints=body.get("hints"),
+                               limits=body.get("limits"), signals=body.get("signals"))
+    except ValueError as error:
+        raise HTTPException(400, str(error)) from error
