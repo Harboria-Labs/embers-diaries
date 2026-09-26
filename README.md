@@ -325,3 +325,7 @@ adds `ember_usefulness_update`, `ember_usefulness_state` and `/visualizer` on th
 same normal server. Reports are grouped into experiences; corrections recompute
 contextual U and directional W. These values remain separate from heat, retrieval
 ranking and truth. The visualizer is an authorized read-only view.
+
+[Live SSE observation](docs/usefulness-sse.md) pushes committed events to the
+visualizer with revision-based recovery, in-place updates, visible connection
+status and read-only authenticated fallback.

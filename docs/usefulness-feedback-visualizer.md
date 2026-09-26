@@ -38,7 +38,8 @@ Namespace permissions still apply to it. Other namespace writers may submit
 ordinary reports but cannot attest identities, correct, merge, split or configure.
 No extra configuration file is required for the defaults.
 
-The page can refresh every five seconds. Select an event to see **U BEFORE /
+The page now uses authenticated SSE with snapshot recovery and polling fallback;
+see [the SSE delivery guide](usefulness-sse.md). Select an event to see **U BEFORE /
 AFTER**, **N_eff BEFORE / AFTER**, and the unchanged epistemic snapshot. Select a
 node for its current evidence, recorded retrieval reasons and edges. Request and
 session filters apply to the event stream; the map remains a **current-state**

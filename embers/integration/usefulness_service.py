@@ -83,6 +83,13 @@ def record_request(db, namespace, actor, operation, args, result, started):
 
 
 def snapshot(db, namespace, actor, *, after=0, limit=100, request_id=None, session_id=None):
+    # A snapshot and its event cursor describe one committed journal prefix.
+    with db._writer.lock:
+        return _snapshot(db, namespace, actor, after=after, limit=limit,
+                         request_id=request_id, session_id=session_id)
+
+
+def _snapshot(db, namespace, actor, *, after=0, limit=100, request_id=None, session_id=None):
     db.require_namespace_access(namespace, actor, 'read')
     ledger = service(db, namespace)
     state = ledger.read(actor=actor)

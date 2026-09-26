@@ -358,6 +358,8 @@ class UsefulnessLedger:
             agent_id=event['actor'], retrieval_candidate=False, training_candidate=False))
         self._reduce(self._state, event)
         self._events.append(event)
+        from ..integration.observation_stream import committed
+        committed(self.db, self.namespace)
 
     def observe(self, observation, *, actor, request_id):
         self.db.require_namespace_access(self.namespace, actor, 'read')

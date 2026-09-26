@@ -527,7 +527,7 @@ TOOLS.extend([
    "request_id":{"type":"string","description":"Unique submission identity; identical retries are idempotent."},"expected_revision":{"type":"integer"},
    "agent_id":{"type":"string"},"token":{"type":"string"},"session_id":{"type":"string"}},
    "required":["namespace","action","payload","request_id"]}},
- {"name":"ember_usefulness_state", "description":"Read-only bounded U/W, evidence, group outcomes and chronological replay snapshot for an authorized namespace.",
+ {"name":"ember_usefulness_state", "description":"Read-only bounded U/W, evidence, group outcomes and chronological replay snapshot for an authorized namespace. Real-time HTTP observation is available via authenticated GET /v1/visualizer-stream/{namespace}, resuming with Last-Event-ID; this MCP tool remains the bounded recovery snapshot.",
   "inputSchema":{"type":"object","properties":{
    "request_id":{"type":"string"},"filter_session_id":{"type":"string"},
    "namespace":{"type":"string"},"after":{"type":"integer","minimum":0},"limit":{"type":"integer","minimum":1,"maximum":200},
