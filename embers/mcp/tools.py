@@ -501,3 +501,35 @@ TOOLS.append({
         "signals": {"type": "array", "uniqueItems": True, "items": {"type": "string", "enum": ["subject", "primary_context", "content", "tags", "relations"]}},
         "agent_id": {"type": "string"}, "token": {"type": "string"}, "session_id": {"type": "string"}},
         "required": ["clues"]}})
+
+
+TOOLS.extend([
+ {"name":"ember_usefulness_update", "description":"Evidence-derived usefulness. Submit reports or authorized resolve/merge/split/configure decisions. Never updates heat or truth. request_id is idempotent; decisions require current expected_revision.",
+  "inputSchema":{"type":"object","properties":{
+   "namespace":{"type":"string"},"action":{"type":"string","enum":["report","resolve","merge","split","configure"]},
+   "payload":{"type":"object","additionalProperties":False,
+    "description":"report: target/context/feedback_type, optional identity/session/query ID/note/experience ID. resolve: experience_id/status/feedback_type/reason. merge: experience_ids/reason. split: experience_id/partitions/reason. configure: policy/reason. Decisions require expected_revision from ember_usefulness_state.",
+    "properties":{
+     "target":{"type":"object","additionalProperties":False,"required":["kind","memory_ids"],"properties":{
+      "kind":{"type":"string","enum":["memory","pair","group"]},
+      "memory_ids":{"type":"array","items":{"type":"string"},"minItems":1,"maxItems":32,"uniqueItems":True},
+      "relation":{"type":"string","enum":["explains","requires","warns_about","alternative"]}}},
+     "context":{"type":["string","null"],"description":"Exact agent-supplied context; null is explicitly unset. No transfer to similar contexts."},
+     "feedback_type":{"type":["string","null"],"enum":["CONTRIBUTED","IRRELEVANT","MISLEADING","UNUSED","PAIR_HELPED","PAIR_IRRELEVANT","GROUP_SUCCESS","GROUP_FAILURE",None]},
+     "session_id":{"type":"string"},"query_request_id":{"type":"string"},"note":{"type":"string"},
+     "identity":{"type":"object","additionalProperties":False,"required":["value","source","provenance"],"properties":{
+      "value":{"type":"string"},"source":{"type":"string"},"provenance":{"type":"string"}}},
+     "identity_verified":{"type":"boolean","description":"Only the configured decision agent may attest identity. Ordinary IDs are unverified claims."},
+     "experience_id":{"type":"string"},"experience_ids":{"type":"array","items":{"type":"string"}},
+     "partitions":{"type":"array","items":{"type":"array","items":{"type":"string"}}},
+     "status":{"type":"string","enum":["accepted","unresolved"]},"reason":{"type":"string"},
+     "policy":{"type":"object","description":"Configurable kappa_u,u0,epsilon,u_max,kappa_w,w0; severity {contributed,irrelevant,misleading}; cluster {session_window,time_window} in seconds. Audited recomputation, no heat/truth coupling."}}},
+   "request_id":{"type":"string","description":"Unique submission identity; identical retries are idempotent."},"expected_revision":{"type":"integer"},
+   "agent_id":{"type":"string"},"token":{"type":"string"},"session_id":{"type":"string"}},
+   "required":["namespace","action","payload","request_id"]}},
+ {"name":"ember_usefulness_state", "description":"Read-only bounded U/W, evidence, group outcomes and chronological replay snapshot for an authorized namespace.",
+  "inputSchema":{"type":"object","properties":{
+   "request_id":{"type":"string"},"filter_session_id":{"type":"string"},
+   "namespace":{"type":"string"},"after":{"type":"integer","minimum":0},"limit":{"type":"integer","minimum":1,"maximum":200},
+   "agent_id":{"type":"string"},"token":{"type":"string"},"session_id":{"type":"string"}},"required":["namespace"]}}
+])

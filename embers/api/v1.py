@@ -171,6 +171,8 @@ async def memory_recall(
             raise ValueError("inspect_context must be boolean")
     except ValueError as error:
         raise HTTPException(400, str(error)) from error
+    import time
+    started = time.monotonic()
     result = protocol.recall(
         query,
         primary_context=body.get("primary_context"),
@@ -180,6 +182,10 @@ async def memory_recall(
         room=body.get("room"),
         format=body.get("format", "structured"),
     )
+    from ..integration.usefulness_service import record_request
+    from .session_gate import current_session_id
+    record_request(db, namespace, agent.agent_id, "ember_recall",
+                   {**body, "session_id": current_session_id() or body.get("session_id")}, result, started)
     return result if isinstance(result, dict) and "context_policy" in result else {"query": query, "memories": result}
 
 
@@ -892,7 +898,14 @@ async def memory_orient(
     if set(body) - {"clues", "namespace", "hints", "limits", "signals"}:
         raise HTTPException(400, "unsupported orientation fields")
     try:
-        return protocol.orient(body.get("clues"), namespace, hints=body.get("hints"),
+        import time
+        from ..integration.usefulness_service import record_request
+        from .session_gate import current_session_id
+        started = time.monotonic()
+        result = protocol.orient(body.get("clues"), namespace, hints=body.get("hints"),
                                limits=body.get("limits"), signals=body.get("signals"))
+        record_request(db, namespace, agent.agent_id, "ember_orient",
+                       {**body, "session_id": current_session_id()}, result, started)
+        return result
     except ValueError as error:
         raise HTTPException(400, str(error)) from error

@@ -159,7 +159,14 @@ async def candidate_recall_route(
     db = _db()
     agent = _agent(db, x_ember_agent_id, x_ember_token)
     try:
-        return candidate_recall(db, namespace, context_id, agent.agent_id, body)
+        import time
+        from ..integration.usefulness_service import record_request
+        from .session_gate import current_session_id
+        started = time.monotonic()
+        result = candidate_recall(db, namespace, context_id, agent.agent_id, body)
+        record_request(db, namespace, agent.agent_id, "ember_candidate_recall",
+                       {**body, "context_id": context_id, "session_id": current_session_id()}, result, started)
+        return result
     except PermissionError as error:
         raise HTTPException(403, str(error)) from error
     except KeyError as error:

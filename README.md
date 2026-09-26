@@ -295,7 +295,7 @@ Built by 0xticketguy / Harboria Labs.
 
 ### Experimental contextual memory (Candidate 04)
 
-See [the live-test guide](docs/feedback-candidate-04.md) for the opt-in server,
+See [the live-test guide](docs/feedback-candidate-04.md) for the normal-server test setup,
 feedback equations, guarantees and limitations.
 
 - **Memory record:** a structured, versioned object with identity, content,
@@ -319,3 +319,9 @@ See the live-test guide for the private test-agent credentials and encoding defa
 [Context orientation Contract 02](docs/context-orientation-contract-02.md) adds
 `ember_orient`: rough clues return a bounded subject/context map with representative
 memories and explicit field/relationship signals. The agent chooses the context.
+
+[Evidence-derived usefulness and live visualizer](docs/usefulness-feedback-visualizer.md)
+adds `ember_usefulness_update`, `ember_usefulness_state` and `/visualizer` on that
+same normal server. Reports are grouped into experiences; corrections recompute
+contextual U and directional W. These values remain separate from heat, retrieval
+ranking and truth. The visualizer is an authorized read-only view.

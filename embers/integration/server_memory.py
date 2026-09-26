@@ -34,6 +34,8 @@ def _prepare_memory_services(db, store_path, *, encoding_name=None, credentials_
                 json.dump(auth, stream)
                 stream.flush()
                 os.fsync(stream.fileno())
+        from .usefulness_service import enable
+        enable(db, {auth['agent_id']})
         journal = db.relevance_journal(namespace='memories', context_id='live-test',
             context={'task': 'live-test'}, authorized_resolvers=frozenset({auth['agent_id']}),
             memory_rate=.25, pair_rate=.25)

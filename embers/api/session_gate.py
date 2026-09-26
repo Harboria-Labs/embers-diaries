@@ -52,6 +52,8 @@ def install(app) -> None:
     from .feedback_routes import router as feedback_router
     from .http_parity import install as install_http_parity
     app.include_router(feedback_router)
+    from .usefulness_routes import router as usefulness_router
+    app.include_router(usefulness_router)
     install_http_parity(app)
 
     @app.middleware("http")

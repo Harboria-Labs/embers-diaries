@@ -102,7 +102,15 @@ class EmberMCP:
     def call_tool(self, name: str, args: dict | None) -> dict:
         args = args or {}
         try:
-            return self._call(name, args)
+            import time
+            started = time.monotonic()
+            result = self._call(name, args)
+            if name in ('ember_recall', 'ember_orient', 'ember_candidate_recall') and not result.get('isError'):
+                from ..integration.usefulness_service import record_request
+                actor = self._auth(args).agent_id
+                record_request(self.db, args.get('namespace') or self.protocol.namespace, actor,
+                    name, args, json.loads(result['content'][0]['text']), started)
+            return result
         except PermissionError as e:
             return _err(str(e))
         except KeyError as e:
@@ -248,6 +256,17 @@ class EmberMCP:
                 "records": [record.to_dict() for record in records],
             })
 
+        if name == "ember_usefulness_update":
+            from ..integration.usefulness_service import update
+            actor = self._auth(args).agent_id
+            return _text(update(self.db, args["namespace"], actor,
+                {k:args[k] for k in ("action","payload","request_id","expected_revision") if k in args}, session_id=args.get("session_id")))
+        if name == "ember_usefulness_state":
+            from ..integration.usefulness_service import snapshot
+            actor = self._auth(args).agent_id
+            return _text(snapshot(self.db, args["namespace"], actor,
+                after=args.get("after",0), limit=args.get("limit",100),
+                request_id=args.get("request_id"), session_id=args.get("filter_session_id")))
         if name == "ember_orient":
             agent = self._auth(args)
             namespace = args.get("namespace") or self.protocol.namespace
