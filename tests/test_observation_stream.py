@@ -155,3 +155,41 @@ def test_merge_split_policy_and_cancelled_waiter(rig):
         with pytest.raises(asyncio.CancelledError):await task
         assert not _listeners
     asyncio.run(run())
+
+
+def test_push_wakes_before_recovery_timer_and_after_durable_commit(rig,monkeypatch):
+    from embers.integration import observation_stream as transport
+    original=transport.committed
+    published=[]
+    def publish(db,namespace):
+        # Publication must only see a record already persisted by the writer.
+        event=rig[1]._events[-1]
+        stored=db._store.read(event['id'])
+        assert stored is not None and stored.data['revision']==event['revision']
+        published.append(event['revision'])
+        original(db,namespace)
+    monkeypatch.setattr(transport,'committed',publish)
+    async def run():
+        async def disconnected():return False
+        gen=stream(rig[0],'experiment','admin',0,lambda:None,disconnected,interval=3600)
+        await anext(gen)
+        pending=asyncio.create_task(anext(gen))
+        await asyncio.sleep(.02)
+        event=report(rig)
+        frame=await asyncio.wait_for(pending,1)
+        assert decode(frame)['events'][0]['id']==event['id']
+        assert 'id: 1\n' in frame and published==[1]
+        await gen.aclose()
+    asyncio.run(run())
+
+
+def test_auth_precedes_subscription_registration(rig):
+    async def run():
+        async def disconnected():return False
+        def denied():
+            assert not _listeners
+            raise PermissionError('unauthorized')
+        gen=stream(rig[0],'experiment','admin',0,denied,disconnected)
+        with pytest.raises(PermissionError):await anext(gen)
+        assert not _listeners
+    asyncio.run(run())

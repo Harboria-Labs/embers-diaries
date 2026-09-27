@@ -67,6 +67,7 @@ async def stream(db, namespace, actor, after, authorize, disconnected, *, interv
     Poll the journal on heartbeat as recovery for missed/local-external wakeups.
     No per-client event queue: slow clients recover by durable revision.
     """
+    authorize()  # Reject before registering any subscriber.
     wake = asyncio.Event()
     listener = (asyncio.get_running_loop(), wake)
     stream_key = key(db, namespace)

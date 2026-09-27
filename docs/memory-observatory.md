@@ -133,3 +133,6 @@ validation after updating to this branch.
 ![3D orbit and actual token inspection](observatory-orbit.png)
 
 ![Exact-context usefulness heatmap](observatory-heatmap.png)
+
+For strengthened transport diagnostics and independent delivery proof, see
+[the SSE v2 validation report](visualizer-sse-v2-validation.md).

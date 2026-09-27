@@ -130,6 +130,9 @@ async def live(namespace: str, request: Request, after: int = Query(default=0, g
     except ValueError as error: raise HTTPException(400, str(error)) from error
     async def delivery():
         try:
+            authorize()
+            from ..integration.observation_stream import frame
+            yield frame('ready', {'transport':'SSE','protocol':'ember-observation.v2'})
             async for chunk in stream(db, namespace, actor, cursor, authorize, request.is_disconnected):
                 for secret in (x_ember_token, session, viewer_code):
                     if secret:
@@ -138,7 +141,8 @@ async def live(namespace: str, request: Request, after: int = Query(default=0, g
         except (PermissionError, HTTPException):
             yield 'event: denied\ndata: {}\n\n'
     return StreamingResponse(delivery(), media_type='text/event-stream', headers={
-        'Cache-Control':'no-store', 'X-Accel-Buffering':'no', 'Connection':'keep-alive'})
+        'Cache-Control':'no-store, no-transform', 'X-Accel-Buffering':'no', 'Connection':'keep-alive',
+        'X-Ember-Observation-Protocol':'ember-observation.v2'})
 
 
 @router.get('/v1/visualizer/{namespace:path}')

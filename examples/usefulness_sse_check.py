@@ -56,16 +56,38 @@ def main():
                         if page.evaluate(predicate):return
                         page.wait_for_timeout(100)
                     raise AssertionError(page.evaluate('() => ({confirmed,status:document.querySelector("#connection").textContent,error:document.querySelector("#error").textContent})'))
-                errors=[];methods=[]
+                errors=[];methods=[];snapshot_requests=[];sse_responses=[]
                 page.on('pageerror',lambda e:errors.append(str(e)))
                 page.on('request',lambda r:methods.append(r.method))
+                page.on('request',lambda r:snapshot_requests.append(r.url) if '/v1/visualizer/' in r.url else None)
+                page.on('response',lambda r:sse_responses.append(r.headers) if '/v1/visualizer-stream/' in r.url else None)
                 grant=post('/v1/visualizer-access',{'namespace':'sse-test'})
                 page.goto(url+grant['viewer_path'])
                 wait("() => document.querySelector('#connection').textContent==='LIVE'")
                 before=client.get('/v1/visualizer/sse-test',headers=headers).json()['revision']
                 assert before==0
-                report(1)
-                wait('() => confirmed===1')
+                # An independent HTTP client must see the same wire events.
+                probe_log=Path(tmp)/'probe.jsonl'
+                with probe_log.open('w') as output:
+                    probe=subprocess.Popen([sys.executable,'examples/visualizer_push_probe.py','--url',url,'--seconds','3'],
+                        env={**os.environ,'EMBER_VIEW_CODE':grant['code']},stdout=output,stderr=subprocess.STDOUT)
+                deadline=time.monotonic()+10
+                while '"connected": true' not in probe_log.read_text():
+                    if time.monotonic()>deadline:
+                        probe.kill();probe.wait();raise AssertionError(probe_log.read_text())
+                    time.sleep(.05)
+                # Block snapshot recovery: the next revisions must come through SSE.
+                initial_gets=len(snapshot_requests)
+                assert initial_gets==1
+                page.route('**/v1/visualizer/**',lambda route:route.abort())
+                started=time.monotonic()
+                event=report(1)
+                wait('() => confirmed===1',timeout=1500)
+                first_push_seconds=time.monotonic()-started
+                assert page.evaluate('emberTransport.last_pushed_revision')==1
+                assert page.evaluate('emberTransport.last_snapshot_revision')==0
+                assert sse_responses[-1]['content-type'].startswith('text/event-stream')
+                assert sse_responses[-1]['x-ember-observation-protocol']=='ember-observation.v2'
                 assert page.evaluate('id => pulses.get(id)>performance.now()',rid)
                 page.evaluate('id => selectNode(id)',rid)
                 page.evaluate('id => window.originalNode=scene.get(id)',rid)
@@ -77,10 +99,25 @@ def main():
                 # Applying an already-confirmed frame again is a no-op.
                 page.evaluate('applyPatch({},2)')
                 assert page.locator('.event').count()==2
+                page.wait_for_timeout(6200)
+                assert probe.wait(timeout=5)==0,probe_log.read_text()
+                probe_evidence=[json.loads(line) for line in probe_log.read_text().splitlines()]
+                assert probe_evidence[-1]['pushed_events_received']==2,probe_evidence
+                assert probe_evidence[-1]['snapshot_GETs']==1
+                print('INDEPENDENT PROBE '+json.dumps(probe_evidence[-1]))
+                healthy_extra_gets=len(snapshot_requests)-initial_gets
+                assert healthy_extra_gets==0,'Healthy SSE attempted a snapshot GET'
+                assert page.evaluate('emberTransport.connected && emberTransport.transport==="SSE"')
+                assert page.evaluate('emberTransport.delivery_log.filter(e=>e.transport==="SSE").map(e=>e.revision)')==[1,2]
+                assert page.evaluate('emberTransport.snapshot_get_count')==1
+                page.unroute('**/v1/visualizer/**')
                 # Drop browser connection while server commits a missed event.
                 page.evaluate('controller.abort()')
+                wait("() => document.querySelector('#connection').textContent==='RECONNECTING'")
+                assert not page.evaluate('emberTransport.connected')
                 report(3)
                 wait('() => confirmed===3',timeout=15000)
+                assert page.evaluate('current.events.filter(e=>e.revision===3).length')==1
                 # Real process restart; persisted revision/state recover automatically.
                 stop();start();report(4)
                 wait('() => confirmed===4',timeout=20000)
@@ -96,6 +133,10 @@ def main():
                 assert state['revision']==5 and state['states'][0]['N_eff']==1
                 page.wait_for_timeout(1200)
                 assert client.get('/v1/visualizer/sse-test',headers=headers).json()['revision']==5
+                proof={'first_push_seconds':round(first_push_seconds,4),'healthy_window_seconds':6.2,
+                       'snapshot_GETs_during_healthy_window':healthy_extra_gets,
+                       'first_deliveries':[1,2],'transport_diagnostics':page.evaluate('emberTransport')}
+                print('TRANSPORT PROOF '+json.dumps(proof))
                 # Real persisted synthetic research records, not injected UI data.
                 ids=[rid]
                 for i in range(1,25):
