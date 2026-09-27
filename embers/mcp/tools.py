@@ -542,3 +542,14 @@ TOOLS.append({"name":"ember_visualizer_access",
   "namespace":{"type":"string"},"ttl_seconds":{"type":"integer","minimum":60,"maximum":3600,"default":900},
   "server_url":{"type":"string"},"grant_id":{"type":"string"},
   "agent_id":{"type":"string"},"token":{"type":"string"},"session_id":{"type":"string"}}}})
+
+
+TOOLS.append({"name":"ember_visualize",
+ "description":"Create a read-only Research Observer link following MY observable Ember activity across namespaces and sessions. No namespace required. Self-only delegation; cannot observe another agent. Does not invoke retrieval or learning. Return visualization_url/viewer_path and code to the intended human. Scope defaults to future activity in namespaces I can currently read, spanning sessions. Namespace View remains available separately through ember_visualizer_access.",
+ "inputSchema":{"type":"object","properties":{
+  "action":{"type":"string","enum":["create","revoke"],"default":"create"},
+  "observer_target":{"type":"string","description":"If supplied, must equal authenticated caller."},
+  "observer_id":{"type":"string"},"server_url":{"type":"string"},
+  "ttl_seconds":{"type":"integer","minimum":60,"maximum":86400,"default":3600},
+  "span_sessions":{"type":"boolean","default":True},"namespaces":{"type":"array","items":{"type":"string"},"maxItems":128},
+  "agent_id":{"type":"string"},"token":{"type":"string"},"session_id":{"type":"string"}}}})

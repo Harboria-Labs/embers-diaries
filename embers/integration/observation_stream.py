@@ -18,7 +18,7 @@ def key(db, namespace):
 def committed(db, namespace):
     """Called only after native write success. Never persist or publish credentials."""
     with _lock:
-        listeners = tuple(_listeners.get(key(db, namespace), ()))
+        listeners = tuple(_listeners.get(key(db, namespace), ())) + tuple(_listeners.get(key(db, None), ()))
     for loop, wake in listeners:
         try:
             loop.call_soon_threadsafe(wake.set)

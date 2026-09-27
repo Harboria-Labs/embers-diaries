@@ -334,3 +334,7 @@ status and read-only authenticated fallback.
 adds full-screen network, 3D orbit, context bubbles, heatmaps and token inspection
 to the same `/visualizer`. Agents can call `ember_visualizer_access` to issue a
 temporary read-only code/link without sharing their login token.
+
+[Research Observer Mode](docs/research-observer-mode.md) adds `ember_visualize`: an
+agent can issue a read-only link following its own activity across namespaces and
+sessions. The researcher enters no namespace; ordinary Namespace View remains.
