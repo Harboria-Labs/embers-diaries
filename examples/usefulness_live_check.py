@@ -70,22 +70,16 @@ def main():
             errors=[];methods=[]
             page.on('pageerror',lambda e:errors.append(str(e)))
             page.on('request',lambda r:methods.append(r.method))
-            page.goto(args.url+'/visualizer')
-            page.locator('#namespace').fill(ns)
-            page.locator('#agent').fill(auth['agent_id'])
-            page.locator('#token').fill(auth['token'])
-            page.locator('#connect').click()
+            grant=client.post('/v1/visualizer-access',json={'namespace':ns}).json()
+            page.goto(args.url+grant['viewer_path'])
             page.locator('.event').first.wait_for()
             page.locator('.event').nth(len(view['events'])-2).click()
-            assert 'U BEFORE' in page.locator('#changes').inner_text()
-            assert 'UNCHANGED' in page.locator('#changes').inner_text()
-            assert page.locator('.node').count()==3
-            # Avoid capturing even masked credential fields in the artifact.
-            page.locator('#token').fill('')
+            assert 'UNCHANGED' in page.locator('#inspector').inner_text()
+            assert page.evaluate('scene.size')==3
             page.screenshot(path=args.screenshot,full_page=True)
-            page.locator('.node').first.click()
+            page.evaluate('selectNode(current.nodes[0].id)')
             assert not errors,errors
-            assert set(methods)=={'GET'},methods
+            assert set(methods)=={'GET','POST'},methods
             browser.close()
     assert client.get('/v1/visualizer/'+ns).json()['revision']==revision
     print(json.dumps({'status':'PASS','namespace':ns,'memory_ids':ids,'revision':revision,

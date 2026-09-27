@@ -73,6 +73,10 @@ def record_request(db, namespace, actor, operation, args, result, started):
             'budget': {k: result[k] for k in ('bounds','token_count','response_bytes','edges_examined') if isinstance(result,dict) and k in result},
             'latency_ms': round((time.monotonic()-started)*1000,3),
             'stage_timing': 'completion snapshot; internal stage timestamps unavailable'}
+        candidate_service=getattr(db,'_candidate_services',{}).get((namespace,fields.get('context_id')))
+        if operation=='ember_candidate_recall' and candidate_service is not None:
+            observation['budget'].update(token_budget=candidate_service.policy.token_budget,
+                                         tokenizer=candidate_service.settings['tokenizer_id'])
         if len(canonical(observation).encode()) > 32768:
             observation['reasons'] = {}
             observation['reasons_truncated'] = True
@@ -104,6 +108,16 @@ def _snapshot(db, namespace, actor, *, after=0, limit=100, request_id=None, sess
         ids.extend(event.get('observation', {}).get('returned_ids', []))
     ids = list(dict.fromkeys(ids))[:100]
     nodes = []
+    # One backwards journal scan preserves latest actual heat across event pages.
+    heat_events = {}
+    missing_heat = set(ids)
+    for event in reversed(ledger._events):
+        observed_ids = event.get('observation', {}).get('observed_heat', {})
+        for rid in missing_heat.intersection(observed_ids):
+            heat_events[rid] = event
+        missing_heat.difference_update(observed_ids)
+        if not missing_heat:
+            break
     for rid in ids:
         rec = db._reader.get(rid, track_access=False)
         if rec is None or rec.namespace != namespace or rec.record_type not in db._DURABLE_MEMORY_TYPES:
@@ -111,11 +125,15 @@ def _snapshot(db, namespace, actor, *, after=0, limit=100, request_id=None, sess
         data = rec.data if isinstance(rec.data, dict) else {}
         observed = next((e['observation'] for e in reversed(events) if rid in e.get('observation',{}).get('returned_ids',[])
                          or rid in e.get('observation',{}).get('candidate_ids',[])), {})
+        heat_event=heat_events.get(rid)
+        measured=heat_event['observation'] if heat_event else {}
         reports = [r for r in state['reports'] if r['target']['kind'] == 'memory' and r['target']['memory_ids'] == [rid]]
         nodes.append({'id': rid, 'subject': data.get('subject'), 'primary_context': data.get('primary_context'),
             'preview': str(data.get('content',''))[:500], 'verify_status': data.get('verify_status'),
             'usefulness': [s for s in state['states'] if s['target']['kind']=='memory' and s['target']['memory_ids']==[rid]][:30],
-            'heat': observed.get('observed_heat',{}).get(rid), 'heat_source': observed.get('heat_source'),
+            'heat': measured.get('observed_heat',{}).get(rid), 'heat_source': measured.get('heat_source'),
+            'heat_observed_at':heat_event['created_at'] if heat_event else None,
+            'heat_context':measured.get('context'),
             'active': None, 'latent': None, 'reactivated': None,
             'candidate': rid in observed.get('candidate_ids',[]), 'returned': rid in observed.get('returned_ids',[]),
             'candidate_position': observed.get('candidate_ids',[]).index(rid) if rid in observed.get('candidate_ids',[]) else None,

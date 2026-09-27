@@ -256,6 +256,23 @@ class EmberMCP:
                 "records": [record.to_dict() for record in records],
             })
 
+        if name == "ember_visualizer_access":
+            from ..integration.visualizer_access import issue, revoke
+            actor = self._auth(args).agent_id
+            if args.get('action','create') == 'revoke':
+                return _text(revoke(self.db,args.get('grant_id'),actor))
+            if args.get('action','create') != 'create':
+                raise ValueError('Unsupported action')
+            base = args.get('server_url') or os.environ.get('EMBER_PUBLIC_URL')
+            if base:
+                from urllib.parse import urlsplit
+                parsed=urlsplit(base)
+                if parsed.scheme not in ('http','https') or not parsed.netloc or parsed.username or parsed.password or parsed.query or parsed.fragment:
+                    raise ValueError('server_url must be an HTTP(S) server origin without credentials/query/fragment')
+            result = issue(self.db,args['namespace'],actor,ttl_seconds=args.get('ttl_seconds',900),session_id=args.get('session_id'))
+            if base:
+                result['viewer_url']=parsed.scheme+'://'+parsed.netloc+result['viewer_path']
+            return _text(result)
         if name == "ember_usefulness_update":
             from ..integration.usefulness_service import update
             actor = self._auth(args).agent_id

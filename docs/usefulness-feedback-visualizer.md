@@ -1,5 +1,9 @@
 # Evidence-derived usefulness and live visualizer
 
+The viewer has since been redesigned. See [Memory observatory](memory-observatory.md)
+for current screens, agent-created codes/links and access controls. The older
+screenshot and credential-entry walkthrough below document the original baseline.
+
 Experimental V0 delivery on `codex/ember-split-feedback-candidate04` (PR #31).
 This document describes this commit's implementation, not a production-readiness
 claim or a final research model. Contracts 01 and 02 retain their retrieval and

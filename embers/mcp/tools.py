@@ -533,3 +533,12 @@ TOOLS.extend([
    "namespace":{"type":"string"},"after":{"type":"integer","minimum":0},"limit":{"type":"integer","minimum":1,"maximum":200},
    "agent_id":{"type":"string"},"token":{"type":"string"},"session_id":{"type":"string"}},"required":["namespace"]}}
 ])
+
+
+TOOLS.append({"name":"ember_visualizer_access",
+ "description":"Create a temporary read-only visualizer code/link for the user without sharing agent credentials, or revoke a previously issued view. Grants authorize exactly one namespace, expire in 15 minutes by default, and cannot call mutation tools. Return code and viewer_url/viewer_path to the user. Supply server_url (the existing server origin) for a complete link, or configure EMBER_PUBLIC_URL.",
+ "inputSchema":{"type":"object","properties":{
+  "action":{"type":"string","enum":["create","revoke"],"default":"create"},
+  "namespace":{"type":"string"},"ttl_seconds":{"type":"integer","minimum":60,"maximum":3600,"default":900},
+  "server_url":{"type":"string"},"grant_id":{"type":"string"},
+  "agent_id":{"type":"string"},"token":{"type":"string"},"session_id":{"type":"string"}}}})

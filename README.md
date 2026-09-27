@@ -329,3 +329,8 @@ ranking and truth. The visualizer is an authorized read-only view.
 [Live SSE observation](docs/usefulness-sse.md) pushes committed events to the
 visualizer with revision-based recovery, in-place updates, visible connection
 status and read-only authenticated fallback.
+
+[Memory observatory and agent-created viewing links](docs/memory-observatory.md)
+adds full-screen network, 3D orbit, context bubbles, heatmaps and token inspection
+to the same `/visualizer`. Agents can call `ember_visualizer_access` to issue a
+temporary read-only code/link without sharing their login token.

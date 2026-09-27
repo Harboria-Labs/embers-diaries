@@ -200,7 +200,8 @@ def test_f21_f22_f23_visualizer_authorization_readonly_replay(rig,monkeypatch):
     assert one.status_code==200 and one.json()==two.json()
     assert file_hashes(root)==before
     html=client.get('/visualizer').text
-    assert "method:'GET'" in html and "method:'POST'" not in html
+    assert "method:'GET'" in html and "/v1/usefulness/" not in html
+    assert "/v1/visualizer-access/exchange" in html  # cookie exchange performs no database writes
 
 
 def test_restart_idempotence_and_policy(rig):
