@@ -1,4 +1,9 @@
-# Candidate 04 experimental implementation
+# Candidate 04 experimental implementation (legacy)
+
+> Superseded by [the consolidated Rust model](consolidated-research-model.md).
+> This document describes historical bias/signed-pair behavior. To register its
+> old server tools, explicitly set `EMBER_ENABLE_LEGACY_CANDIDATE04=1`.
+> Use `ember_research_recall` for the current FUR → U → Q′ → activation experiment.
 
 This opt-in implementation connects durable relevance resolution, directional
 pairings, active/latent transfer, and bounded context rendering. Legacy recall

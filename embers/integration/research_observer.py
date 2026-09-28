@@ -121,7 +121,7 @@ def _project(db,e):
     changes=[]
     for delta in e.get('transitions',[])[:100]:
         def state(s):return {k:s.get(k) for k in ('metric','value','N_eff','context','target')} if s else None
-        changes.append({'before':state(delta.get('before')),'after':state(delta.get('after'))})
+        changes.append({'before':state(delta.get('before')),'after':state(delta.get('after')), 'modulation':delta.get('modulation')})
     memories=[]
     for rid in meta['memory_ids'][:100]:
         rec=db._reader.get(rid,track_access=False)
@@ -135,11 +135,11 @@ def _project(db,e):
          'affected_experience_ids':[x['id'] for x in e.get('experiences',[])][:100],
          'experiences':[{'id':x['id'],'target':x['target'],'resolution_status':x.get('resolution_status'),
                          'outcome':x.get('resolved_feedback_type'),'active':x.get('active')} for x in e.get('experiences',[])][:100],
-         'changes':changes,'memories':memories,'actual_H':obs.get('observed_heat',{}),
+         'changes':changes,'memories':memories,'dynamics':obs.get('dynamics',[])[:100], 'report_state':e.get('report_state'),'model_version':e.get('model_version'),'configuration_revision':e.get('configuration_revision'),'actual_H':obs.get('observed_heat',{}),
          'heat_source':obs.get('heat_source'),'query':obs.get('query'),'returned_ids':obs.get('returned_ids',[])[:100],
          'candidate_ids':obs.get('candidate_ids',[])[:100],'budget':obs.get('budget'),
-         'pipeline':{'query':stage(bool(obs.get('query'))),'context':stage(meta['context'] is not None),
-                     'retrieval':stage(bool(obs)),'direct_memory':'NOT OBSERVED','LADC_reactivation':'NOT OBSERVED',
+         'pipeline':{'query':stage(bool(obs.get('query')) or bool(obs.get('dynamics'))),'context':stage(meta['context'] is not None),
+                     'retrieval':stage(bool(obs)),'direct_memory':'NOT OBSERVED','LADC_reactivation':stage(any(x.get('reactivated') for x in obs.get('dynamics',[]))),
                      'pair_expansion':'NOT OBSERVED','returned_memory':stage(bool(obs.get('returned_ids'))),
                      'agent_use':'REPORTED' if r.get('feedback_type') in ('CONTRIBUTED','PAIR_HELPED','GROUP_SUCCESS','MISLEADING') else 'NOT OBSERVED',
                      'feedback':stage(bool(r) or e['action']=='resolve'),'evidence':stage(bool(e.get('experiences'))),

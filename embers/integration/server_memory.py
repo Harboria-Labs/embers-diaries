@@ -1,4 +1,4 @@
-"""Prepare the existing Candidate 04 live-test service in the normal server.
+"""Prepare FUR authority on the normal server; legacy Candidate 04 is explicitly opt-in.
 
 This is startup wiring, not new context-resolution or learning policy.
 """
@@ -36,6 +36,8 @@ def _prepare_memory_services(db, store_path, *, encoding_name=None, credentials_
                 os.fsync(stream.fileno())
         from .usefulness_service import enable
         enable(db, {auth['agent_id']})
+        if os.environ.get('EMBER_ENABLE_LEGACY_CANDIDATE04') != '1':
+            return None  # Current research uses the Rust FUR/activation service; no legacy state bootstrap.
         journal = db.relevance_journal(namespace='memories', context_id='live-test',
             context={'task': 'live-test'}, authorized_resolvers=frozenset({auth['agent_id']}),
             memory_rate=.25, pair_rate=.25)

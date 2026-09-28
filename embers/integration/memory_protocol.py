@@ -133,12 +133,8 @@ class MemoryProtocol:
             resolved_room = MemoryRoom.UNSCOPED.value
 
         data = dict(content) if isinstance(content, dict) else {"content": str(content)}
-        if "primary_context" in data:
-            validate_context(data["primary_context"])
-            if primary_context is not None and data["primary_context"] != primary_context:
-                raise ValueError("conflicting primary contexts")
-        elif primary_context is not None:
-            data["primary_context"] = primary_context
+        from ..core.domain import call
+        data = call('context_write', {'data':data, 'supplied':primary_context})
         if "memory_type" not in data:
             data["memory_type"] = resolved_type
         else:
@@ -270,6 +266,7 @@ class MemoryProtocol:
                 emitted = set(self.context_builder.get_last_injected())
             return {"query": query, "primary_context": primary_context,
                     "context_policy": "agent-supplied-pass-through-v1",
+                    "retrieval_model": "legacy-query-discovery-v1",
                     "candidates": [{"id": r.id, "primary_context": (r.data.get("primary_context") if isinstance(r.data, dict) else None)}
                                    for r, _ in candidates.values()],
                     "results": [{"id": r.id, "primary_context": (r.data.get("primary_context") if isinstance(r.data, dict) else None)}

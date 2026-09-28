@@ -56,6 +56,8 @@ def install(app) -> None:
     app.include_router(usefulness_router)
     from .observer_routes import router as observer_router
     app.include_router(observer_router)
+    from .research_routes import router as research_router
+    app.include_router(research_router)
     install_http_parity(app)
 
     @app.middleware("http")

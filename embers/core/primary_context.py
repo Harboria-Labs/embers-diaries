@@ -1,6 +1,5 @@
-"""Contract 01: opaque agent-supplied context, without canonicalization."""
+"""Contract 01 compatibility facade; Rust owns opaque context invariants."""
+from .domain import call
 
 def validate_context(value):
-    if value is not None and (not isinstance(value, str) or not value.strip()):
-        raise ValueError("primary/retrieval context must be a nonempty string or null")
-    return value
+    return call('context', value)

@@ -134,7 +134,10 @@ def _snapshot(db, namespace, actor, *, after=0, limit=100, request_id=None, sess
             'heat': measured.get('observed_heat',{}).get(rid), 'heat_source': measured.get('heat_source'),
             'heat_observed_at':heat_event['created_at'] if heat_event else None,
             'heat_context':measured.get('context'),
-            'active': None, 'latent': None, 'reactivated': None,
+            'dynamics': next((r for r in measured.get('dynamics',[]) if r['id']==rid), None),
+            'active': next((r['stage']=='ACTIVE' for r in measured.get('dynamics',[]) if r['id']==rid),None),
+            'latent': next((r['latent'] for r in measured.get('dynamics',[]) if r['id']==rid),None),
+            'reactivated': next((r['reactivated'] for r in measured.get('dynamics',[]) if r['id']==rid),None),
             'candidate': rid in observed.get('candidate_ids',[]), 'returned': rid in observed.get('returned_ids',[]),
             'candidate_position': observed.get('candidate_ids',[]).index(rid) if rid in observed.get('candidate_ids',[]) else None,
             'used': any(r['feedback_type']=='CONTRIBUTED' for r in reports),
@@ -229,10 +232,10 @@ def _snapshot(db, namespace, actor, *, after=0, limit=100, request_id=None, sess
             'scope':'counts namespace-wide except candidate/returned counts from this event page'},
         'flags':flags, 'pipeline':{
             'query':'observed when recorded', 'context':'exact agent supplied',
-            'direct_candidates':'observed when exposed', 'LADC_reactivation':'NOT ACTIVE in new usefulness model',
+            'direct_candidates':'observed when exposed', 'LADC_reactivation':'Rust consolidated activation when recorded',
             'pair_expansion':'legacy orientation/recall only; no new W coupling',
             'judgment':'NOT ACTIVE', 'budget':'see request observations', 'return':'observed',
-            'agent_feedback':'active', 'evidence_structure':'active', 'state_update':'derived U/W; no heat/truth write'},
+            'agent_feedback':'active', 'evidence_structure':'active', 'state_update':'Rust U/W; explicit research recall advances activation; no truth write'},
         'limits':{'nodes':100,'edges':200,'experiences':100,'reports':200,'events':limit,'bytes':262144},
         'truncated': len(ids)>=100 or len(experiences)>100 or len(reports)>200 or len(state['states'])>100}
     while len(canonical(output).encode())>258048:

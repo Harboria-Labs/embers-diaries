@@ -5,7 +5,8 @@ from embers.db import EmberDB
 from embers.integration.server_memory import prepare_memory_services
 
 
-def test_normal_bootstrap_reuses_identity_and_policy(tmp_path):
+def test_normal_bootstrap_reuses_identity_and_policy(tmp_path, monkeypatch):
+    monkeypatch.setenv("EMBER_ENABLE_LEGACY_CANDIDATE04", "1")
     root = tmp_path / 'store'
     db = EmberDB.connect(str(root))
     prepare_memory_services(db, root)
@@ -33,3 +34,12 @@ def test_bootstrap_does_not_replace_invalid_credentials(tmp_path):
     with pytest.raises(PermissionError):
         prepare_memory_services(db, root)
     assert set(db._store.all_ids()) == before
+
+
+def test_current_bootstrap_does_not_activate_old_learning(tmp_path, monkeypatch):
+    monkeypatch.delenv('EMBER_ENABLE_LEGACY_CANDIDATE04', raising=False)
+    db=EmberDB.connect(str(tmp_path/'current'))
+    prepare_memory_services(db,tmp_path/'current')
+    assert db._usefulness_enabled
+    assert not getattr(db,'_candidate_services',{})
+    assert not getattr(db,'_relevance_services',{})

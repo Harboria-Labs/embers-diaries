@@ -553,3 +553,12 @@ TOOLS.append({"name":"ember_visualize",
   "ttl_seconds":{"type":"integer","minimum":60,"maximum":86400,"default":3600},
   "span_sessions":{"type":"boolean","default":True},"namespaces":{"type":"array","items":{"type":"string"},"maxItems":128},
   "agent_id":{"type":"string"},"token":{"type":"string"},"session_id":{"type":"string"}}}})
+
+# Consolidated Rust-authoritative model, separate from explicit historical replay.
+for _name, _desc, _props, _required in [
+    ('ember_research_recall','Consolidated FUR U → query modulation → bounded activation. Explicit agent direct scores and model time. W is not used for expansion.',
+     {'query_id':{'type':'string'},'direct_scores':{'type':'object','additionalProperties':{'type':'number','minimum':0,'maximum':1}},'elapsed':{'type':'number','minimum':0},'context':{'type':['string','null']},'format':{'type':'string','enum':['structured','text','messages']}},['query_id','direct_scores','elapsed']),
+    ('ember_research_settings','Read versioned research settings and Rust-validated recovery guarantees.',{},[]),
+    ('ember_research_configure','Authorized research configuration change; Rust validates and reprojects FUR, preserving existing activation. expected_revision is the journal revision.',
+     {'config':{'type':'object'},'policy':{'type':'object'},'request_id':{'type':'string'},'expected_revision':{'type':'integer','minimum':0},'reason':{'type':'string'}},['config','policy','request_id','expected_revision','reason'])]:
+    TOOLS.append({'name':_name,'description':_desc,'inputSchema':{'type':'object','properties':{'namespace':{'type':'string'},'agent_id':{'type':'string'},'token':{'type':'string'},'session_id':{'type':'string'},**_props},'required':['namespace',*_required]}})

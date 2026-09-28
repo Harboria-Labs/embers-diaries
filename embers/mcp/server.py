@@ -256,6 +256,13 @@ class EmberMCP:
                 "records": [record.to_dict() for record in records],
             })
 
+        if name in ('ember_research_recall','ember_research_settings','ember_research_configure'):
+            from ..integration import consolidated
+            actor=self._auth(args).agent_id
+            ns=args['namespace']
+            if name=='ember_research_settings':return _text(consolidated.settings(self.db,ns,actor))
+            if name=='ember_research_configure':return _text(consolidated.configure(self.db,ns,actor,{k:args[k] for k in ('config','policy','request_id','expected_revision','reason')}))
+            return _text(consolidated.recall(self.db,ns,actor,**{k:args[k] for k in ('query_id','direct_scores','elapsed','context','format','session_id') if k in args}))
         if name == "ember_visualize":
             from ..integration.research_observer import issue, revoke
             actor=self._auth(args).agent_id

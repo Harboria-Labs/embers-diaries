@@ -293,7 +293,28 @@ MIT
 
 Built by 0xticketguy / Harboria Labs.
 
-### Experimental contextual memory (Candidate 04)
+### Consolidated Rust research model
+
+The current experimental path is `ember-fur-activation-v1`: feedback → accepted
+experiences → usefulness U → query modulation Q′ → bounded activation. Rust owns
+the equations and deterministic domain decisions. W remains evidence only.
+
+Use the **same normal server** (`uvicorn embers.api:app`). The MCP tools are
+`ember_research_recall`, `ember_research_settings`, and `ember_research_configure`.
+The Settings editor is at `/research/settings`. Research Observer continues to use SSE.
+Rebuild the native extension when updating this branch; there is no Python math fallback.
+Ordinary text recall remains compatible and does not silently become the new experiment.
+
+See [equations, proofs, defaults and boundaries](docs/consolidated-research-model.md),
+[release results and usage](docs/consolidated-release-report.md), and
+[recorded browser/network evidence](docs/consolidated-browser-proof.json).
+
+### Historical contextual memory (Candidate 04)
+
+This older bias-learning experiment is superseded on the consolidated path.
+Its normal-server registration now requires `EMBER_ENABLE_LEGACY_CANDIDATE04=1`.
+Its historical journals are not automatically converted to FUR/activation state.
+
 
 See [the live-test guide](docs/feedback-candidate-04.md) for the normal-server test setup,
 feedback equations, guarantees and limitations.

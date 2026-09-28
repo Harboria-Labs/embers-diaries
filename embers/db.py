@@ -1530,7 +1530,17 @@ class EmberDB:
             return merged
         return {"value": discovery, **meta}
 
-    def memory_status(self, memory_id: str) -> "MemoryStatus":
+    def memory_status(self, memory_id: str):
+        """Explicit status. Unknown/unverified memories are provisional, never verified by absence."""
+        from .core.domain import explicit_truth
+        from .core.types import MemoryStatus
+        rec = self._reader.get_current(memory_id) or self._reader.get(memory_id, True, True)
+        if rec is None: raise KeyError(memory_id)
+        value = explicit_truth(rec, any(c.status.value == 'open' for c in self.conflicts_for(rec.id)))['status']
+        if value == 'superseded': return MemoryStatus.SUPERSEDED
+        return MemoryStatus.VERIFIED if value == 'verified' else MemoryStatus.DISPUTED if value in ('disputed','contested','incorrect') else MemoryStatus.PROVISIONAL
+
+    def legacy_memory_status(self, memory_id: str) -> "MemoryStatus":
         """The current epistemic status of a durable memory.
 
         Reads the CURRENT version (status changes are new versions). Defaults to

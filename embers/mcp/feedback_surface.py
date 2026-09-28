@@ -11,7 +11,7 @@ _INSTALLED = False
 
 _TOOLS = [
     {"name": "ember_candidate_recall",
-     "description": "Experimental contextual recall using agent-scored memory IDs, LADC and learned directional pairs. Persists activation only; does not reinforce or verify memories. elapsed is explicit model time.",
+     "description": "LEGACY Candidate 04 v1 only. Requires explicit EMBER_ENABLE_LEGACY_CANDIDATE04 configuration. For the consolidated Rust model use ember_research_recall.",
      "inputSchema": {"type": "object", "properties": {
          "namespace": {"type": "string"}, "context_id": {"type": "string"},
          "query_id": {"type": "string"}, "direct_scores": {"type": "object", "additionalProperties": {"type": "number", "minimum": 0, "maximum": 1}},
@@ -20,7 +20,7 @@ _TOOLS = [
          "required": ["namespace", "context_id", "query_id", "direct_scores", "elapsed"]}},
     {
         "name": "ember_resolve_relevance",
-        "description": "Resolve or correct a scoped outcome using a preconfigured resolver policy. Does not change truth. Requires request_id and expected_revision.",
+        "description": "LEGACY signed-bias model only: resolve or correct a scoped outcome using a preconfigured resolver policy. Does not change truth. Requires request_id and expected_revision.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -35,7 +35,7 @@ _TOOLS = [
     },
     {
         "name": "ember_relevance_state",
-        "description": "Read contextual learned memory biases, typed pair strengths and unresolved dependencies. No truth promotion.",
+        "description": "Read LEGACY candidate-04-kernels-v1 contextual learned memory biases, typed pair strengths and unresolved dependencies. No truth promotion.",
         "inputSchema": {
             "type": "object",
             "properties": {

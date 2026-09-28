@@ -1,3 +1,4 @@
+mod domain;
 mod quota;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
 use base64::Engine;
@@ -644,6 +645,11 @@ fn write_record_transaction(
     let root = Path::new(root);
     let data: Value = serde_json::from_slice(data_json)
         .map_err(|error| PyValueError::new_err(format!("invalid record WAL data: {error}")))?;
+    if matches!(data["record_type"].as_str(), Some("node" | "document")) {
+        if let Some(context)=data["data"].get("primary_context") {
+            domain::context(context).map_err(PyValueError::new_err)?;
+        }
+    }
     let pending = serde_json::to_vec(&PendingWalEntry {
         wal_id, operation: "write", record_id, data, status: "PENDING", timestamp: pending_timestamp,
     }).map_err(|e| PyValueError::new_err(e.to_string()))?;
@@ -911,8 +917,9 @@ fn python_to_canonical_json(value: &Bound<'_, PyAny>) -> PyResult<Value> {
 #[pyfunction]
 fn canonical_record_bytes(payload: &Bound<'_, PyAny>) -> PyResult<Vec<u8>> {
     let normalized = python_to_canonical_json(payload)?;
-    serde_json::to_vec(&normalized)
-        .map_err(|error| PyValueError::new_err(format!("canonical encoding failed: {error}")))
+    // Domain reducers preserve insertion order; record hashes must retain the
+    // historical recursive sorted-key encoding regardless of serde map backend.
+    Ok(domain::canonical(&normalized).into_bytes())
 }
 
 fn json_to_msgpack(value: Value) -> rmpv::Value {
@@ -1119,8 +1126,17 @@ fn checkpoint_wal(path: &str) -> PyResult<usize> {
     Ok(compact_wal(Path::new(path))?)
 }
 
+#[pyfunction]
+fn domain_call(operation: &str, input: &str) -> PyResult<String> {
+    let value: Value = serde_json::from_str(input).map_err(|e| PyValueError::new_err(e.to_string()))?;
+    domain::call(operation, value).map(|v|v.to_string()).map_err(|e| {
+        if let Some(message)=e.strip_prefix("AUTH:") { pyo3::exceptions::PyPermissionError::new_err(message.to_owned()) }
+        else { PyValueError::new_err(e) }
+    })
+}
 #[pymodule]
 fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_function(wrap_pyfunction!(domain_call, module)?)?;
     module.add_function(wrap_pyfunction!(sha256_hex, module)?)?;
     module.add_function(wrap_pyfunction!(append_wal_line, module)?)?;
     module.add_function(wrap_pyfunction!(append_wal_pending, module)?)?;
