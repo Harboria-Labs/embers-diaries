@@ -196,12 +196,14 @@ def page(db,code,cursor=None,filters=None,limit=20):
                 'scope':grant['scope'],'span_sessions':grant['span_sessions']}
 
 
-async def stream(db,code,cursor,filters,disconnected,interval=1.):
+async def stream(db,code,cursor,filters,disconnected,interval=1.,*,stream_id=None):
     grant=verify(db,code)
     wake=asyncio.Event();listener=(asyncio.get_running_loop(),wake);stream_key=key(db,None)
     with _lock:_listeners.setdefault(stream_key,set()).add(listener)
     try:
-        yield frame('ready',{'transport':'SSE','protocol':PROTOCOL,'observed_agent_id':grant['observed_agent_id']})
+        yield frame('ready',{'transport':'SSE','protocol':PROTOCOL,'observed_agent_id':grant['observed_agent_id'],
+                             'stream_id':stream_id,'expires_at':grant['expires_at'],
+                             'remaining_seconds':max(0,grant['expires_at']-time.time())})
         while not await disconnected():
             verify(db,code);wake.clear();data=page(db,code,cursor,filters)
             next_cursor=data['cursor']

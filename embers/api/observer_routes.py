@@ -1,8 +1,13 @@
 """Research observer capabilities cannot authenticate any ordinary Ember operation."""
 import json
 import time
+import asyncio
+import logging
+import uuid
+from contextlib import aclosing
+from pathlib import Path
 from fastapi import APIRouter, Request, Header, HTTPException
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse, Response
 from ..integration import research_observer as observer
 from .usefulness_routes import authorized
 
@@ -56,6 +61,20 @@ async def events(request:Request,cursor:str|None=None):
     except ValueError as e:raise HTTPException(400,str(e)) from e
 
 
+@router.get('/v1/observer/transport.js')
+async def transport_script():
+    return Response(Path(__file__).with_name('observer_transport.js').read_text(encoding='utf-8'),
+                    media_type='application/javascript',headers={'Cache-Control':'no-store'})
+
+
+@router.get('/v1/observer/status')
+async def transport_status(request:Request):
+    _,_,grant=access(request)
+    return JSONResponse({'observed_agent_id':grant['observed_agent_id'],
+        'expires_at':grant['expires_at'],'remaining_seconds':max(0,grant['expires_at']-time.time()),
+        'scope':grant['scope']},headers={'Cache-Control':'no-store'})
+
+
 @router.get('/v1/observer/stream')
 async def stream(request:Request,cursor:str|None=None,last_event_id:str|None=Header(default=None)):
     db,code,grant=access(request)
@@ -65,13 +84,42 @@ async def stream(request:Request,cursor:str|None=None,last_event_id:str|None=Hea
         selected=filters(request)
         if any(len(v)>512 for v in selected.values()):raise ValueError('Filter exceeds bound')
     except ValueError as e:raise HTTPException(400,str(e)) from e
+    stream_id=uuid.uuid4().hex
+    log=logging.getLogger('embers.observer.transport')
     async def delivery():
+        started=time.monotonic();chunks=0;reason='generator_closed'
+        async def disconnected():
+            nonlocal reason
+            gone=await request.is_disconnected()
+            if gone:reason='http_disconnect'
+            return gone
+        log.info('observer_stream_open stream_id=%s',stream_id)
         try:
-            async for chunk in observer.stream(db,code,cursor,selected,request.is_disconnected):
-                yield chunk.replace(code,'[REDACTED]')
+            # Explicit closing guarantees listener cleanup on ASGI cancellation too.
+            async with aclosing(observer.stream(db,code,cursor,selected,disconnected,stream_id=stream_id)) as source:
+                async for chunk in source:
+                    chunks+=1
+                    log.debug('observer_stream_yield stream_id=%s chunk=%s bytes=%s',stream_id,chunks,len(chunk.encode()))
+                    yield chunk.replace(code,'[REDACTED]')
+                    if chunk.startswith(': heartbeat'):
+                        # Transport liveness only: no journal ID, no model/event mutation.
+                        yield 'event: keepalive\ndata: '+json.dumps({'stream_id':stream_id})+'\n\n'
         except PermissionError:
-            yield 'event: denied\ndata: {}\n\n'
+            reason='authorization_ended'
+            yield 'event: denied\ndata: {"reason":"authorization_ended"}\n\n'
         except ValueError:
+            reason='cursor_or_journal_unavailable'
             yield 'event: reset\ndata: {"reason":"Observer cursor or journal unavailable; reopen explicitly"}\n\n'
+        except asyncio.CancelledError:
+            reason='asgi_cancelled';raise
+        except GeneratorExit:
+            reason='response_closed';raise
+        except OSError:
+            reason='socket_write_failed';raise
+        finally:
+            log.info('observer_stream_close stream_id=%s reason=%s chunks=%s seconds=%.3f',
+                     stream_id,reason,chunks,time.monotonic()-started)
     return StreamingResponse(delivery(),media_type='text/event-stream',headers={
-        'Cache-Control':'no-store, no-transform','X-Accel-Buffering':'no','X-Ember-Observation-Protocol':observer.PROTOCOL})
+        'Cache-Control':'no-store, no-cache, no-transform','X-Accel-Buffering':'no',
+        'Content-Encoding':'identity','X-Ember-Stream-Id':stream_id,
+        'X-Ember-Observation-Protocol':observer.PROTOCOL})

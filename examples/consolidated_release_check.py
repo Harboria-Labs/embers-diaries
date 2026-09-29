@@ -30,7 +30,7 @@ def main():
                 page.locator('#reason').fill('Fictional consolidation browser validation');page.locator('#save').click();expect(page.locator('#revision')).to_have_text('1');proof['settings_commit_revision']=1
                 page.locator('#token').fill('');page.locator('#agent').fill('');page.locator('main').evaluate('(e)=>e.scrollTop=0');page.screenshot(path=str(repo/'docs/research-settings.png'),full_page=True)
                 page.set_viewport_size({'width':390,'height':844});assert page.evaluate('document.documentElement.scrollWidth<=innerWidth');proof['mobile_no_horizontal_overflow']=True
-                grant=post('/v1/observer-access',{});view=browser.new_page(viewport={'width':1440,'height':900});view.on('pageerror',lambda e:errors.append(str(e)));requests=[];view.on('request',lambda r:requests.append(r.url.split('#')[0]));view.add_init_script("""window.wire=[];const fetch0=window.fetch;window.fetch=async(...a)=>{const r=await fetch0(...a);if(String(a[0]).startsWith('/v1/observer/stream')&&r.ok){const reader=r.clone().body.getReader(),decoder=new TextDecoder();(async()=>{try{while(true){const x=await reader.read();if(x.done)break;window.wire.push(decoder.decode(x.value,{stream:true}))}}catch{}})()}return r};""");view.goto(url+grant['viewer_path']);expect(view.locator('#status')).to_have_text('LIVE')
+                grant=post('/v1/observer-access',{});view=browser.new_page(viewport={'width':1440,'height':900});view.on('pageerror',lambda e:errors.append(str(e)));requests=[];view.on('request',lambda r:requests.append(r.url.split('#')[0]));wire=[];cdp=view.context.new_cdp_session(view);cdp.send('Network.enable');cdp.on('Network.eventSourceMessageReceived',lambda e:wire.append(e['data']));view.goto(url+grant['viewer_path']);expect(view.locator('#status')).to_have_text('LIVE')
                 base=sum('/v1/observer/events' in x for x in requests)
                 feedback=post('/v1/usefulness/demo',{'action':'report','request_id':'helpful','payload':{'target':{'kind':'memory','memory_ids':[rid]},'context':'mathematics','feedback_type':'CONTRIBUTED'}})
                 args={'query_id':'query1','direct_scores':{rid:.8},'elapsed':1,'context':'mathematics'}
@@ -39,7 +39,7 @@ def main():
                 view.locator('.territory g[role=button]').first.click();assert 'Q′' in view.locator('#inspector').inner_text()
                 observed=view.evaluate("[...events.values()].find(e=>e.dynamics?.length).dynamics");assert observed==result['dynamics'];proof['browser_matches_committed_rust_dynamics']=True
                 count=view.locator('.event').count();before=hashes();view.wait_for_timeout(6100);assert sum('/v1/observer/events' in x for x in requests)==base;assert hashes()==before;assert view.locator('.event').count()==count
-                proof.update(healthy_snapshot_GETs=0,observer_mutated_memory=False,raw_SSE=view.evaluate('wire.join("")'),dynamics=result['dynamics'],retry_exact=True)
+                proof.update(healthy_snapshot_GETs=0,observer_mutated_memory=False,raw_SSE='\n'.join(wire),dynamics=result['dynamics'],retry_exact=True)
                 for secret in (auth['token'],grant['code']):assert secret not in proof['raw_SSE']
                 view.screenshot(path=str(repo/'docs/consolidated-observer.png'),full_page=True)
                 browser.close()

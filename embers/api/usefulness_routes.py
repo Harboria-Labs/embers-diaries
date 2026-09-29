@@ -160,5 +160,6 @@ async def view(namespace: str, request: Request, after: int = Query(default=0, g
 @router.get('/visualizer', response_class=HTMLResponse)
 async def visualizer(mode: str | None = None):
     # Public shell contains no memory data. Every data request authenticates.
+    script_sources="'self' 'unsafe-inline'" if mode=='observer' else "'unsafe-inline'"
     return HTMLResponse(Path(__file__).with_name('observer.html' if mode=='observer' else 'visualizer.html').read_text(encoding='utf-8'), headers={
-        'Cache-Control':'no-store', 'Referrer-Policy':'no-referrer', 'Content-Security-Policy': "default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'"})
+        'Cache-Control':'no-store', 'Referrer-Policy':'no-referrer', 'Content-Security-Policy': f"default-src 'self'; script-src {script_sources}; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'"})

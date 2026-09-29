@@ -50,7 +50,7 @@ ember-api = "embers.api_cli:main"
 manifest-path = "rust/ember_core/Cargo.toml"
 python-source = "."
 python-packages = ["embers"]
-include = [{ path = "embers/api/*.html", format = ["sdist", "wheel"] }]
+include = [{ path = "embers/api/*.html", format = ["sdist", "wheel"] }, { path = "embers/api/*.js", format = ["sdist", "wheel"] }]
 module-name = "embers._native"
 bindings = "pyo3"
 

@@ -51,7 +51,9 @@ def main():
             with sync_playwright() as pw:
                 browser=pw.chromium.launch(headless=True,args=['--no-sandbox']);page=browser.new_page(viewport={'width':1440,'height':900})
                 errors=[];requests=[];page.on('pageerror',lambda e:errors.append(str(e)));page.on('request',lambda r:requests.append({'method':r.method,'url':r.url.split('#')[0]}))
-                page.add_init_script("""window.observerWire=[];const originalFetch=window.fetch;window.fetch=async(...args)=>{const r=await originalFetch(...args);if(String(args[0]).startsWith('/v1/observer/stream')&&r.ok){const reader=r.clone().body.getReader(),decoder=new TextDecoder();(async()=>{try{while(true){const x=await reader.read();if(x.done)break;window.observerWire.push(decoder.decode(x.value,{stream:true}));}}catch{}})()}return r};""")
+                observer_wire=[]
+                cdp=page.context.new_cdp_session(page);cdp.send('Network.enable')
+                cdp.on('Network.eventSourceMessageReceived',lambda e:observer_wire.append(e['data']))
                 def wait(expr,timeout=15000):
                     end=time.monotonic()+timeout/1000
                     while time.monotonic()<end:
@@ -81,7 +83,7 @@ def main():
                 before=hashes();page.wait_for_timeout(6200)
                 healthy_snapshot_gets=get_count()-baseline
                 assert healthy_snapshot_gets==0
-                wire=page.evaluate('observerWire.join("")')
+                wire='\n'.join(observer_wire)
                 assert e1['id'] in wire and e2['id'] in wire
                 assert foreign['id'] not in wire and hidden['id'] not in wire and 'other-agent-private' not in wire
                 assert auth['token'] not in wire and grant['code'] not in wire and s1 not in wire and s2 not in wire

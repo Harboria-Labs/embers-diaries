@@ -182,3 +182,66 @@ def test_oversized_observation_is_explicitly_bounded_without_losing_identity(env
     assert data['events'][0]['event_id']==rid
     assert data['events'][0]['details_omitted'] is True
     assert len(json.dumps(data).encode())<data['limits']['page_bytes']
+
+
+def test_transport_status_is_authorized_readonly_and_never_renews(env):
+    db,agent,_,_,_,client,path=env
+    assert client.get('/v1/observer/status').status_code==403
+    assert client.get('/v1/observer/stream').status_code==403
+    grant=ro.issue(db,agent)
+    client.post('/v1/observer/exchange',json={'code':grant['code']})
+    before=file_hashes(path);cap=ro.verify(db,grant['code']).copy()
+    for _ in range(3):
+        response=client.get('/v1/observer/status');assert response.status_code==200
+        data=response.json();assert data['observed_agent_id']==agent
+        assert data['expires_at']==grant['expires_at'] and 0<data['remaining_seconds']<=3600
+        assert grant['code'] not in response.text
+    assert ro.verify(db,grant['code'])==cap and file_hashes(path)==before
+    ro.revoke(db,grant['observer_id'],agent)
+    assert client.get('/v1/observer/status').status_code==403
+    assert client.get('/v1/observer/stream').status_code==403
+    assert file_hashes(path)==before
+
+
+def test_transport_route_cancellation_cleans_subscriber_and_headers(env,caplog):
+    from embers.api.observer_routes import stream
+    from embers.integration.observation_stream import _listeners,key
+    from starlette.requests import Request
+    db,agent,*rest=env;path=rest[-1];grant=ro.issue(db,agent)
+    async def run():
+        async def receive():return {'type':'http.request','body':b'','more_body':False}
+        request=Request({'type':'http','method':'GET','path':'/v1/observer/stream',
+            'query_string':b'','headers':[(b'cookie',('ember_observer='+grant['code']).encode())]},receive)
+        response=await stream(request,None,None)
+        assert response.headers['content-type'].startswith('text/event-stream')
+        assert response.headers['content-encoding']=='identity'
+        assert response.headers['x-accel-buffering']=='no'
+        assert 'no-transform' in response.headers['cache-control']
+        assert 'content-length' not in response.headers
+        before=file_hashes(path);iterator=response.body_iterator
+        first=await anext(iterator)
+        assert response.headers['x-ember-stream-id'] in first and 'expires_at' in first
+        assert key(db,None) in _listeners
+        await anext(iterator)  # Initial vector checkpoint, no mutation.
+        pending=asyncio.create_task(anext(iterator));await asyncio.sleep(.02);pending.cancel()
+        with pytest.raises(asyncio.CancelledError):await pending
+        await iterator.aclose()
+        assert key(db,None) not in _listeners
+        assert file_hashes(path)==before
+    import logging
+    logger=logging.getLogger('embers.observer.transport')
+    logger.addHandler(caplog.handler)
+    try:
+        with caplog.at_level(logging.INFO,logger=logger.name):asyncio.run(run())
+    finally:logger.removeHandler(caplog.handler)
+    assert 'reason=asgi_cancelled' in caplog.text and grant['code'] not in caplog.text
+
+
+def test_observer_transport_assets_and_no_healthy_body_timeout(env):
+    *_,client,path=env
+    html=client.get('/visualizer?mode=observer')
+    assert '/v1/observer/transport.js' in html.text
+    assert "script-src 'self'" in html.headers['content-security-policy']
+    js=client.get('/v1/observer/transport.js')
+    assert js.status_code==200 and 'new EventSource(' in js.text
+    assert "active.abort(),10000" not in html.text
