@@ -61,6 +61,13 @@ def main():
                         page.wait_for_timeout(50)
                     raise AssertionError(page.locator('#notice').inner_text())
                 page.goto(url+grant['viewer_path']);wait("() => document.querySelector('#status').textContent==='LIVE'")
+                build=client.get('/v1/observer/build').json()
+                assert build['transport_client_version']=='9f94c5a / transport-v2'
+                assert build['transport_asset_url'] in [r['url'].removeprefix(url) for r in requests]
+                assert hashlib.sha256(client.get(build['transport_asset_url']).content).hexdigest()==build['transport_sha256']
+                assert 'Observer client: 9f94c5a / transport-v2' in page.locator('#buildMarker').inner_text()
+                assert page.evaluate('window.emberObserverTransport.transport_sha256')==build['transport_sha256']
+                assert page.evaluate('window.emberObserverTransport.server_build')==build['server_build']
                 assert page.locator('input[name=namespace]').input_value()==''
                 get_count=lambda:sum('/v1/observer/events' in r['url'] for r in requests)
                 baseline=get_count();assert baseline==1
@@ -113,7 +120,7 @@ def main():
                 wait('() => territories.size===0')
                 assert hashes()==before
                 assert not errors,errors
-                proof={'result':'PASS','same_browser_followed':['research-A','research-B','research-A'],
+                proof={'result':'PASS','observer_build':build,'same_browser_followed':['research-A','research-B','research-A'],
                        'sessions_observed':2,'namespace_entry_required':False,'first_push_seconds':round(latency,4),
                        'healthy_window_seconds':6.2,'healthy_snapshot_GETs':healthy_snapshot_gets,
                        'initial_snapshot_GETs':baseline,'cross_agent_payload_leak':False,

@@ -5,11 +5,11 @@ import asyncio
 import logging
 import uuid
 from contextlib import aclosing
-from pathlib import Path
 from fastapi import APIRouter, Request, Header, HTTPException
 from fastapi.responses import JSONResponse, StreamingResponse, Response
 from ..integration import research_observer as observer
 from .usefulness_routes import authorized
+from . import observer_build
 
 router=APIRouter()
 
@@ -62,9 +62,17 @@ async def events(request:Request,cursor:str|None=None):
 
 
 @router.get('/v1/observer/transport.js')
-async def transport_script():
-    return Response(Path(__file__).with_name('observer_transport.js').read_text(encoding='utf-8'),
-                    media_type='application/javascript',headers={'Cache-Control':'no-store'})
+async def transport_script(v:str|None=None):
+    if v is not None and v != observer_build.TRANSPORT_SHA256:
+        return JSONResponse({'detail':'Observer asset version mismatch; reload the observer page'},
+                            status_code=409,headers=observer_build.headers())
+    return Response(observer_build.TRANSPORT,media_type='application/javascript',
+                    headers=observer_build.headers())
+
+
+@router.get('/v1/observer/build')
+async def build_identity():
+    return JSONResponse(observer_build.metadata(),headers=observer_build.headers())
 
 
 @router.get('/v1/observer/status')

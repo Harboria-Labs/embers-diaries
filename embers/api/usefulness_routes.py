@@ -161,5 +161,10 @@ async def view(namespace: str, request: Request, after: int = Query(default=0, g
 async def visualizer(mode: str | None = None):
     # Public shell contains no memory data. Every data request authenticates.
     script_sources="'self' 'unsafe-inline'" if mode=='observer' else "'unsafe-inline'"
-    return HTMLResponse(Path(__file__).with_name('observer.html' if mode=='observer' else 'visualizer.html').read_text(encoding='utf-8'), headers={
-        'Cache-Control':'no-store', 'Referrer-Policy':'no-referrer', 'Content-Security-Policy': f"default-src 'self'; script-src {script_sources}; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'"})
+    if mode=='observer':
+        from .observer_build import render, headers
+        content=render();build_headers=headers()
+    else:
+        content=Path(__file__).with_name('visualizer.html').read_text(encoding='utf-8');build_headers={}
+    return HTMLResponse(content, headers={
+        'Cache-Control':'no-store', **build_headers, 'Referrer-Policy':'no-referrer', 'Content-Security-Policy': f"default-src 'self'; script-src {script_sources}; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'"})

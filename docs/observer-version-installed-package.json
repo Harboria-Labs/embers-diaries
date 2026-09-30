@@ -1,0 +1,24 @@
+{
+  "result": "PASS",
+  "installed_package": {
+    "transport_client_version": "9f94c5a / transport-v2",
+    "transport_sha256": "6b6d262295d56d9f71546a6b79f6eeb0f0caded00fc242c5b9cd28cf1e4274e9",
+    "transport_asset_url": "/v1/observer/transport.js?v=6b6d262295d56d9f71546a6b79f6eeb0f0caded00fc242c5b9cd28cf1e4274e9",
+    "transport_baseline_commit": "9f94c5a01d4d0ca843cfdb3a322df5968671935f",
+    "transport_matches_baseline": true,
+    "server_build": "sha256:3f4233cddc4ea012f150da79d6cd9462539274809a63cdf0833f3fa0fe496d63",
+    "server_build_kind": "observer-source-sha256",
+    "server_git_commit": null,
+    "package_version": "0.2.0"
+  },
+  "asset_response_headers": {
+    "cache-control": "no-store, no-cache, must-revalidate, no-transform",
+    "x-ember-observer-build": "sha256:3f4233cddc4ea012f150da79d6cd9462539274809a63cdf0833f3fa0fe496d63",
+    "x-ember-transport-sha256": "6b6d262295d56d9f71546a6b79f6eeb0f0caded00fc242c5b9cd28cf1e4274e9",
+    "x-ember-transport-version": "9f94c5a / transport-v2",
+    "content-length": "7987",
+    "content-type": "application/javascript",
+    "vary": "Origin"
+  },
+  "source_location": "embers/api/observer_build.py"
+}
