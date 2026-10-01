@@ -12,7 +12,9 @@ from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 ROOT = Path(__file__).parent
-TRANSPORT = (ROOT / 'observer_transport.js').read_bytes()
+# Universal-newline decoding keeps the served asset identical to the Git blob
+# when a Windows checkout has converted its line endings to CRLF.
+TRANSPORT = (ROOT / 'observer_transport.js').read_text(encoding='utf-8').encode('utf-8')
 TEMPLATE = (ROOT / 'observer.html').read_text(encoding='utf-8')
 TRANSPORT_SHA256 = hashlib.sha256(TRANSPORT).hexdigest()
 BASELINE_SHA256 = '6b6d262295d56d9f71546a6b79f6eeb0f0caded00fc242c5b9cd28cf1e4274e9'

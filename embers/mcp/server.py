@@ -34,7 +34,8 @@ from ..integration.conflict_protocol import (
 )
 from .tools import TOOLS
 
-PROTOCOL = "2024-11-05"
+PROTOCOL = "2025-06-18"
+SUPPORTED_PROTOCOLS = ("2025-06-18", "2025-03-26", "2024-11-05")
 
 
 def _text(obj: Any) -> dict:
@@ -578,11 +579,13 @@ class EmberMCP:
         if method == "initialize":
             if is_notification:
                 return None
+            params = message.get("params") or {}
+            requested = params.get("protocolVersion")
             return {
                 "jsonrpc": "2.0",
                 "id": msg_id,
                 "result": {
-                    "protocolVersion": PROTOCOL,
+                    "protocolVersion": requested if requested in SUPPORTED_PROTOCOLS else PROTOCOL,
                     "capabilities": {"tools": {}},
                     "serverInfo": {"name": "ember-diaries", "version": "0.2.0"},
                 },
@@ -655,6 +658,9 @@ def _read() -> dict | None:
 
 
 def main(argv: list[str] | None = None) -> None:
+    # MCP stdio is UTF-8 even when the Windows console defaults to CP1252.
+    sys.stdin.reconfigure(encoding="utf-8")
+    sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description="Ember MCP stdio server")
     parser.add_argument("--config", help="path to an Ember TOML configuration file")
     parser.add_argument("--store", help="override storage.path")
