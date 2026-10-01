@@ -17,6 +17,14 @@ def key(db, namespace):
 
 def committed(db, namespace):
     """Called only after native write success. Never persist or publish credentials."""
+    if getattr(db,'_write_observations_installed',False):
+        # Post-commit instrumentation only; failure never changes the source result.
+        try:
+            from .observation_journal import sync
+            sync(db,namespace)
+        except Exception:
+            import logging
+            logging.getLogger(__name__).exception('Observer journal sync pending startup recovery')
     with _lock:
         listeners = tuple(_listeners.get(key(db, namespace), ())) + tuple(_listeners.get(key(db, None), ()))
     for loop, wake in listeners:
@@ -79,10 +87,11 @@ async def stream(db, namespace, actor, after, authorize, disconnected, *, interv
         while not await disconnected():
             authorize()  # Revalidate session/token and namespace, including idle connections.
             wake.clear()  # Clear BEFORE reading; a concurrent commit cannot be lost.
-            ledger = service(db, namespace)
+            from .observation_journal import journal
+            ledger = journal(db, namespace)
             pending = ledger.events(actor=actor, after=cursor, limit=1)
             if pending or not previous:
-                current = snapshot(db, namespace, actor, after=cursor, limit=20)
+                current = snapshot(db, namespace, actor, after=cursor, limit=20, observations=True)
                 if cursor > current['revision']:
                     yield frame('reset', {'reason':'cursor_ahead_of_journal'})
                     return

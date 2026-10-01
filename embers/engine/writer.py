@@ -42,7 +42,15 @@ class WriteEngine:
         # path, so version reads, writes, and supersession sidecars serialize
         # as one transaction within the process.
         self._lock  = store.lock
+        self._prepare_callbacks: list = []
         self._write_callbacks: list = []  # notify index layer after writes
+
+    def register_prepare_callback(self, fn):
+        self._prepare_callbacks.append(fn)
+
+    def _prepare(self, record):
+        for fn in self._prepare_callbacks:
+            fn(record)
 
     @property
     def lock(self):
@@ -80,6 +88,7 @@ class WriteEngine:
                     f"Record {record.id} already exists. "
                     "Ember's Diaries is append-only — use update() to create a new version."
                 )
+            self._prepare(record)
             record_id = self._store.write(record)
             self._notify(record, "write")
             return record_id
@@ -217,6 +226,7 @@ class WriteEngine:
             new_record.seal()
 
             # Write the new record first
+            self._prepare(new_record)
             self._store.write(new_record)
 
             # Now mark old record as superseded

@@ -39,6 +39,13 @@ def _save(path, data):
 
 
 def _events(db, actor, namespaces=None):
+    from .observation_journal import path,read
+    if path(db).exists():
+        for e in read(db):
+            ns=e['namespace']
+            if e.get('actor')==actor and (namespaces is None or ns in namespaces) and db.check_namespace_access(ns,actor,'read'):
+                yield e
+        return
     # Reads only committed RAW journal records; never calls recall/learning.
     for rid in db._store.all_ids():
         if not rid.startswith('usefulness-'):continue
@@ -111,8 +118,8 @@ def _metadata(e):
     contexts=list(dict.fromkeys([x.get('context') for x in exps]+[d.get('after',{}).get('context') for d in e.get('transitions',[])]))
     context=obs.get('context',r.get('context',contexts[0] if len(contexts)==1 else None))
     session=obs.get('session_id') or r.get('session_id')
-    ids=list(dict.fromkeys(obs.get('candidate_ids',[])+obs.get('returned_ids',[])+r.get('target',{}).get('memory_ids',[])+[m for x in exps for m in x['target']['memory_ids']]))
-    return {'namespace':e['namespace'],'session':_ref(session),'context':context,'contexts':contexts,
+    ids=list(dict.fromkeys(obs.get('memory_ids',[])+obs.get('candidate_ids',[])+obs.get('returned_ids',[])+r.get('target',{}).get('memory_ids',[])+[m for x in exps for m in x['target']['memory_ids']]))
+    return {'namespace':e['namespace'],'session':obs.get('session_ref') or _ref(session),'context':context,'contexts':contexts,
             'memory_ids':ids,'event_type':obs.get('operation') or r.get('feedback_type') or e['action']},session
 
 
@@ -123,23 +130,35 @@ def _project(db,e):
         def state(s):return {k:s.get(k) for k in ('metric','value','N_eff','context','target')} if s else None
         changes.append({'before':state(delta.get('before')),'after':state(delta.get('after')), 'modulation':delta.get('modulation')})
     memories=[]
-    for rid in meta['memory_ids'][:100]:
+    for rid in list(dict.fromkeys(meta['memory_ids']+obs.get('source_ids',[])))[:100]:
         rec=db._reader.get(rid,track_access=False)
         if rec is not None and rec.namespace==e['namespace'] and rec.record_type in db._DURABLE_MEMORY_TYPES:
             d=rec.data if isinstance(rec.data,dict) else {}
-            memories.append({'id':rid,'namespace':rec.namespace,'preview':str(d.get('content',''))[:500],
+            from .write_observation import provenance
+            origin=provenance(db,rec)
+            if rid in obs.get('memory_ids',[]):origin.update(creation_event=e['id'],originating_agent=e['actor'])
+            memories.append({'provenance':origin,'id':rid,'namespace':rec.namespace,'preview':str(d.get('content',d.get('summary','')))[:500],
                              'subject':d.get('subject'),'primary_context':d.get('primary_context'),'verify_status':d.get('verify_status')})
+    visible={m['id'] for m in memories}
+    relationships=[]
+    for m in memories:
+        for source in m['provenance']['source_ids']:
+            if source in visible and len(relationships)<100:
+                relationships.append({'from':m['id'],'to':source,'type':'derived_from','kind':'recorded_provenance'})
+        for edge in db._graph_index.get_edges(m['id'],direction='outgoing'):
+            if edge['target'] in visible and len(relationships)<100:
+                relationships.append({'from':m['id'],'to':edge['target'],'type':str(edge.get('edge_type'))[:128],'kind':'stored_relation'})
     stage=lambda yes:'OBSERVED' if yes else 'NOT OBSERVED'
     out={**meta,'event_id':e['id'],'revision':e['revision'],'timestamp':e['created_at'],
-         'observed_agent_id':e['actor'],'request_id':e['request_id'],'action':e['action'],
+         'source_journal_revision':e.get('source_journal_revision',e['revision']),'observed_agent_id':e['actor'],'request_id':obs.get('origin_request_id') if obs.get('memory_ids') else e['request_id'],'action':e['action'],
          'affected_experience_ids':[x['id'] for x in e.get('experiences',[])][:100],
          'experiences':[{'id':x['id'],'target':x['target'],'resolution_status':x.get('resolution_status'),
                          'outcome':x.get('resolved_feedback_type'),'active':x.get('active')} for x in e.get('experiences',[])][:100],
-         'changes':changes,'memories':memories,'dynamics':obs.get('dynamics',[])[:100], 'report_state':e.get('report_state'),'model_version':e.get('model_version'),'configuration_revision':e.get('configuration_revision'),'actual_H':obs.get('observed_heat',{}),
+         'relationships':relationships,'changes':changes,'memories':memories,'dynamics':obs.get('dynamics',[])[:100], 'report_state':e.get('report_state'),'model_version':e.get('model_version'),'configuration_revision':e.get('configuration_revision'),'actual_H':obs.get('observed_heat',{}),
          'heat_source':obs.get('heat_source'),'query':obs.get('query'),'returned_ids':obs.get('returned_ids',[])[:100],
          'candidate_ids':obs.get('candidate_ids',[])[:100],'budget':obs.get('budget'),
          'pipeline':{'query':stage(bool(obs.get('query')) or bool(obs.get('dynamics'))),'context':stage(meta['context'] is not None),
-                     'retrieval':stage(bool(obs)),'direct_memory':'NOT OBSERVED','LADC_reactivation':stage(any(x.get('reactivated') for x in obs.get('dynamics',[]))),
+                     'write':stage(bool(obs.get('memory_ids'))),'retrieval':stage(bool(obs) and not obs.get('memory_ids')),'direct_memory':'NOT OBSERVED','LADC_reactivation':stage(any(x.get('reactivated') for x in obs.get('dynamics',[]))),
                      'pair_expansion':'NOT OBSERVED','returned_memory':stage(bool(obs.get('returned_ids'))),
                      'agent_use':'REPORTED' if r.get('feedback_type') in ('CONTRIBUTED','PAIR_HELPED','GROUP_SUCCESS','MISLEADING') else 'NOT OBSERVED',
                      'feedback':stage(bool(r) or e['action']=='resolve'),'evidence':stage(bool(e.get('experiences'))),
@@ -184,7 +203,7 @@ def page(db,code,cursor=None,filters=None,limit=20):
             _,ns,i=heapq.heappop(heap);e=buckets[ns][i];meta,session=_metadata(e)
             seen[ns]=e['revision'];scanned+=1
             if i+1<len(buckets[ns]):heapq.heappush(heap,(buckets[ns][i+1]['created_at'],ns,i+1))
-            if grant['session_id'] and session!=grant['session_id']:continue
+            if grant['session_id'] and meta['session']!=_ref(grant['session_id']):continue
             if any((v not in meta['memory_ids'] if k=='memory' else meta.get(k)!=v) for k,v in filters.items() if v):continue
             projected=_project(db,e);out.append(projected);size+=len(json.dumps(projected).encode())
             if size>160000:break

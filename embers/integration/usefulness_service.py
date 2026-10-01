@@ -15,6 +15,9 @@ def enable(db, admins):
     db._usefulness_policy = policy
     db._usefulness_admins = frozenset(admins)
     db._usefulness_enabled = True
+    from .write_observation import install
+    try:install(db)
+    except Exception:logging.getLogger(__name__).exception('Write observation unavailable; normal memory service remains enabled')
 
 
 def service(db, namespace):
@@ -86,24 +89,30 @@ def record_request(db, namespace, actor, operation, args, result, started):
         logging.getLogger('embers').warning('Request succeeded but observability recording failed: %s', error)
 
 
-def snapshot(db, namespace, actor, *, after=0, limit=100, request_id=None, session_id=None):
+def snapshot(db, namespace, actor, *, after=0, limit=100, request_id=None, session_id=None, observations=False):
     # A snapshot and its event cursor describe one committed journal prefix.
     with db._writer.lock:
         return _snapshot(db, namespace, actor, after=after, limit=limit,
-                         request_id=request_id, session_id=session_id)
+                         request_id=request_id, session_id=session_id, observations=observations)
 
 
-def _snapshot(db, namespace, actor, *, after=0, limit=100, request_id=None, session_id=None):
+def _snapshot(db, namespace, actor, *, after=0, limit=100, request_id=None, session_id=None, observations=False):
     db.require_namespace_access(namespace, actor, 'read')
-    ledger = service(db, namespace)
-    state = ledger.read(actor=actor)
+    state = service(db, namespace).read(actor=actor)
+    from .observation_journal import journal
+    ledger = journal(db,namespace) if observations else service(db,namespace)
     events = ledger.events(actor=actor, after=after, limit=limit, request_id=request_id, session_id=session_id)
     experiences = [e for e in state['experiences'] if e['active']]
     # Include only namespace records and edges whose endpoints were authorized.
     ids = []
+    # Recently committed writes remain discoverable even on an empty catch-up page.
+    for event in reversed(ledger._events):
+        ids.extend(event.get('observation', {}).get('memory_ids', []))
+        if len(set(ids))>=100:break
     for exp in experiences:
         ids.extend(exp['target']['memory_ids'])
     for event in events:
+        ids.extend(event.get('observation', {}).get('memory_ids', []))
         ids.extend(event.get('observation', {}).get('candidate_ids', []))
         ids.extend(event.get('observation', {}).get('returned_ids', []))
     ids = list(dict.fromkeys(ids))[:100]
@@ -128,8 +137,12 @@ def _snapshot(db, namespace, actor, *, after=0, limit=100, request_id=None, sess
         heat_event=heat_events.get(rid)
         measured=heat_event['observation'] if heat_event else {}
         reports = [r for r in state['reports'] if r['target']['kind'] == 'memory' and r['target']['memory_ids'] == [rid]]
-        nodes.append({'id': rid, 'subject': data.get('subject'), 'primary_context': data.get('primary_context'),
-            'preview': str(data.get('content',''))[:500], 'verify_status': data.get('verify_status'),
+        from .write_observation import provenance
+        origin=provenance(db,rec)
+        creation=next((e for e in ledger._events if rid in e.get('observation',{}).get('memory_ids',[])),None)
+        if creation:origin.update(creation_event=creation['id'],originating_agent=creation['actor'])
+        nodes.append({'provenance':origin,'id': rid, 'subject': data.get('subject'), 'primary_context': data.get('primary_context'),
+            'preview': str(data.get('content',data.get('summary','')))[:500], 'verify_status': data.get('verify_status'),
             'usefulness': [s for s in state['states'] if s['target']['kind']=='memory' and s['target']['memory_ids']==[rid]][:30],
             'heat': measured.get('observed_heat',{}).get(rid), 'heat_source': measured.get('heat_source'),
             'heat_observed_at':heat_event['created_at'] if heat_event else None,
@@ -153,6 +166,10 @@ def _snapshot(db, namespace, actor, *, after=0, limit=100, request_id=None, sess
             if edge['target'] in visible:
                 edges.append({'from':rid, 'to':edge['target'], 'type':str(edge.get('edge_type'))[:128],
                               'kind':'stored_relation', 'traversed':None, 'used':None})
+    for node in nodes:
+        for source in node['provenance']['source_ids']:
+            if source in visible and len(edges)<200 and not any(e['from']==node['id'] and e['to']==source for e in edges):
+                edges.append({'from':node['id'],'to':source,'type':'derived_from','kind':'recorded_provenance','traversed':None,'used':None})
     for s in state['states']:
         t = s['target']
         if t['kind']=='pair' and all(r in visible for r in t['memory_ids']) and len(edges)<200:
@@ -210,7 +227,7 @@ def _snapshot(db, namespace, actor, *, after=0, limit=100, request_id=None, sess
                 if delta[side]:
                     delta[side]['experience_count'] = len(delta[side]['experiences'])
                     delta[side]['experiences'] = delta[side]['experiences'][:20]
-    output = {'namespace':namespace, 'revision':state['revision'], 'policy':state['policy'],
+    output = {'namespace':namespace, 'revision':len(ledger._events), 'source_journal_revision':state['revision'], 'policy':state['policy'],
         'nodes':nodes, 'edges':edges, 'states':state['states'][:100],
         'experiences':[compact_experience(e) for e in experiences[:100]], 'reports':reports[:200], 'events':events,
         'next_after': after+len(events), 'diagnostics':{
@@ -222,8 +239,8 @@ def _snapshot(db, namespace, actor, *, after=0, limit=100, request_id=None, sess
             'unclustered_reports':sum(len(e['reports'])==1 and e['identity_mode']=='structural' for e in experiences),
             'group_outcomes':sum(e['target']['kind']=='group' for e in experiences),
             'pair_edges':sum(s['metric']=='W' for s in state['states']),
-            'pair_expansions':None, 'context_budgets':[e['observation']['budget'] for e in events if 'observation' in e],
-            'latency_ms':[e['observation']['latency_ms'] for e in events if 'observation' in e],
+            'pair_expansions':None, 'context_budgets':[e['observation']['budget'] for e in events if 'budget' in e.get('observation',{})],
+            'latency_ms':[e['observation']['latency_ms'] for e in events if 'latency_ms' in e.get('observation',{})],
             'pair_feedback_events':sum(r['target']['kind']=='pair' for r in reports),
             'U_distribution':[s['value'] for s in state['states'] if s['metric']=='U'][:100],
             'N_eff_distribution':[s['N_eff'] for s in state['states']][:100],

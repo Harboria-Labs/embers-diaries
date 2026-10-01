@@ -15,6 +15,7 @@ ROOT = Path(__file__).parent
 # Universal-newline decoding keeps the served asset identical to the Git blob
 # when a Windows checkout has converted its line endings to CRLF.
 TRANSPORT = (ROOT / 'observer_transport.js').read_text(encoding='utf-8').encode('utf-8')
+THEME = (ROOT / 'visualizer_theme.css').read_text(encoding='utf-8')
 NAMESPACE_TEMPLATE = (ROOT / 'visualizer.html').read_text(encoding='utf-8')
 TEMPLATE = (ROOT / 'observer.html').read_text(encoding='utf-8')
 TRANSPORT_SHA256 = hashlib.sha256(TRANSPORT).hexdigest()
@@ -22,7 +23,7 @@ BASELINE_SHA256 = '6b6d262295d56d9f71546a6b79f6eeb0f0caded00fc242c5b9cd28cf1e427
 CLIENT_VERSION = 'shared-transport-v3 / sha256:' + TRANSPORT_SHA256[:12]
 ASSET_URL = '/v1/observer/transport.js?v=' + TRANSPORT_SHA256
 _files = ('observer_build.py', 'observer_routes.py', 'usefulness_routes.py',
-          'observer.html', 'visualizer.html', 'observer_transport.js', '../integration/research_observer.py')
+          'observer.html', 'visualizer.html', 'visualizer_theme.css', 'observer_transport.js', '../integration/research_observer.py')
 _hash = hashlib.sha256()
 for _name in _files:
     _bytes = (ROOT / _name).read_bytes()
@@ -56,4 +57,4 @@ def render(namespace=False):
     return ((NAMESPACE_TEMPLATE if namespace else TEMPLATE).replace('__OBSERVER_BUILD_LABEL__', html.escape(label))
             .replace('__OBSERVER_BUILD_JSON__', json.dumps(metadata()).replace('<', '\\u003c'))
             .replace('__OBSERVER_ASSET_URL__', html.escape(ASSET_URL, quote=True))
-            .replace('__OBSERVER_ASSET_INTEGRITY__', integrity))
+            .replace('__OBSERVER_ASSET_INTEGRITY__', integrity).replace('__VISUALIZER_THEME__', THEME))

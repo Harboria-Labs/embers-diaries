@@ -98,10 +98,15 @@ class EmberMCP:
         if not agent_id or not token:
             raise PermissionError(
                 "agent_id and token required (args or EMBER_AGENT_ID / EMBER_TOKEN)")
-        return self.registry.authenticate(agent_id, token)
+        identity=self.registry.authenticate(agent_id, token)
+        from ..integration.write_observation import bind
+        bind(identity.agent_id,args.get('session_id'),args.get('request_id'))
+        return identity
 
     def call_tool(self, name: str, args: dict | None) -> dict:
         args = args or {}
+        from ..integration.write_observation import context
+        observation_token=context.set(None)
         try:
             import time
             started = time.monotonic()
@@ -118,6 +123,8 @@ class EmberMCP:
             return _err(str(e))
         except Exception as e:
             return _err(f"{type(e).__name__}: {e}")
+        finally:
+            context.reset(observation_token)
 
     def _call(self, name: str, args: dict) -> dict:
         if name == "ember_register":

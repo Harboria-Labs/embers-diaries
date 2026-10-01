@@ -187,8 +187,8 @@ async def live(namespace: str, request: Request, after: int = Query(default=0, g
         authorize()
         cursor = int(last_event_id) if last_event_id is not None else after
         if cursor < 0: raise ValueError('negative revision')
-        from ..integration.usefulness_service import service
-        if cursor > service(db, namespace).read(actor=actor)['revision']:
+        from ..integration.observation_journal import journal
+        if cursor > len(journal(db,namespace)._events):
             raise ValueError('cursor ahead of journal; reload snapshot explicitly')
     except PermissionError as error: raise HTTPException(403, str(error)) from error
     except ValueError as error: raise HTTPException(400, str(error)) from error
@@ -223,7 +223,7 @@ async def view(namespace: str, request: Request, after: int = Query(default=0, g
     db, actor = authorized_view(request,x_ember_agent_id,x_ember_token,namespace)
     try:
         from ..integration.observation_stream import public_payload
-        data=public_payload(snapshot(db, namespace, actor, after=after, limit=limit, request_id=request_id, session_id=session_id))
+        data=public_payload(snapshot(db, namespace, actor, after=after, limit=limit, request_id=request_id, session_id=session_id, observations=True))
         return JSONResponse(data, headers={'Cache-Control':'no-store'})
     except PermissionError as error: raise HTTPException(403,str(error)) from error
     except ValueError as error: raise HTTPException(400,str(error)) from error

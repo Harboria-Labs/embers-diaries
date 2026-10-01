@@ -97,7 +97,7 @@ def test_observer_committed_dynamics_and_readonly(rig):
     def hashes():return {str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in root.rglob('*') if p.is_file()}
     before=hashes();out=page(db,grant['code']);assert hashes()==before
     e=out['events'][0];assert e['dynamics']==result['dynamics'];assert e['model_version']==MODEL_VERSION
-    snap=snapshot(db,'research','admin');assert snap['nodes'][0]['dynamics']==result['dynamics'][0]
+    snap=snapshot(db,'research','admin');assert next(n for n in snap['nodes'] if n['id']==ids[0])['dynamics']==result['dynamics'][0]
     assert hashes()==before
 
 

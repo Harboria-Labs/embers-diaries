@@ -70,6 +70,8 @@ def _patch_auth() -> None:
                     raise PermissionError("unknown session")
                 if session.agent_id != ident.agent_id:
                     raise PermissionError("session belongs to another agent")
+            from ..integration.write_observation import bind
+            bind(ident.agent_id, sid, args.get("request_id"))
             return ident
 
         sid = args.get("session_id")
@@ -82,6 +84,8 @@ def _patch_auth() -> None:
             ident = self.registry.get(session.agent_id)
             if ident is None:
                 raise PermissionError("unknown agent")
+            from ..integration.write_observation import bind
+            bind(ident.agent_id, sid, args.get("request_id"))
             return ident
 
         raise PermissionError(

@@ -21,7 +21,10 @@ def resolve_agent(db, agent_id: str | None, token: str | None,
     session_id = session_id or _header_session.get()
     if agent_id and token:
         try:
-            return AgentRegistry(db).authenticate(agent_id, token)
+            ident=AgentRegistry(db).authenticate(agent_id, token)
+            from ..integration.write_observation import bind
+            bind(ident.agent_id,session_id)
+            return ident
         except PermissionError as e:
             raise HTTPException(401, str(e)) from e
     if session_id:
@@ -33,6 +36,8 @@ def resolve_agent(db, agent_id: str | None, token: str | None,
         ident = AgentRegistry(db).get(session.agent_id)
         if ident is None:
             raise HTTPException(401, "unknown agent")
+        from ..integration.write_observation import bind
+        bind(ident.agent_id,session_id)
         return ident
     raise HTTPException(
         401,
@@ -62,11 +67,14 @@ def install(app) -> None:
 
     @app.middleware("http")
     async def bind_session_header(request, call_next):
+        from ..integration.write_observation import context
+        observation_token=context.set(None)
         token = _header_session.set(request.headers.get("x-ember-session-id"))
         try:
             return await call_next(request)
         finally:
             _header_session.reset(token)
+            context.reset(observation_token)
 
     holder = {}
 
