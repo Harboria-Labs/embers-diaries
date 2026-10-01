@@ -33,6 +33,47 @@ def test_code_exchange_read_only_scope_and_no_mutation(rig,client):
     assert token not in response.text
 
 
+def test_namespace_browser_auth_is_readonly_and_scope_checked(rig,client):
+    actor,token=AgentRegistry(rig[0]).register('browser-viewer')
+    rig[0].create_namespace('experiment',owner=actor.agent_id)
+    before=file_hashes(rig[-1])
+    response=client.post('/v1/visualizer-access/browser-auth',json={'namespace':'experiment'},
+        headers={'X-Ember-Agent-Id':actor.agent_id,'X-Ember-Token':token})
+    assert response.status_code==200 and token not in response.text
+    assert 'HttpOnly' in response.headers['set-cookie']
+    assert client.get('/v1/visualizer/experiment').status_code==200
+    assert client.get('/v1/visualizer-status/experiment').json()['remaining_seconds']>0
+    assert client.get('/v1/visualizer/other').status_code==403
+    assert client.post('/v1/memory/write',json={'content':'forbidden'}).status_code==401
+    assert client.post('/v1/usefulness/experiment',json={}).status_code==401
+    assert file_hashes(rig[-1])==before
+
+
+def test_all_surface_assets_share_transport_and_alias(client):
+    import re
+    import hashlib
+    pages=[client.get(p) for p in ['/visualizer','/visualizer?mode=observer','/observer']]
+    assert all(p.status_code==200 for p in pages)
+    assert pages[1].content==pages[2].content
+    urls=[re.search(r'<script src="([^"]+)"',p.text)[1] for p in pages]
+    assert len(set(urls))==1
+    js=client.get(urls[0]);assert 'new EventSource(this.scope.streamUrl())' in js.text
+    assert all('getReader()' not in p.text and 'active.abort' not in p.text for p in pages)
+    assert all(p.headers['x-ember-transport-sha256']==hashlib.sha256(js.content).hexdigest() for p in pages)
+    assert 'consumeViewLink' in pages[0].text and 'consumeObserverLink' in pages[1].text
+
+
+def test_namespace_status_revocation_and_cookie_exchange_do_not_mutate(rig,client):
+    grant=issue(rig[0],'experiment','admin')
+    before=file_hashes(rig[-1])
+    client.post('/v1/visualizer-access/exchange',json={'code':grant['code']})
+    assert client.get('/v1/visualizer-status/experiment').status_code==200
+    assert file_hashes(rig[-1])==before
+    revoke(rig[0],grant['grant_id'],'admin');before=file_hashes(rig[-1])
+    assert client.get('/v1/visualizer-status/experiment').status_code==403
+    assert file_hashes(rig[-1])==before
+
+
 def test_expiry_revocation_restart_and_session_binding(rig,monkeypatch):
     from embers.db import EmberDB
     grant=issue(rig[0],'experiment','admin',ttl_seconds=60)

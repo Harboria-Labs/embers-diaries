@@ -13,7 +13,7 @@ header{background:linear-gradient(100deg,#111b36,#0a1024 65%);box-shadow:0 1px 0
 @media(max-width:690px){.metric small{display:none}.metric{grid-template-columns:1fr;padding:7px 9px;gap:2px}.metric strong{grid-row:2;grid-column:1;font-size:21px}.metric span{font-size:8px;letter-spacing:.5px;white-space:nowrap}.panel-top{gap:5px;padding:10px}.panel-top h2{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.panel-top small{display:none}.event time{display:none}.event{padding:7px 4px;font-size:9px;gap:5px}.canvas-legend{font-size:8px}}
 #transportPanel{position:fixed;z-index:15;right:12px;top:58px;width:min(360px,calc(100vw - 24px));max-height:calc(100dvh - 70px);overflow:auto;padding:18px;background:#14213af5;border:1px solid #536d92;border-radius:9px;box-shadow:0 12px 50px #0007}#transportPanel[hidden]{display:none}#transportPanel p{margin:8px 0 14px}#transportPanel .row span:last-child{max-width:185px;overflow-wrap:anywhere;text-align:right}#connection{cursor:pointer;text-decoration:underline dotted;text-underline-offset:4px}</style></head><body>
 <header><div class="brand"><svg viewBox="0 0 28 34" aria-hidden="true"><path fill="#ffb075" d="M16 1C18 11 27 14 26 23C25 31 17 35 9 31C0 27 2 18 8 12C7 19 11 19 12 15C15 9 11 7 16 1Z"/><path fill="#ffd6a7" d="M15 18C21 25 18 30 13 29C8 28 10 23 15 18Z"/></svg><div><b>EMBER</b><p>Memory observatory / experimental</p></div></div><div class="head-actions"><span id="scope" class="mono muted">No view connected</span><span id="connection" class="connection" role="button" tabindex="0" aria-controls="transportPanel" aria-expanded="false" title="Open streaming diagnostics">RECONNECTING</span><span class="badge">READ ONLY</span><button id="accessButton">Open view</button><button class="mobile-inspect" id="inspectToggle">Inspect</button></div></header>
-<aside id="transportPanel" hidden><h2>Streaming diagnostics</h2><p class="muted">Actual network delivery · ember-observation.v2</p><div id="transportFields"></div><small>Click the connection badge to close.</small></aside><div id="metrics" class="metrics"></div>
+<aside id="transportPanel" hidden><h2>Streaming diagnostics</h2><p class="muted">Actual network delivery · ember-observation.v2</p><div id="transportFields"></div><p class="mono">__OBSERVER_BUILD_LABEL__</p><small>Click the connection badge to close.</small></aside><div id="metrics" class="metrics"></div>
 <div class="workspace">
 <aside class="territory"><div class="section-head"><h2>Memory territory</h2><span class="eyebrow" id="contextCount">0</span></div><input id="search" placeholder="Find a memory…" aria-label="Find a memory"><div id="territoryList" class="territory-list"></div><div class="territory-footer"><div id="streamSummary" class="mono" style="margin-bottom:12px"></div><span class="eyebrow">How to explore</span><br>Click a node to inspect.<br>Drag to pan / orbit. Scroll to zoom.<br><br>Motion arranges the view.<br>Pulses mark observed events.<br><span style="color:var(--orange)">U does not drive LADC heat.</span></div></aside>
 <section class="stage"><div class="stage-bar"><div class="tabs" id="viewTabs"><button data-view="network" class="active">Network</button><button data-view="orbit">3D orbit</button><button data-view="bubbles">Bubbles</button><button data-view="heatmap">Heatmap</button></div><select id="colorBy" aria-label="Color metric"><option value="U">Usefulness · U</option><option value="H">Observed heat · H</option><option value="truth">Truth status</option></select></div><div id="error" class="notice" role="alert"></div><div class="canvas-wrap" id="canvasWrap"><canvas id="graph" aria-label="Interactive memory graph. Select memories using the territory list or inspector." role="img" tabindex="0"></canvas><div class="stage-tools"><button id="motion">Pause layout</button><button id="resetCamera">Fit view</button><button id="fullscreen" aria-label="Toggle fullscreen">⛶</button></div><div id="empty" class="empty"><strong>Your memory, in motion.</strong><span>Open an agent-created view to see recorded activity.</span></div><div id="tooltip" class="tooltip"></div><div class="canvas-legend"><div><span id="legendText">Color: contextual usefulness · radius: effective evidence</span><div style="margin-top:5px">Solid → stored relation &nbsp; · &nbsp; dashed → pair evidence &nbsp; · &nbsp; dotted → unresolved group credit</div></div><div class="legend-scale"><span>0</span><span class="gradient"></span><span>1</span></div></div></div></section>
@@ -22,10 +22,12 @@ header{background:linear-gradient(100deg,#111b36,#0a1024 65%);box-shadow:0 1px 0
 </div>
 <div class="access-backdrop" id="accessDialog"><div class="access-card"><span class="eyebrow" style="color:var(--cyan)">A window into Ember</span><h2>Open a memory view.</h2><p>Ask your connected agent to create an Ember visualization link or viewing code. No agent login token needed.</p><label for="viewCode">Viewing code</label><input id="viewCode" class="mono" placeholder="EMBER-XXXXX-XXXXX-XXXXX-XXXXX" autocomplete="off" spellcheck="false"><button id="openCode" class="primary">Enter observatory →</button><p id="accessError" class="access-error" role="alert"></p><p><a href="/visualizer?mode=observer" style="color:var(--cyan)">Research Observer View → follow an agent</a></p><p class="access-foot">Temporary · one namespace · read-only. The code grants viewing access, so share it only with your intended viewer.</p><details id="advancedAccess"><summary>Advanced: connect using existing agent credentials</summary><div class="advanced"><label class="wide">Namespace<input id="namespace" value="memories"></label><label>Agent ID<input id="agent" autocomplete="off"></label><label>Token<input id="token" type="password" autocomplete="off"></label><label class="wide">Or active session ID<input id="session" type="password" autocomplete="off"></label></div><button id="connect" class="primary">Connect with credentials</button></details><button id="closeAccess" style="width:100%;margin-top:12px">Close</button></div></div>
 <div hidden><input id="live" type="checkbox" checked><input id="filterRequest"><input id="filterSession"><button id="next"></button><div id="changes"></div><div id="alerts"></div><div id="diagnostics"></div><div id="pipeline"></div><div id="groups"></div></div>
+<script>window.emberObserverBuild=__OBSERVER_BUILD_JSON__;</script>
+<script src="__OBSERVER_ASSET_URL__" integrity="__OBSERVER_ASSET_INTEGRITY__"></script>
 <script>
 'use strict';
 const $=id=>document.getElementById(id), palette=['#57d9ca','#aa9af6','#ffb075','#6caaf2','#f08fb5','#b7d774'];
-let current=null,after=0,nextAfter=0,busy=false,controller=null,generation=0,confirmed=0,failures=0,selectedNode=null,selectedEdge=null;
+let current=null,after=0,nextAfter=0,busy=false,transport=null,generation=0,accessAttempt=0,confirmed=0,failures=0,selectedNode=null,selectedEdge=null;
 let mode='network',metric='U',tab='memory',contextFocus=null,paused=matchMedia('(prefers-reduced-motion: reduce)').matches,selectedEvent=null,selectedGroup=null;
 let camera={yaw:.35,pitch:.15,zoom:1,panX:0,panY:0},scene=new Map(),screenNodes=[],screenEdges=[],hover=null,drag=null,tick=0;
 const tokenCache=new Map(),pulses=new Map(),$canvas=$('graph'),ctx=$canvas.getContext('2d');
@@ -47,71 +49,22 @@ const transportDiagnostic={protocol:'ember-observation.v2',transport:'NONE',conn
 window.emberTransport=transportDiagnostic;
 function transportState(change={}){Object.assign(transportDiagnostic,change,{last_confirmed_revision:confirmed});const d=transportDiagnostic;const fields=[['Transport',d.transport],['Connected',d.connected?'yes':'no'],['Last pushed revision',d.last_pushed_revision??'none'],['Last snapshot revision',d.last_snapshot_revision??'none'],['Last confirmed revision',confirmed],['Reconnect count',d.reconnect_count],['Snapshot GETs',d.snapshot_get_count],['SSE connections',d.sse_connection_count],['Pushed events received',d.pushed_event_count],['Last transport error',d.last_error??'none']];$('transportFields').replaceChildren(...fields.map(([key,value])=>{const row=document.createElement('div');row.className='row';const label=document.createElement('span'),val=document.createElement('span');label.textContent=key;val.textContent=String(value);row.append(label,val);return row}));$('streamSummary').textContent=`${d.transport} · pushed ${d.last_pushed_revision??'—'} · snapshot ${d.last_snapshot_revision??'—'}`}
 function deliveryEvidence(transport,events){for(const e of events)transportDiagnostic.delivery_log.push({transport,revision:e.revision,event_id:e.id});transportDiagnostic.delivery_log=transportDiagnostic.delivery_log.slice(-100)}
-async function recover(signal,initial=false,run=generation){
- const namespace=$('namespace').value,auth=headers();let cursor=initial?0:confirmed;
- do{
-  if(run!==generation)throw new DOMException('Stale connection','AbortError');
-  transportState({snapshot_get_count:transportDiagnostic.snapshot_get_count+1});
-  const response=await fetch('/v1/visualizer/'+encodeURIComponent(namespace)+'?after='+cursor+'&limit=50',{method:'GET',headers:auth,cache:'no-store',signal});
-  if(!response.ok){const error=Error('Read refused: HTTP '+response.status);error.denied=[401,403].includes(response.status);throw error}
-  const data=await response.json();if(run!==generation)throw new DOMException('Stale connection','AbortError');
-  if(data.next_after<cursor)throw Error('Journal was replaced; reconnect explicitly');let expected=cursor+1;
-  for(const e of data.events)if(e.revision!==expected++)throw Error('Snapshot event gap');
-  if(data.next_after>cursor&&!data.events.length)throw Error('Snapshot omitted event prefix');
-  deliveryEvidence('SNAPSHOT',data.events);const arrived=data.events;
-  data.events=mergeEvents(initial?[]:current?.events||[],data.events);render(data);cursor=data.next_after;confirmed=cursor;
-  transportState({last_snapshot_revision:cursor});if(!initial)highlight(arrived);initial=false;
- }while(cursor<current.revision)
+function receiveNamespace(data,kind,id){
+ if(kind==='SSE'){applyPatch(data,Number(id));deliveryEvidence('SSE',data.events||[]);return}
+ const cursor=confirmed;if(data.next_after<cursor)throw Error('Journal replaced');let expected=cursor+1;
+ for(const e of data.events)if(e.revision!==expected++)throw Error('Snapshot event gap');
+ if(data.next_after>cursor&&!data.events.length)throw Error('Snapshot omitted events');
+ deliveryEvidence('SNAPSHOT',data.events);const arrived=data.events;data.events=mergeEvents(current?.events||[],data.events);render(data);confirmed=data.next_after;highlight(arrived);
 }
-async function connection(run){
- let attempts=0;
- while(run===generation&&$('live').checked){
-  const active=new AbortController();controller=active;let idle,reader;
-  if(attempts++)transportState({reconnect_count:transportDiagnostic.reconnect_count+1});
-  const fallback=failures>=3;
-  status(fallback?'POLLING FALLBACK':'RECONNECTING');transportState({connected:false,transport:fallback?'POLLING':'CONNECTING'});
-  const resetIdle=()=>{clearTimeout(idle);idle=setTimeout(()=>active.abort(new Error('SSE connection timed out')),10000)};
-  try{
-   // Every retry has a deadline, including proxies that never send response headers.
-   resetIdle();if(fallback)await recover(active.signal,false,run);
-   const response=await fetch('/v1/visualizer-stream/'+encodeURIComponent($('namespace').value)+'?after='+confirmed,{method:'GET',headers:{...headers(),'Last-Event-ID':String(confirmed)},cache:'no-store',signal:active.signal});
-   if(!response.ok){const e=Error('Stream refused: HTTP '+response.status);e.denied=[401,403].includes(response.status);throw e}
-   if(!response.headers.get('content-type')?.includes('text/event-stream'))throw Error('SSE unavailable: unexpected response type');
-   reader=response.body.getReader();const decoder=new TextDecoder();let buffer='',ready=false;resetIdle();
-   while(run===generation){
-    const {value,done}=await reader.read();if(run!==generation)return;if(done)throw Error('SSE stream ended');resetIdle();
-    buffer+=decoder.decode(value,{stream:true});if(buffer.length>600000)throw Error('Stream frame exceeds bound');
-    let match;
-    while((match=/\r?\n\r?\n/.exec(buffer))){
-     const block=buffer.slice(0,match.index).replace(/\r\n/g,'\n');buffer=buffer.slice(match.index+match[0].length);
-     let type='',id=null;const lines=[];
-     for(const line of block.split('\n')){if(line.startsWith('event:'))type=line.slice(6).trim();if(line.startsWith('id:'))id=Number(line.slice(3).trim());if(line.startsWith('data:'))lines.push(line.slice(5).trimStart())}
-     if(type==='denied'){const e=Error('Stream authorization ended');e.denied=true;throw e}
-     if(type==='reset')throw Error('Journal changed; reconnect explicitly');
-     if(type==='ready'){
-      const hello=JSON.parse(lines.join('\n'));if(hello.protocol!==transportDiagnostic.protocol||hello.transport!=='SSE')throw Error('Unsupported streaming protocol');
-      if(!ready){ready=true;transportState({connected:true,transport:'SSE',sse_connection_count:transportDiagnostic.sse_connection_count+1,last_error:null});status('LIVE');failures=0;$('error').textContent=''}
-     }else if(type==='patch'){
-      if(!ready)throw Error('Missing SSE ready handshake');
-      if(!Number.isSafeInteger(id)||id<0)throw Error('Invalid stream ID');const payload=JSON.parse(lines.join('\n'));applyPatch(payload,id);
-      if(payload.events?.length){deliveryEvidence('SSE',payload.events);transportState({last_pushed_revision:id,pushed_event_count:transportDiagnostic.pushed_event_count+payload.events.length})}
-      transportState();
-     }
-    }
-   }
-  }catch(error){
-   if(run!==generation)return;
-   active.abort();transportState({connected:false,transport:'CONNECTING',last_error:error.message});status('RECONNECTING');
-   if(error.denied){clearPrivate();$('error').textContent=error.message;$('live').checked=false;return}
-   failures++;$('error').textContent=error.message;
-   if(failures>=3){status('POLLING FALLBACK');transportState({transport:'POLLING'})}
-   try{await recover(activeReplacementSignal(),false,run)}catch(e){if(run!==generation)return;if(e.denied){clearPrivate();$('live').checked=false;$('error').textContent=e.message;return}}
-  }finally{clearTimeout(idle);if(reader)await reader.cancel().catch(()=>{});active.abort()}
-  await new Promise(resolve=>setTimeout(resolve,Math.min(1000*2**Math.min(failures,3),5000)));
- }
+async function load(){
+ generation++;transport?.stop();confirmed=0;clearPrivate();$('live').checked=true;
+ transportState({delivery_log:[]});const namespace=$('namespace').value,encoded=encodeURIComponent(namespace);
+ transport=new EmberObserverTransport({receive:receiveNamespace,onState:status,onNotice:message=>{$('error').textContent=message},onTerminal:()=>{clearPrivate();$('live').checked=false},
+ onDiagnostic:d=>transportState({...d,...window.emberObserverBuild,snapshot_get_count:d.snapshot_gets,last_snapshot_revision:d.last_snapshot,last_pushed_revision:d.last_pushed,sse_connection_count:d.stream_attempts,pushed_event_count:d.pushed_events,last_error:d.last_disconnect_reason}),
+ scope:{snapshotUrl:()=>'/v1/visualizer/'+encoded+'?after='+confirmed+'&limit=50',streamUrl:()=>'/v1/visualizer-stream/'+encoded+'?after='+confirmed,statusUrl:'/v1/visualizer-status/'+encoded,eventName:'patch',
+ validateHello:h=>h.protocol==='ember-observation.v2'&&h.namespace===namespace,validateStatus:d=>d.namespace===namespace,cursor:d=>d.next_after,more:d=>d.next_after<d.revision,validateEvent:(d,id)=>Number.isSafeInteger(Number(id))&&Number(id)>=0}});
+ await transport.start();
 }
-function activeReplacementSignal(){return AbortSignal.timeout(10000)}
-async function load(){$('live').checked=true;generation++;confirmed=0;transportState({transport:'NONE',connected:false,last_pushed_revision:null,last_snapshot_revision:null,reconnect_count:0,snapshot_get_count:0,sse_connection_count:0,pushed_event_count:0,last_error:null,delivery_log:[]});status('RECONNECTING');controller?.abort();const run=generation;failures=0;confirmed=0;clearPrivate();controller=new AbortController();try{await recover(controller.signal,true);$('error').textContent='';if($('live').checked)connection(run)}catch(error){if(run===generation){clearPrivate();$('error').textContent=error.message;status('RECONNECTING')}}}
 
 function getU(n){const states=n.usefulness||[];return contextFocus?states.find(s=>s.context===JSON.parse(contextFocus)[1])||states.find(s=>s.context===n.primary_context):states.find(s=>s.context===n.primary_context)||states[0]}
 function valueColor(v,kind='U'){const a=kind==='H'?[49,42,95]:[44,64,117],b=kind==='H'?[255,195,140]:[99,240,216],t=Math.max(0,Math.min(1,v));return `rgb(${a.map((x,i)=>Math.round(x+(b[i]-x)*t)).join(',')})`}
@@ -156,9 +109,9 @@ function updateLegend(){document.querySelector('.gradient').style.background=met
 $('colorBy').onchange=()=>{metric=$('colorBy').value;if(mode==='heatmap'&&metric==='truth'){metric='U';$('colorBy').value='U'}updateLegend()};$('motion').onclick=()=>{paused=!paused;$('motion').textContent=paused?'Resume layout':'Pause layout'};$('motion').textContent=paused?'Resume layout':'Pause layout';$('resetCamera').onclick=()=>{camera={yaw:.35,pitch:.15,zoom:1,panX:0,panY:0}};$('fullscreen').onclick=()=>{if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen?.()};$('search').oninput=()=>{};
 $('inspectorTabs').onclick=e=>{const b=e.target.closest('[data-tab]');if(!b)return;tab=b.dataset.tab;renderInspector();if(tab==='tokens'&&selectedNode)fetchTokens(selectedNode);drawTrend()};$('inspectToggle').onclick=()=>$('inspectorPanel').classList.toggle('open');
 $('accessButton').onclick=()=>$('accessDialog').hidden=false;$('closeAccess').onclick=()=>$('accessDialog').hidden=true;
-$('connect').onclick=load;$('next').onclick=()=>recover(new AbortController().signal);
-async function openCode(){const code=$('viewCode').value.trim();$('accessError').textContent='Opening read-only view…';try{const response=await fetch('/v1/visualizer-access/exchange',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code}),cache:'no-store'});if(!response.ok)throw Error('This viewing code is invalid, expired or revoked. Ask your agent for a new one.');const grant=await response.json();$('namespace').value=grant.namespace;for(const id of ['agent','token','session'])$(id).value='';$('viewCode').value='';$('accessError').textContent='';await load()}catch(error){$('accessError').textContent=error.message}}$('openCode').onclick=openCode;$('viewCode').onkeydown=e=>{if(e.key==='Enter')openCode()};
-for(const id of ['namespace','agent','token','session'])$(id).onchange=()=>{generation++;controller?.abort();clearPrivate();status('RECONNECTING')};window.addEventListener('pagehide',()=>{generation++;controller?.abort()});new ResizeObserver(()=>drawTrend()).observe($('trend'));
+$('connect').onclick=async()=>{try{const r=await fetch('/v1/visualizer-access/browser-auth',{method:'POST',headers:{...headers(),'Content-Type':'application/json'},body:JSON.stringify({namespace:$('namespace').value})});if(!r.ok)throw Error('Read-only authorization refused');for(const id of ['agent','token','session'])$(id).value='';await load()}catch(e){$('accessError').textContent=e.message}};$('next').onclick=()=>{transport?.stop();load()};
+async function openCode(){const attempt=++accessAttempt;transport?.stop();clearPrivate();const code=$('viewCode').value.trim();$('accessError').textContent='Opening read-only view…';try{const response=await fetch('/v1/visualizer-access/exchange',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code}),cache:'no-store'});if(!response.ok)throw Error('This viewing code is invalid, expired or revoked. Ask your agent for a new one.');const grant=await response.json();if(attempt!==accessAttempt)return;$('namespace').value=grant.namespace;for(const id of ['agent','token','session'])$(id).value='';$('viewCode').value='';$('accessError').textContent='';await load()}catch(error){if(attempt!==accessAttempt)return;status('ACCESS EXPIRED');$('accessError').textContent=error.message}}$('openCode').onclick=openCode;$('viewCode').onkeydown=e=>{if(e.key==='Enter')openCode()};
+for(const id of ['namespace','agent','token','session'])$(id).onchange=()=>{generation++;transport?.stop();clearPrivate();status('RECONNECTING')};window.addEventListener('pagehide',()=>{generation++;transport?.stop()});new ResizeObserver(()=>drawTrend()).observe($('trend'));
 $('connection').onclick=()=>{$('transportPanel').hidden=!$('transportPanel').hidden;$('connection').setAttribute('aria-expanded',String(!$('transportPanel').hidden));transportState()};$('connection').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('connection').click()}};transportState();
-const initial=new URLSearchParams(location.hash.slice(1)).get('view');if(initial){history.replaceState(null,'',location.pathname+location.search);$('viewCode').value=initial;openCode()}
+function consumeViewLink(){const fragment=new URLSearchParams(location.hash.slice(1));if(fragment.has('observe')){location.replace('/observer'+location.hash);return}if(fragment.has('view')){const initial=fragment.get('view');history.replaceState(null,'',location.pathname+location.search);transport?.stop();clearPrivate();$('accessDialog').hidden=false;$('viewCode').value=initial;openCode()}}window.addEventListener('hashchange',consumeViewLink);consumeViewLink();
 </script></body></html>

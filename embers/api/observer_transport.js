@@ -1,7 +1,8 @@
 /* Observer transport only. No memory/model operations. One owner, one EventSource. */
 class EmberObserverTransport {
-  constructor({params, snapshot, receive, onState, onDiagnostic, onNotice, onTerminal, agent}) {
+  constructor({params, snapshot, receive, onState, onDiagnostic, onNotice, onTerminal, agent, scope={}}) {
     Object.assign(this, {params, snapshot, receive, onState, onDiagnostic, onNotice, onTerminal, agent});
+    this.scope={snapshotUrl:()=>'/v1/observer/events?'+this.params(),streamUrl:()=>'/v1/observer/stream?'+this.params(),statusUrl:'/v1/observer/status',eventName:'observer',validateHello:h=>h.protocol==='ember-agent-observer.v1'&&h.observed_agent_id===this.agent,validateStatus:d=>d.observed_agent_id===this.agent,cursor:d=>d.cursor,more:d=>d.more,validateEvent:(d,id)=>d.cursor===id,...scope};
     this.stopped=false; this.source=null; this.failures=0; this.attempts=0;
     this.fallback=false; this.polling=false; this.rest=new Set();
     this.stats={transport:'NONE',connected:false,connection_state:'RECONNECTING',stream_id:null,
@@ -22,11 +23,11 @@ class EmberObserverTransport {
     }finally{clearTimeout(timer);this.rest.delete(c)}
   }
   async authorize(){
-    const data=await this.json('/v1/observer/status');
-    if(data.observed_agent_id!==this.agent){const e=Error('Observer target changed');e.denied=true;throw e}
+    const data=await this.json(this.scope.statusUrl);
+    if(!this.scope.validateStatus(data)){const e=Error('Observer target changed');e.denied=true;throw e}
     this.stats.grant_expires_at=data.expires_at;this.emit();
     // Server-supplied remaining lifetime avoids client clock skew. No grant extension.
-    this.timer('expiryTimer',()=>this.checkExpiry(),Math.max(1000,data.remaining_seconds*1000));
+    if(Number.isFinite(data.remaining_seconds))this.timer('expiryTimer',()=>this.checkExpiry(),Math.max(1000,data.remaining_seconds*1000));
   }
   async checkExpiry(){if(this.stopped)return;try{await this.authorize()}catch(e){if(e.denied)this.terminal('ACCESS EXPIRED','Authorization expired, revoked or unavailable');else this.timer('expiryTimer',()=>this.checkExpiry(),5000)}}
   async start(){
@@ -36,8 +37,8 @@ class EmberObserverTransport {
   }
   async takeSnapshot(){
     let more;
-    do{this.stats.snapshot_gets++;this.emit();const data=await this.json('/v1/observer/events?'+this.params());
-      if(this.stopped)return;this.receive(data,'SNAPSHOT');this.stats.last_snapshot=data.cursor;more=data.more;
+    do{this.stats.snapshot_gets++;this.emit();const data=await this.json(this.scope.snapshotUrl());
+      if(this.stopped)return;this.receive(data,'SNAPSHOT');this.stats.last_snapshot=this.scope.cursor(data);more=this.scope.more(data);
     }while(more&&!this.stopped);
   }
   endIfTerminal(e){if(e.denied){this.terminal('ACCESS EXPIRED','Authorization expired, revoked or unavailable');return true}
@@ -50,7 +51,7 @@ class EmberObserverTransport {
     clearTimeout(this.retryTimer);if(this.attempts++)this.stats.reconnect_count++;
     this.stats.stream_attempts++;this.stats.last_sse_status='CONNECTING';this.emit();
     this.state('RECONNECTING');
-    const es=new EventSource('/v1/observer/stream?'+this.params());this.source=es;
+    const es=new EventSource(this.scope.streamUrl());this.source=es;
     let ready=false,openedAt=0;
     const current=()=>!this.stopped&&this.source===es;
     const liveness=()=>{if(ready&&performance.now()-openedAt>=15000)this.failures=0;this.stats.last_byte_at=new Date().toISOString();this.timer('idleTimer',()=>{if(current())this.lost(es,'No SSE event/keepalive for 45 seconds')},45000)};
@@ -60,17 +61,17 @@ class EmberObserverTransport {
     es.addEventListener('ready',event=>{
       if(!current())return;
       try{const hello=JSON.parse(event.data);
-        if(hello.protocol!=='ember-agent-observer.v1'||hello.observed_agent_id!==this.agent)throw Error('Wrong observer handshake');
+        if(!this.scope.validateHello(hello))throw Error('Wrong observer handshake');
         openedAt=performance.now();ready=true;liveness();clearTimeout(this.connectTimer);this.stats.stream_id=hello.stream_id;
         this.stats.grant_expires_at=hello.expires_at;this.stopFallback();this.state('LIVE');
-        this.timer('expiryTimer',()=>this.checkExpiry(),Math.max(1000,hello.remaining_seconds*1000));
+        if(Number.isFinite(hello.remaining_seconds))this.timer('expiryTimer',()=>this.checkExpiry(),Math.max(1000,hello.remaining_seconds*1000));
       }catch(e){this.lost(es,e.message)}
     });
-    es.addEventListener('observer',event=>{
+    es.addEventListener(this.scope.eventName,event=>{
       if(!current())return;
       try{if(!ready)throw Error('Missing SSE handshake');const data=JSON.parse(event.data);
-        if(!event.lastEventId||data.cursor!==event.lastEventId)throw Error('Cursor mismatch');
-        liveness();this.receive(data,'SSE');this.stats.last_received_event_id=event.lastEventId;
+        if(!event.lastEventId||!this.scope.validateEvent(data,event.lastEventId))throw Error('Cursor mismatch');
+        liveness();this.receive(data,'SSE',event.lastEventId);this.stats.last_received_event_id=event.lastEventId;
         this.stats.last_pushed=event.lastEventId;this.stats.pushed_events+=data.events.length;this.emit();
       }catch(e){this.lost(es,e.message)}
     });

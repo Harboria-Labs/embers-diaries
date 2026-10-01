@@ -62,10 +62,10 @@ def main():
                     raise AssertionError(page.locator('#notice').inner_text())
                 page.goto(url+grant['viewer_path']);wait("() => document.querySelector('#status').textContent==='LIVE'")
                 build=client.get('/v1/observer/build').json()
-                assert build['transport_client_version']=='9f94c5a / transport-v2'
+                assert build['transport_client_version'].startswith('shared-transport-v3')
                 assert build['transport_asset_url'] in [r['url'].removeprefix(url) for r in requests]
                 assert hashlib.sha256(client.get(build['transport_asset_url']).content).hexdigest()==build['transport_sha256']
-                assert 'Observer client: 9f94c5a / transport-v2' in page.locator('#buildMarker').inner_text()
+                assert 'Observer client: shared-transport-v3' in page.locator('#buildMarker').inner_text()
                 assert page.evaluate('window.emberObserverTransport.transport_sha256')==build['transport_sha256']
                 assert page.evaluate('window.emberObserverTransport.server_build')==build['server_build']
                 assert page.locator('input[name=namespace]').input_value()==''

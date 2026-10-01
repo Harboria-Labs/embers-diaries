@@ -259,17 +259,17 @@ def test_build_identity_fingerprinted_asset_integrity_and_readonly(env,monkeypat
     info=client.get('/v1/observer/build')
     assert info.status_code==200
     data=info.json()
-    assert data['transport_matches_baseline'] is True
-    assert data['transport_client_version']=='9f94c5a / transport-v2'
+    assert data['transport_matches_baseline'] is False
+    assert data['transport_client_version'].startswith('shared-transport-v3')
     assert data['server_git_commit'] is None  # Never pretend a source fingerprint is a commit.
     html=client.get('/visualizer?mode=observer')
     assert '__OBSERVER_' not in html.text
-    assert 'Observer client: 9f94c5a / transport-v2' in html.text
+    assert 'Observer client: shared-transport-v3' in html.text
     url=re.search(r'<script src="([^"]+)" integrity="([^"]+)"',html.text)
     assert url and url[1]==data['transport_asset_url']
     script=client.get(url[1])
     digest=hashlib.sha256(script.content).hexdigest()
-    assert digest==data['transport_sha256']==build.BASELINE_SHA256
+    assert digest==data['transport_sha256']==build.TRANSPORT_SHA256
     assert url[2]=='sha256-'+base64.b64encode(bytes.fromhex(digest)).decode()
     for response in (info,html,script):
         assert 'no-store' in response.headers['cache-control']
@@ -278,7 +278,7 @@ def test_build_identity_fingerprinted_asset_integrity_and_readonly(env,monkeypat
         assert response.headers['x-ember-transport-sha256']==digest
         assert 'set-cookie' not in response.headers
     assert client.get('/v1/observer/transport.js?v=stale').status_code==409
-    assert 'x-ember-observer-build' not in client.get('/visualizer').headers
+    assert client.get('/visualizer').headers['x-ember-transport-sha256']==digest
     assert file_hashes(path)==before
 
 

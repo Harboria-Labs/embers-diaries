@@ -11,7 +11,7 @@
 <script>window.emberObserverBuild=__OBSERVER_BUILD_JSON__;</script>
 <script src="__OBSERVER_ASSET_URL__" integrity="__OBSERVER_ASSET_INTEGRITY__"></script>
 <script>
-const $=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';let grant=null,cursor=null,generation=0,events=new Map(),seenRevisions=new Map(),territories=new Map(),selectedFilters={},lastNamespace=null;
+const $=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';let grant=null,cursor=null,generation=0,accessAttempt=0,events=new Map(),seenRevisions=new Map(),territories=new Map(),selectedFilters={},lastNamespace=null;
 let stats={...window.emberObserverBuild},transport=null;window.emberObserverTransport=stats;
 if(typeof EmberObserverTransport==='undefined'){$('accessBuild').textContent+=' · CLIENT ASSET ERROR';$('status').textContent='CLIENT ASSET ERROR'}
 function status(value,kind){$('status').textContent=value;$('status').dataset.state=value}
@@ -37,9 +37,9 @@ option('namespaces',e.namespace);option('sessions',e.session);option('contexts',
 }
 function receive(data,kind){if(data.observed_agent_id!==grant.observed_agent_id)throw Error('Observer target mismatch');for(const e of data.events)apply(e);cursor=data.cursor;}
 async function start(){generation++;transport?.stop();cursor=null;clear();transport=new EmberObserverTransport({params,receive,onState:status,onDiagnostic:diagnostics,onNotice:message=>{$('notice').textContent=message},onTerminal:()=>{clear();$('agent').textContent='Authorization/recovery required'},agent:grant.observed_agent_id});await transport.start()}
-async function open(){try{const r=await fetch('/v1/observer/exchange',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:$('code').value.trim()})});if(!r.ok)throw Error('Invalid, expired or revoked observer code');grant=await r.json();$('code').value='';$('access').hidden=true;$('agent').textContent=grant.observed_agent_id;$('agent').title=grant.observed_agent_id;transport?.stop();selectedFilters={};$('filters').reset();await start()}catch(e){$('accessError').textContent=e.message}}
+async function open(){const attempt=++accessAttempt;transport?.stop();clear();try{const r=await fetch('/v1/observer/exchange',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:$('code').value.trim()})});if(!r.ok)throw Error('Invalid, expired or revoked observer code');const data=await r.json();if(attempt!==accessAttempt)return;grant=data;$('code').value='';$('access').hidden=true;$('agent').textContent=grant.observed_agent_id;$('agent').title=grant.observed_agent_id;transport?.stop();selectedFilters={};$('filters').reset();await start()}catch(e){if(attempt!==accessAttempt)return;status('ACCESS EXPIRED');$('accessError').textContent=e.message}}
 window.addEventListener('pagehide',()=>transport?.stop());
 $('connect').onclick=open;$('code').onkeydown=e=>{if(e.key==='Enter')open()};$('openAccess').onclick=()=>$('access').hidden=false;$('inspectToggle').onclick=()=>$('right').classList.toggle('open');$('filters').onsubmit=e=>{e.preventDefault();if(!grant)return;selectedFilters=Object.fromEntries([...new FormData(e.target)].filter(([,v])=>v));start()};$('all').onclick=()=>{$('filters').reset();selectedFilters={};if(grant)start()};
-function consumeObserverLink(){const initial=new URLSearchParams(location.hash.slice(1)).get('observe');if(initial){history.replaceState(null,'',location.pathname+location.search);$('code').value=initial;open()}}
+function consumeObserverLink(){const initial=new URLSearchParams(location.hash.slice(1)).get('observe');if(new URLSearchParams(location.hash.slice(1)).has('observe')){transport?.stop();clear();$('access').hidden=false;history.replaceState(null,'',location.pathname+location.search);$('code').value=initial;open()}}
 window.addEventListener('hashchange',consumeObserverLink);consumeObserverLink();
 </script></body></html>

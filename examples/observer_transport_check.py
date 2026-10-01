@@ -23,7 +23,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):self.forward()
     def do_POST(self):self.forward()
     def forward(self):
-        stream=self.path.startswith('/v1/observer/stream');proxy=self.server
+        stream=self.path.startswith(('/v1/observer/stream','/v1/visualizer-stream/'));proxy=self.server
         if stream and proxy.mode=='down':
             self.send_response(503);self.send_header('Content-Length','0');self.end_headers();return
         if stream:
@@ -34,7 +34,7 @@ class Handler(BaseHTTPRequestHandler):
                 body=self.rfile.read(int(self.headers.get('Content-Length','0')))
                 with client.stream(self.command,self.path,headers=headers,content=body) as r:
                     self.send_response(r.status_code)
-                    for k,v in r.headers.items():
+                    for k,v in r.headers.multi_items():
                         if k not in ('content-length','transfer-encoding','connection'):self.send_header(k,v)
                     self.send_header('Transfer-Encoding','chunked');self.end_headers();started=time.monotonic();first=True
                     for chunk in r.iter_raw():
