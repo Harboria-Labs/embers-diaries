@@ -14,7 +14,7 @@ def schema(config, policy):
         ('severity.misleading','sM','Misleading evidence mass','> irrelevant mass','Stronger negative evidence for a misleading experience.'),
         ('cluster.session_window','Δsession','Session grouping window','[0,86400] seconds','Structural grouping for future reports in one session; 0 disables grouping.'),
         ('cluster.time_window','Δtime','No-session grouping window','[0,86400] seconds','Structural grouping for future reports without a session; 0 disables grouping.'),
-        ('w0','w₀','Directional pair prior','[0,1]','Pair usefulness prior; W does not expand retrieval.'),
+        ('w0','w₀','Directional pair prior','[0,1]','Pair usefulness prior. W does not influence direct retrieval/LADC admission. After primary direct selection, Pairing Matrix V1 may use contextual directional W to select at most one paired memory.'),
         ('kappa_w','κW','Directional pair prior strength','> 0','Prior mass for directional pair evidence.')]:
         add('policy.'+path,symbol,name,range,'Pair evidence' if path in ('w0','kappa_w') else 'Feedback','(κ × prior + positive mass) / (κ + effective mass)',effect,'reprojects accepted evidence; grouping windows affect future grouping only; no restart')
     for key,symbol,name,range,equation,effect in [
@@ -28,5 +28,5 @@ def schema(config, policy):
         ('max_elapsed','Δt max','Maximum time step','> 0 model units','A_next=A*+(A−A*)exp[−(u+v)Δt]','Reject larger requested steps instead of silently clamping them.')]:
         add('config.'+key,symbol,name,range,'Query modulation' if key=='alpha' else 'Activation',equation,effect)
     for key,name,cap in [('max_seeds','Candidate memories',512),('max_state_memories','Activation cache memories',100000),('max_results','Returned memories',100),('token_budget','Total rendered token budget',1000000),('memory_token_cap','Per-memory token cap',1000000),('neighborhood_token_cap','Per-neighborhood token cap',1000000)]:
-        add('config.'+key,key,name,f'integer 1..{cap}; compatible with total/candidate limits','Attention','exact tokenizer count ≤ configured cap','Limits admission. With W uncoupled each direct candidate is its own neighborhood.')
+        add('config.'+key,key,name,f'integer 1..{cap}; compatible with total/candidate limits','Attention','exact tokenizer count ≤ configured cap','Limits admission. W does not influence direct retrieval/LADC admission. Pairing Matrix V1 attempts at most one contextual directional W-selected addition after primary direct selection, within existing capacity.')
     return rows
