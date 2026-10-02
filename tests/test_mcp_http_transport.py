@@ -32,7 +32,7 @@ def test_streamable_http_discovery_and_notification(tmp_path, monkeypatch):
     assert listed.status_code == 200
     assert {tool["name"] for tool in listed.json()["result"]["tools"]} == {
         tool["name"] for tool in TOOLS}
-    assert len(listed.json()["result"]["tools"]) == 44
+    assert len(listed.json()["result"]["tools"]) == 45
     assert client.get("/mcp", headers={"Accept": "text/event-stream"}).status_code == 405
 
 

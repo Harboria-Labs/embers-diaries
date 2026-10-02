@@ -1763,14 +1763,19 @@ class EmberDB:
 
     def link(self, from_id: str, to_id: str,
              edge_type: str = "relates_to",
-             weight: float = 1.0, label: str = "") -> bool:
-        """Create a graph edge between two records."""
+             weight: float = 1.0, label: str = "", **kwargs) -> bool:
+        """Create a graph edge; primary_context is optional, explicit edge metadata."""
+        if set(kwargs) - {'primary_context'}:
+            raise TypeError('unsupported link fields')
+        if 'primary_context' in kwargs:
+            from .core.primary_context import validate_context
+            validate_context(kwargs['primary_context'])
         if not self.exists(from_id) or not self.exists(to_id):
             return False
         import uuid
         self._graph_index.add_edge(
             from_id, to_id, edge_type, weight,
-            edge_id=str(uuid.uuid4()), label=label)
+            edge_id=str(uuid.uuid4()), label=label, metadata=kwargs)
         return True
 
     def neighbors(self, record_id: str, depth: int = 1,

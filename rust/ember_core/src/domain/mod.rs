@@ -2,6 +2,7 @@
 pub mod dynamics;
 pub mod fur;
 pub mod orientation;
+pub mod pairing;
 use serde_json::{json, Value};
 pub type Result<T> = std::result::Result<T, String>;
 pub const MODEL: &str = "ember-fur-activation-v1";
@@ -68,6 +69,7 @@ pub fn call(op: &str, v: Value) -> Result<Value> {
             }
             Ok(json!({"retry":null}))
         }
+        "pair_select" => pairing::select(&v),
         "context" => context(&v),
         "context_write" => {
             context(&v["supplied"])?;

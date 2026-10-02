@@ -254,7 +254,37 @@ class MemoryProtocol:
                 pass
 
         def observed(result):
-            if not inspect_context and primary_context is None:
+            if format == 'raw': direct_ids = [r.id for r in result]
+            elif format == 'structured': direct_ids = [r['id'] for r in result]
+            elif format == 'messages': direct_ids = [r['metadata']['ember_record_id'] for r in result]
+            else: direct_ids = self.context_builder.get_last_injected()
+            pair_route = None
+            if getattr(self.db, '_usefulness_enabled', False) and direct_ids:
+                from .pairing import select
+                paired, route = select(self.db, ns, direct_ids, primary_context)
+                if paired is not None and len(direct_ids) < top_k:
+                    # Render separately: never reorder or evict already admitted direct rows.
+                    from .context import ContextBuilder
+                    builder = ContextBuilder(self.decay, self.context_builder.max_tokens,
+                                             self.context_builder._chars_per_token)
+                    if format == 'raw':
+                        result = result + [paired]; pair_route = route
+                    elif format == 'structured':
+                        row = self._stamp_conflicts(builder.build_structured_context([paired]))[0]
+                        row['retrieval'] = route
+                        result = result + [row]; pair_route = route
+                    elif format == 'messages':
+                        addition = builder.build_message_context([paired])
+                        if addition and sum(len(x['content']) for x in result + addition) / builder._chars_per_token <= builder.max_tokens:
+                            addition[0]['metadata']['retrieval'] = route
+                            result = result + addition; pair_route = route
+                    else:
+                        addition = builder.build_text_context([paired], include_annotations=include_annotations)
+                        if addition and builder._estimate_tokens(result + '\n' + addition) <= builder.max_tokens:
+                            result = result + '\n' + addition; pair_route = route
+                            self.context_builder._last_injected.append(paired.id)
+                    if pair_route: records.append(paired)
+            if not inspect_context and primary_context is None and not pair_route:
                 return result
             if format == "raw":
                 emitted = {r.id for r in result}
@@ -265,6 +295,8 @@ class MemoryProtocol:
             else:
                 emitted = set(self.context_builder.get_last_injected())
             return {"query": query, "primary_context": primary_context,
+                    "direct_ids": direct_ids, "primary_memory_id": direct_ids[0] if direct_ids else None,
+                    "pair_expansion": pair_route,
                     "context_policy": "agent-supplied-pass-through-v1",
                     "retrieval_model": "legacy-query-discovery-v1",
                     "candidates": [{"id": r.id, "primary_context": (r.data.get("primary_context") if isinstance(r.data, dict) else None)}

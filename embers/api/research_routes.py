@@ -43,3 +43,9 @@ async def research_recall(namespace:str,body:dict,x_ember_agent_id:str|None=Head
 @router.get('/research/settings',response_class=HTMLResponse)
 async def settings_page():
     return HTMLResponse(Path(__file__).with_name('research_settings.html').read_text(encoding='utf-8'),headers={'Cache-Control':'no-store','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'"})
+
+@router.post('/v1/memory/pair-relationship')
+async def pair_relationship(body:dict,x_ember_agent_id:str|None=Header(None),x_ember_token:str|None=Header(None)):
+    from ..integration.pairing import link
+    db,actor=auth(x_ember_agent_id,x_ember_token)
+    return execute(link,db,actor,**body)

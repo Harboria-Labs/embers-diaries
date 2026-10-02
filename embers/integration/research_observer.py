@@ -156,10 +156,11 @@ def _project(db,e):
                          'outcome':x.get('resolved_feedback_type'),'active':x.get('active')} for x in e.get('experiences',[])][:100],
          'relationships':relationships,'changes':changes,'memories':memories,'dynamics':obs.get('dynamics',[])[:100], 'report_state':e.get('report_state'),'model_version':e.get('model_version'),'configuration_revision':e.get('configuration_revision'),'actual_H':obs.get('observed_heat',{}),
          'heat_source':obs.get('heat_source'),'query':obs.get('query'),'returned_ids':obs.get('returned_ids',[])[:100],
+         'direct_ids':obs.get('direct_ids',[])[:100],'pair_expansion':obs.get('pair_expansion'),
          'candidate_ids':obs.get('candidate_ids',[])[:100],'budget':obs.get('budget'),
          'pipeline':{'query':stage(bool(obs.get('query')) or bool(obs.get('dynamics'))),'context':stage(meta['context'] is not None),
-                     'write':stage(bool(obs.get('memory_ids'))),'retrieval':stage(bool(obs) and not obs.get('memory_ids')),'direct_memory':'NOT OBSERVED','LADC_reactivation':stage(any(x.get('reactivated') for x in obs.get('dynamics',[]))),
-                     'pair_expansion':'NOT OBSERVED','returned_memory':stage(bool(obs.get('returned_ids'))),
+                     'write':stage(bool(obs.get('memory_ids'))),'retrieval':stage(bool(obs) and not obs.get('memory_ids')),'direct_memory':stage(bool(obs.get('direct_ids'))),'LADC_reactivation':stage(any(x.get('reactivated') for x in obs.get('dynamics',[]))),
+                     'pair_expansion':stage(bool(obs.get('pair_expansion'))),'returned_memory':stage(bool(obs.get('returned_ids'))),
                      'agent_use':'REPORTED' if r.get('feedback_type') in ('CONTRIBUTED','PAIR_HELPED','GROUP_SUCCESS','MISLEADING') else 'NOT OBSERVED',
                      'feedback':stage(bool(r) or e['action']=='resolve'),'evidence':stage(bool(e.get('experiences'))),
                      'U_W_update':stage(bool(changes))}}

@@ -67,6 +67,8 @@ def record_request(db, namespace, actor, operation, args, result, started):
         session = db.get_session(fields['session_id']) if fields.get('session_id') else None
         task = session.task if session and session.agent_id == actor and session.namespace == namespace else None
         observation = {'operation': operation, 'query': query,
+            'direct_ids': result.get('direct_ids', []) if isinstance(result,dict) else [],
+            'pair_expansion': result.get('pair_expansion') if isinstance(result,dict) else None,
             'context': fields.get('primary_context', fields.get('context_id')),
             'session_id': fields.get('session_id'), 'hints': fields.get('hints'), 'subject': fields.get('subject'),
             'task': task, 'goal': None, 'constraints': None,

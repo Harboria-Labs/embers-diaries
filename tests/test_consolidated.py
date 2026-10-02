@@ -68,7 +68,7 @@ def test_no_exposure_or_pair_coupling_and_budget(rig):
     for _ in range(10):db.record_access(ids[0])
     first=run(db,ids,dt=0)
     assert first['candidate_ids']==ids[:1] and first['dynamics'][0]['activation']==.02
-    assert first['pair_expansion']=='NOT CONNECTED'
+    assert first['pair_expansion'] is None  # Feedback alone creates no stored relationship.
     for i in range(3):run(db,ids,qid=f'repeat-{i}')
     assert service(db,'research').read(actor='admin')['states'][0]['N_eff']==1
     prior=run(db,ids,qid='positive',dt=10)['dynamics'][0]['activation']

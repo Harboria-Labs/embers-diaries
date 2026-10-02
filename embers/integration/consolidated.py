@@ -77,18 +77,29 @@ def recall(db, namespace, actor, *, query_id, direct_scores, elapsed, context=No
                  'dynamics':next(r for r in candidates if r['id']==rid)}
             if call('admit',dict(admission,item_tokens=counter(_render([row],format)),total_tokens=counter(_render(selected+[row],format)),selected_count=len(selected)))['admit']:
                 selected.append(row)
+        direct_ids=[r['id'] for r in selected]
+        from .pairing import select
+        paired, pair_route=select(db,namespace,direct_ids,context,state,query_id)
+        pair_expansion=None
+        if paired is not None:
+            truth=explicit_truth(paired,any(c.status.value=='open' for c in db.conflicts_for(paired.id)))
+            row={'id':paired.id,'data':paired.data,'truth_status':truth['status'],'truth_projection':truth,
+                 'written_by':paired.written_by,'content_hash':paired.content_hash,'retrieval':pair_route}
+            if call('admit',dict(admission,item_tokens=counter(_render([row],format)),total_tokens=counter(_render(selected+[row],format)),selected_count=len(selected)))['admit']:
+                selected.append(row)
+                pair_expansion=pair_route
         rendered=_render(selected,format)
         call('admit',dict(config=cfg,final_tokens=counter(rendered)))
         response=dict(context=rendered,format=format,token_count=counter(rendered),selected_ids=[r['id'] for r in selected],candidate_ids=list(records),
             query_id=query_id,primary_context=context,model_version=MODEL_VERSION,configuration_revision=state.get('configuration_revision',0),
-            dynamics=batch['rows'],latent_inspected=plan['latent_inspected'],pair_expansion='NOT CONNECTED',tokenizer='tiktoken:'+encoding.name)
+            dynamics=batch['rows'],latent_inspected=plan['latent_inspected'],pair_expansion=pair_expansion,direct_ids=direct_ids,primary_memory_id=direct_ids[0] if direct_ids else None,tokenizer='tiktoken:'+encoding.name)
         old[key]={'sequence':scoped['sequence']+1,'memories':batch['state']}
         event={'kind':KIND,'id':ledger.prefix+f'{len(ledger._events)+1:012d}','revision':len(ledger._events)+1,
             'namespace':namespace,'actor':actor,'request_id':query_id,'action':'activation','fingerprint':fingerprint,'created_at':float(ledger.clock()),
             'previous':ledger._events[-1]['seal'] if ledger._events else None,'policy':state['policy'],'research_config':cfg,
             'configuration_revision':state.get('configuration_revision',0),'activation_state':old,'model_version':MODEL_VERSION,'response':response,
             'observation':{'operation':'ember_research_recall','context':context,'session_id':session_id,'query':None,
-                'candidate_ids':list(records),'returned_ids':response['selected_ids'],'dynamics':batch['rows'],
+                'direct_ids':direct_ids,'pair_expansion':pair_expansion,'candidate_ids':list(records),'returned_ids':response['selected_ids'],'dynamics':batch['rows'],
                 'observed_heat':{r['id']:r['activation'] for r in batch['rows']},'heat_source':MODEL_VERSION,
                 'budget':{'token_budget':cfg['token_budget'],'token_count':response['token_count'],'tokenizer':response['tokenizer']},'latency_ms':None}}
         ledger._append(event)

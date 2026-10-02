@@ -562,3 +562,12 @@ for _name, _desc, _props, _required in [
     ('ember_research_configure','Authorized research configuration change; Rust validates and reprojects FUR, preserving existing activation. expected_revision is the journal revision.',
      {'config':{'type':'object'},'policy':{'type':'object'},'request_id':{'type':'string'},'expected_revision':{'type':'integer','minimum':0},'reason':{'type':'string'}},['config','policy','request_id','expected_revision','reason'])]:
     TOOLS.append({'name':_name,'description':_desc,'inputSchema':{'type':'object','properties':{'namespace':{'type':'string'},'agent_id':{'type':'string'},'token':{'type':'string'},'session_id':{'type':'string'},**_props},'required':['namespace',*_required]}})
+
+TOOLS.append({"name":"ember_pair_relationship",
+ "description":"Store a directional typed relationship with explicit context for Pairing Matrix V1. Does not update W. Repeating the same relationship reuses its identity. Use ember_usefulness_update report with a pair target for explicit route feedback.",
+ "inputSchema":{"type":"object","properties":{
+ "source":{"type":"string"},"target":{"type":"string"},
+ "relation":{"type":"string","enum":["explains","requires","warns_about","alternative"]},
+ "primary_context":{"type":["string","null"]},
+ "agent_id":{"type":"string"},"token":{"type":"string"},"session_id":{"type":"string"}},
+ "required":["source","target","relation","primary_context"]}})
