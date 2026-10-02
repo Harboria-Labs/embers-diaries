@@ -131,3 +131,11 @@ async def stream(request:Request,cursor:str|None=None,last_event_id:str|None=Hea
         'Cache-Control':'no-store, no-cache, no-transform','X-Accel-Buffering':'no',
         'Content-Encoding':'identity','X-Ember-Stream-Id':stream_id,
         'X-Ember-Observation-Protocol':observer.PROTOCOL})
+
+@router.get('/status')
+async def server_status_page():
+    # Static observer-only page; no store initialization, retrieval or model calls.
+    from pathlib import Path
+    return Response(Path(__file__).with_name('server_status.html').read_text(encoding='utf-8'),
+                    media_type='text/html',headers={'Cache-Control':'no-store','Referrer-Policy':'no-referrer',
+                    'Content-Security-Policy':"default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'"})
