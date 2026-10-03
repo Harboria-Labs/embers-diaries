@@ -19,7 +19,7 @@ def test_pages_health_build_and_observer_are_readonly(tmp_path,monkeypatch):
     monkeypatch.setattr(api,'_get_db',lambda:db)
     def hashes():return {str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in tmp_path.rglob('*') if p.is_file()}
     before=hashes();client=TestClient(api.app)
-    for path in ['/visualizer','/observer','/status','/health','/v1/observer/build']:
+    for path in ['/visualizer','/observer','/status','/health','/v1/observer/build','/v1/observer/transport.js','/research/settings']:
         assert client.get(path).status_code==200
     page(db,grant['code'])
     assert hashes()==before
@@ -34,7 +34,8 @@ def test_shared_presentation_and_unchanged_transport():
         assert 'observer/transport.js?v=' in html
     assert observer_build.TRANSPORT_SHA256=='b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0'
     source=Path('embers/api/research_dashboard.js').read_text()
-    assert "fetch('/health'" in source
+    assert "fetch('/health'" not in source
+    assert "STATUS_MONITOR" in Path('embers/api/observer_build.py').read_text()
     assert "method:'POST'" not in source and 'fixture()' not in source
 
 

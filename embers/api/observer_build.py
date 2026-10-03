@@ -17,6 +17,7 @@ ROOT = Path(__file__).parent
 TRANSPORT = (ROOT / 'observer_transport.js').read_text(encoding='utf-8').encode('utf-8')
 THEME = (ROOT / 'visualizer_theme.css').read_text(encoding='utf-8')
 DASHBOARD = (ROOT / 'research_dashboard.js').read_text(encoding='utf-8')
+STATUS_MONITOR = (ROOT / 'status_monitor.js').read_text(encoding='utf-8')
 DASHBOARD_STYLE = (ROOT / 'research_dashboard.css').read_text(encoding='utf-8')
 NAMESPACE_TEMPLATE = (ROOT / 'visualizer.html').read_text(encoding='utf-8')
 TEMPLATE = (ROOT / 'observer.html').read_text(encoding='utf-8')
@@ -25,7 +26,7 @@ BASELINE_SHA256 = '6b6d262295d56d9f71546a6b79f6eeb0f0caded00fc242c5b9cd28cf1e427
 CLIENT_VERSION = 'shared-transport-v3 / sha256:' + TRANSPORT_SHA256[:12]
 ASSET_URL = '/v1/observer/transport.js?v=' + TRANSPORT_SHA256
 _files = ('observer_build.py', 'observer_routes.py', 'usefulness_routes.py',
-          'server_status.html', 'research_dashboard.js', 'research_dashboard.css', 'observer.html', 'visualizer.html', 'visualizer_theme.css', 'observer_transport.js', '../integration/research_observer.py')
+          'status_monitor.js', 'server_status.html', 'research_dashboard.js', 'research_dashboard.css', 'observer.html', 'visualizer.html', 'visualizer_theme.css', 'observer_transport.js', '../integration/research_observer.py')
 _hash = hashlib.sha256()
 for _name in _files:
     _bytes = (ROOT / _name).read_bytes()
@@ -59,4 +60,4 @@ def render(namespace=False):
     return ((NAMESPACE_TEMPLATE if namespace else TEMPLATE).replace('__OBSERVER_BUILD_LABEL__', html.escape(label))
             .replace('__OBSERVER_BUILD_JSON__', json.dumps(metadata()).replace('<', '\\u003c'))
             .replace('__OBSERVER_ASSET_URL__', html.escape(ASSET_URL, quote=True))
-            .replace('__OBSERVER_ASSET_INTEGRITY__', integrity).replace('__VISUALIZER_THEME__', THEME).replace('__RESEARCH_DASHBOARD__', '<style>'+DASHBOARD_STYLE+'</style><script>'+DASHBOARD+'</script>'))
+            .replace('__OBSERVER_ASSET_INTEGRITY__', integrity).replace('__VISUALIZER_THEME__', THEME).replace('__RESEARCH_DASHBOARD__', '<style>'+DASHBOARD_STYLE+'</style><script>'+DASHBOARD+'</script><script>'+STATUS_MONITOR+'</script>'))
