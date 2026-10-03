@@ -1,0 +1,4102 @@
+{
+  "before_held_chunks": {
+    "protocol": "ember-observation.v2",
+    "transport": "SSE",
+    "connected": true,
+    "last_pushed_revision": null,
+    "last_snapshot_revision": 0,
+    "last_confirmed_revision": 0,
+    "reconnect_count": 1,
+    "snapshot_get_count": 2,
+    "sse_connection_count": 2,
+    "pushed_event_count": 0,
+    "last_error": null,
+    "delivery_log": []
+  },
+  "idle_seconds": 180,
+  "read_only_idle": true,
+  "result": "PASS",
+  "surfaces": [
+    {
+      "surface": "namespace",
+      "initial": {
+        "protocol": "ember-observation.v2",
+        "transport": "SSE",
+        "connected": true,
+        "last_pushed_revision": "0",
+        "last_snapshot_revision": 0,
+        "last_confirmed_revision": 0,
+        "reconnect_count": 0,
+        "snapshot_get_count": 1,
+        "sse_connection_count": 1,
+        "pushed_event_count": 0,
+        "last_error": null,
+        "delivery_log": [],
+        "connection_state": "LIVE",
+        "stream_id": "3b729cff9ed14e7bb3fe670a2a5927cc",
+        "last_received_event_id": "0",
+        "snapshot_gets": 1,
+        "fallback_count": 0,
+        "pushed_events": 0,
+        "last_pushed": "0",
+        "last_snapshot": 0,
+        "last_disconnect_reason": null,
+        "last_http_status": 200,
+        "last_sse_status": 200,
+        "grant_expires_at": 1790824904.6430418,
+        "stream_attempts": 1,
+        "last_byte_at": "2026-10-01T03:06:57.945Z",
+        "transport_client_version": "shared-transport-v3 / sha256:b7f69d4f0640",
+        "transport_sha256": "b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0",
+        "transport_asset_url": "/v1/observer/transport.js?v=b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0",
+        "transport_baseline_commit": "9f94c5a01d4d0ca843cfdb3a322df5968671935f",
+        "transport_matches_baseline": false,
+        "server_build": "sha256:7dd8afc59cc50a03f24266cdeec68157215d9b92277062faaae50bd921791058",
+        "server_build_kind": "observer-source-sha256",
+        "server_git_commit": null,
+        "package_version": "uninstalled source checkout"
+      },
+      "requests": [
+        "http://127.0.0.1:40605/visualizer",
+        "http://127.0.0.1:40605/v1/observer/transport.js?v=b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0",
+        "http://127.0.0.1:40605/v1/visualizer-access/exchange",
+        "http://127.0.0.1:40605/v1/visualizer/surface-A?after=0&limit=50",
+        "http://127.0.0.1:40605/v1/visualizer-stream/surface-A?after=0"
+      ],
+      "wire": [
+        {
+          "requestId": "90.6",
+          "timestamp": 1654.324508,
+          "eventName": "ready",
+          "eventId": "",
+          "data": "{\"transport\":\"SSE\",\"protocol\":\"ember-observation.v2\",\"namespace\":\"surface-A\",\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\",\"expires_at\":1790824904.6430418,\"remaining_seconds\":886.7479531764984}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1654.325175,
+          "eventName": "patch",
+          "eventId": "0",
+          "data": "{\"collections\":{\"nodes\":{\"upsert\":[],\"remove\":[]},\"edges\":{\"upsert\":[],\"remove\":[]},\"states\":{\"upsert\":[],\"remove\":[]},\"experiences\":{\"upsert\":[],\"remove\":[]},\"reports\":{\"upsert\":[],\"remove\":[]}},\"events\":[],\"meta\":{\"namespace\":\"surface-A\",\"revision\":0,\"policy\":{\"kappa_u\":4.0,\"u0\":0.5,\"epsilon\":0.0,\"u_max\":1.0,\"kappa_w\":4.0,\"w0\":0.5,\"severity\":{\"contributed\":1.0,\"irrelevant\":1.0,\"misleading\":2.0},\"cluster\":{\"session_window\":1800.0,\"time_window\":60.0}},\"next_after\":0,\"diagnostics\":{\"active_memories\":null,\"latent_memories\":null,\"reactivations\":null,\"candidate_count\":0,\"returned_count\":0,\"experience_count\":0,\"resolved\":0,\"unresolved\":0,\"duplicate_reports_collapsed\":0,\"unclustered_reports\":0,\"group_outcomes\":0,\"pair_edges\":0,\"pair_expansions\":null,\"context_budgets\":[],\"latency_ms\":[],\"pair_feedback_events\":0,\"U_distribution\":[],\"N_eff_distribution\":[],\"storage\":{\"ledger_canonical_json_bytes\":0,\"physical_bytes\":null,\"global_quota\":\"enforced by native writer; global values withheld\"},\"scope\":\"counts namespace-wide except candidate/returned counts from this event page\"},\"flags\":[],\"pipeline\":{\"query\":\"observed when recorded\",\"context\":\"exact agent supplied\",\"direct_candidates\":\"observed when exposed\",\"LADC_reactivation\":\"Rust consolidated activation when recorded\",\"pair_expansion\":\"legacy orientation/recall only; no new W coupling\",\"judgment\":\"NOT ACTIVE\",\"budget\":\"see request observations\",\"return\":\"observed\",\"agent_feedback\":\"active\",\"evidence_structure\":\"active\",\"state_update\":\"Rust U/W; explicit research recall advances activation; no truth write\"},\"limits\":{\"nodes\":100,\"edges\":200,\"experiences\":100,\"reports\":200,\"events\":20,\"bytes\":262144},\"truncated\":false}}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1655.279868,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1656.281145,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1657.28282,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1658.284396,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1659.285779,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1660.287283,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1661.289095,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1662.291019,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1663.292583,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1664.293897,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1665.295835,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1666.297945,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1667.299627,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1668.301347,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1669.303248,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1670.306077,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1671.308844,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1672.310424,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1673.312322,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1674.314662,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1675.315926,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1676.317813,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1677.319407,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1678.321174,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1679.323447,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1680.324869,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1681.326291,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1682.328845,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1683.330189,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1684.332162,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1685.333508,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1686.334566,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1687.336619,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1688.337858,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1689.339139,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1690.34051,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1691.342759,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1692.344835,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1693.346506,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1694.348199,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1695.351442,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1696.352463,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1697.354309,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1698.355897,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1699.357735,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1700.359061,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1701.361483,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1702.363304,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1703.367125,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1704.367312,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1705.370572,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1706.373053,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1707.374022,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1708.375586,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1709.377113,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1710.380655,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1711.383842,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1712.387015,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1713.38593,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1714.387713,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1715.389718,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1716.391437,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1717.393269,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1718.394922,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1719.395974,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1720.397698,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1721.399011,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1722.400715,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1723.40356,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1724.404809,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1725.407013,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1726.408253,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1727.410361,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1728.412364,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1729.414199,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1730.415867,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1731.41727,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1732.419461,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1733.421318,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1734.422355,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1735.425266,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1736.426285,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1737.42757,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1738.42878,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1739.430398,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1740.43215,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1741.433698,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1742.435357,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1743.436847,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1744.438854,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1745.44022,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1746.442744,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1747.444144,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1748.446102,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1749.44796,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1750.450098,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1751.451963,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1752.453739,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1753.455611,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1754.458389,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1755.459965,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1756.461524,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1757.463054,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1758.464346,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1759.465751,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1760.467688,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1761.469459,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1762.470945,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1763.473047,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1764.474877,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1765.476404,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1766.478299,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1767.480374,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1768.482096,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1769.483663,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1770.486424,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1771.488095,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1772.489739,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1773.495356,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1774.495616,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1775.497373,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1776.499704,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1777.501411,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1778.504692,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1779.506754,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1780.50845,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1781.510165,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1782.512108,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1783.513865,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1784.515278,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1785.516884,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1786.518367,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1787.519531,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1788.521532,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1789.523139,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1790.524916,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1791.527768,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1792.529279,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1793.530934,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1794.532609,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1795.534043,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1796.535349,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1797.537347,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1798.539461,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1799.541753,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1800.543419,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1801.545307,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1802.548155,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1803.549661,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1804.55173,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1805.553489,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1806.55561,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1807.557721,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1808.560621,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1809.562264,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1810.56514,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1811.566419,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1812.567808,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1813.570779,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1814.573043,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1815.574967,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1816.578138,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1817.579513,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1818.581284,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1819.582602,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1820.583717,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1821.586027,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1822.587569,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1823.589136,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1824.590945,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1825.594002,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1826.595385,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1827.596714,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1828.598389,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1829.600616,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1830.602419,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1831.60429,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1832.605645,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1833.607115,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1834.608997,
+          "eventName": "keepalive",
+          "eventId": "0",
+          "data": "{\"stream_id\":\"3b729cff9ed14e7bb3fe670a2a5927cc\"}"
+        },
+        {
+          "requestId": "90.6",
+          "timestamp": 1835.410703,
+          "eventName": "patch",
+          "eventId": "1",
+          "data": "{\"collections\":{\"nodes\":{\"upsert\":[{\"id\":\"97e45702-a827-45a6-b19a-02106393e366\",\"subject\":\"Surface test\",\"primary_context\":null,\"preview\":\"Fictional surface transport fixture\",\"verify_status\":\"hypothesis\",\"usefulness\":[{\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"97e45702-a827-45a6-b19a-02106393e366\"],\"relation\":null},\"context\":\"test\",\"positive_mass\":1.0,\"N_eff\":1.0,\"experiences\":[{\"id\":\"usefulness-8985b13dfe7a596e9450325c9bf091d7-000000000001:experience\",\"effective_weight\":1.0,\"resolution_status\":\"accepted\",\"feedback_type\":\"CONTRIBUTED\"}],\"metric\":\"U\",\"value\":0.6}],\"heat\":null,\"heat_source\":null,\"heat_observed_at\":null,\"heat_context\":null,\"dynamics\":null,\"active\":null,\"latent\":null,\"reactivated\":null,\"candidate\":false,\"returned\":false,\"candidate_position\":null,\"used\":true,\"unused\":false,\"observation_scope\":\"candidate/return from latest matching displayed request; used/unused are historical individual reports\",\"why_retrieved\":null}],\"remove\":[]},\"edges\":{\"upsert\":[],\"remove\":[]},\"states\":{\"upsert\":[{\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"97e45702-a827-45a6-b19a-02106393e366\"],\"relation\":null},\"context\":\"test\",\"positive_mass\":1.0,\"N_eff\":1.0,\"experiences\":[{\"id\":\"usefulness-8985b13dfe7a596e9450325c9bf091d7-000000000001:experience\",\"effective_weight\":1.0,\"resolution_status\":\"accepted\",\"feedback_type\":\"CONTRIBUTED\"}],\"metric\":\"U\",\"value\":0.6}],\"remove\":[]},\"experiences\":{\"upsert\":[{\"id\":\"usefulness-8985b13dfe7a596e9450325c9bf091d7-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"97e45702-a827-45a6-b19a-02106393e366\"],\"relation\":null},\"context\":\"test\",\"reports\":[\"usefulness-8985b13dfe7a596e9450325c9bf091d7-000000000001:report\"],\"active\":true,\"created_at\":1790824199.0172896,\"updated_at\":1790824199.0172896,\"identity_key\":null,\"identity_provenance\":null,\"identity_verified_by\":null,\"cluster_actor\":\"agent-b41ef1b1-c357-4d9b-ab25-9ffbe3d35ba2\",\"cluster_session\":null,\"identity_mode\":\"structural\",\"manual_resolution\":false,\"resolution_status\":\"accepted\",\"resolved_feedback_type\":\"CONTRIBUTED\",\"report_count\":1,\"reports_truncated\":false}],\"remove\":[]},\"reports\":{\"upsert\":[{\"id\":\"usefulness-8985b13dfe7a596e9450325c9bf091d7-000000000001:report\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"97e45702-a827-45a6-b19a-02106393e366\"],\"relation\":null},\"context\":\"test\",\"feedback_type\":\"CONTRIBUTED\",\"actor\":\"agent-b41ef1b1-c357-4d9b-ab25-9ffbe3d35ba2\",\"session_id\":null,\"query_request_id\":null,\"identity\":null,\"identity_verified_by\":null,\"note\":\"\",\"created_at\":1790824199.0172896}],\"remove\":[]}},\"events\":[{\"kind\":\"ember.usefulness-evidence.v1\",\"id\":\"usefulness-8985b13dfe7a596e9450325c9bf091d7-000000000001\",\"revision\":1,\"namespace\":\"surface-A\",\"actor\":\"agent-b41ef1b1-c357-4d9b-ab25-9ffbe3d35ba2\",\"request_id\":\"surfaces-feedback\",\"action\":\"report\",\"fingerprint\":\"984a6fd7bb2e929f6daee3268d944a24468195ca12bbbf039dc573d11f481030\",\"created_at\":1790824199.0172896,\"previous\":null,\"policy\":{\"kappa_u\":4.0,\"u0\":0.5,\"epsilon\":0.0,\"u_max\":1.0,\"kappa_w\":4.0,\"w0\":0.5,\"severity\":{\"contributed\":1.0,\"irrelevant\":1.0,\"misleading\":2.0},\"cluster\":{\"session_window\":1800.0,\"time_window\":60.0}},\"experiences\":[{\"id\":\"usefulness-8985b13dfe7a596e9450325c9bf091d7-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"97e45702-a827-45a6-b19a-02106393e366\"],\"relation\":null},\"context\":\"test\",\"reports\":[\"usefulness-8985b13dfe7a596e9450325c9bf091d7-000000000001:report\"],\"active\":true,\"created_at\":1790824199.0172896,\"updated_at\":1790824199.0172896,\"identity_key\":null,\"identity_provenance\":null,\"identity_verified_by\":null,\"cluster_actor\":\"agent-b41ef1b1-c357-4d9b-ab25-9ffbe3d35ba2\",\"cluster_session\":null,\"identity_mode\":\"structural\",\"manual_resolution\":false,\"resolution_status\":\"accepted\",\"resolved_feedback_type\":\"CONTRIBUTED\",\"report_count\":1,\"reports_truncated\":false}],\"model_version\":\"ember-fur-activation-v1\",\"transitions\":[{\"key\":[{\"kind\":\"memory\",\"memory_ids\":[\"97e45702-a827-45a6-b19a-02106393e366\"],\"relation\":null},\"test\"],\"before\":{\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"97e45702-a827-45a6-b19a-02106393e366\"],\"relation\":null},\"context\":\"test\",\"positive_mass\":0.0,\"N_eff\":0.0,\"experiences\":[],\"metric\":\"U\",\"value\":0.5,\"experience_count\":0},\"after\":{\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"97e45702-a827-45a6-b19a-02106393e366\"],\"relation\":null},\"context\":\"test\",\"positive_mass\":1.0,\"N_eff\":1.0,\"experiences\":[{\"id\":\"usefulness-8985b13dfe7a596e9450325c9bf091d7-000000000001:experience\",\"effective_weight\":1.0,\"resolution_status\":\"accepted\",\"feedback_type\":\"CONTRIBUTED\"}],\"metric\":\"U\",\"value\":0.6,\"experience_count\":1},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.19999999999999996,\"alpha\":0.25,\"multiplier\":1.05,\"Q\":null,\"Q_prime\":null}}}],\"truth_before\":{\"97e45702-a827-45a6-b19a-02106393e366\":{\"content_hash\":\"e3203a73bf823bc64fef4a7f35f4769916dc12b47833a2a523f3318176ce5412\",\"verify_status\":\"hypothesis\",\"epistemic_digest\":\"c2757a37dd12275434c0ea34aa302b13e1962936b3fd2ca54f7baa92bcf2f257\",\"annotations_digest\":\"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945\"}},\"truth_after\":{\"97e45702-a827-45a6-b19a-02106393e366\":{\"content_hash\":\"e3203a73bf823bc64fef4a7f35f4769916dc12b47833a2a523f3318176ce5412\",\"verify_status\":\"hypothesis\",\"epistemic_digest\":\"c2757a37dd12275434c0ea34aa302b13e1962936b3fd2ca54f7baa92bcf2f257\",\"annotations_digest\":\"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945\"}},\"truth_firewall\":\"append-only relevance ledger; source records not written\",\"reason\":null,\"report_state\":{\"report_id\":\"usefulness-8985b13dfe7a596e9450325c9bf091d7-000000000001:report\",\"experience_id\":\"usefulness-8985b13dfe7a596e9450325c9bf091d7-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":false,\"report_count\":1,\"effective_mass_changed\":true},\"report\":{\"id\":\"usefulness-8985b13dfe7a596e9450325c9bf091d7-000000000001:report\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"97e45702-a827-45a6-b19a-02106393e366\"],\"relation\":null},\"context\":\"test\",\"feedback_type\":\"CONTRIBUTED\",\"actor\":\"agent-b41ef1b1-c357-4d9b-ab25-9ffbe3d35ba2\",\"session_id\":null,\"query_request_id\":null,\"identity\":null,\"identity_verified_by\":null,\"note\":\"\",\"created_at\":1790824199.0172896},\"research_config\":{\"model_version\":\"ember-fur-activation-v1\",\"alpha\":0.25,\"epsilon_a\":0.02,\"rho\":1.0,\"delta\":0.05,\"threshold\":0.4,\"q_min\":0.8,\"d_min\":0.8,\"model_time_unit\":\"explicit model unit\",\"max_elapsed\":1000000.0,\"max_seeds\":32,\"max_state_memories\":2048,\"max_results\":10,\"token_budget\":2048,\"memory_token_cap\":512,\"neighborhood_token_cap\":1024},\"configuration_revision\":0,\"seal\":\"55a208ac390830b506c780ef9a826fd9c8335697a78cf9d79b9239ec2845f152\",\"transitions_count\":1}],\"meta\":{\"namespace\":\"surface-A\",\"revision\":1,\"policy\":{\"kappa_u\":4.0,\"u0\":0.5,\"epsilon\":0.0,\"u_max\":1.0,\"kappa_w\":4.0,\"w0\":0.5,\"severity\":{\"contributed\":1.0,\"irrelevant\":1.0,\"misleading\":2.0},\"cluster\":{\"session_window\":1800.0,\"time_window\":60.0}},\"next_after\":1,\"diagnostics\":{\"active_memories\":null,\"latent_memories\":null,\"reactivations\":null,\"candidate_count\":0,\"returned_count\":0,\"experience_count\":1,\"resolved\":1,\"unresolved\":0,\"duplicate_reports_collapsed\":0,\"unclustered_reports\":1,\"group_outcomes\":0,\"pair_edges\":0,\"pair_expansions\":null,\"context_budgets\":[],\"latency_ms\":[],\"pair_feedback_events\":0,\"U_distribution\":[0.6],\"N_eff_distribution\":[1.0],\"storage\":{\"ledger_canonical_json_bytes\":4116,\"physical_bytes\":null,\"global_quota\":\"enforced by native writer; global values withheld\"},\"scope\":\"counts namespace-wide except candidate/returned counts from this event page\"},\"flags\":[{\"kind\":\"identity_observability_limit\",\"count\":1}],\"pipeline\":{\"query\":\"observed when recorded\",\"context\":\"exact agent supplied\",\"direct_candidates\":\"observed when exposed\",\"LADC_reactivation\":\"Rust consolidated activation when recorded\",\"pair_expansion\":\"legacy orientation/recall only; no new W coupling\",\"judgment\":\"NOT ACTIVE\",\"budget\":\"see request observations\",\"return\":\"observed\",\"agent_feedback\":\"active\",\"evidence_structure\":\"active\",\"state_update\":\"Rust U/W; explicit research recall advances activation; no truth write\"},\"limits\":{\"nodes\":100,\"edges\":200,\"experiences\":100,\"reports\":200,\"events\":20,\"bytes\":262144},\"truncated\":false}}"
+        }
+      ],
+      "after_idle": {
+        "protocol": "ember-observation.v2",
+        "transport": "SSE",
+        "connected": true,
+        "last_pushed_revision": "0",
+        "last_snapshot_revision": 0,
+        "last_confirmed_revision": 0,
+        "reconnect_count": 0,
+        "snapshot_get_count": 1,
+        "sse_connection_count": 1,
+        "pushed_event_count": 0,
+        "last_error": null,
+        "delivery_log": [],
+        "connection_state": "LIVE",
+        "stream_id": "3b729cff9ed14e7bb3fe670a2a5927cc",
+        "last_received_event_id": "0",
+        "snapshot_gets": 1,
+        "fallback_count": 0,
+        "pushed_events": 0,
+        "last_pushed": "0",
+        "last_snapshot": 0,
+        "last_disconnect_reason": null,
+        "last_http_status": 200,
+        "last_sse_status": 200,
+        "grant_expires_at": 1790824904.6430418,
+        "stream_attempts": 1,
+        "last_byte_at": "2026-10-01T03:06:57.945Z",
+        "transport_client_version": "shared-transport-v3 / sha256:b7f69d4f0640",
+        "transport_sha256": "b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0",
+        "transport_asset_url": "/v1/observer/transport.js?v=b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0",
+        "transport_baseline_commit": "9f94c5a01d4d0ca843cfdb3a322df5968671935f",
+        "transport_matches_baseline": false,
+        "server_build": "sha256:7dd8afc59cc50a03f24266cdeec68157215d9b92277062faaae50bd921791058",
+        "server_build_kind": "observer-source-sha256",
+        "server_git_commit": null,
+        "package_version": "uninstalled source checkout"
+      },
+      "stream_requests": 1,
+      "scripts": [
+        "/v1/observer/transport.js?v=b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0"
+      ]
+    },
+    {
+      "surface": "observer-mode",
+      "initial": {
+        "transport": "SSE",
+        "connected": true,
+        "connection_state": "LIVE",
+        "stream_id": "8791c43e08f448ffafcd5caa0ea915be",
+        "last_received_event_id": null,
+        "reconnect_count": 0,
+        "snapshot_gets": 1,
+        "fallback_count": 0,
+        "pushed_events": 0,
+        "last_pushed": null,
+        "last_snapshot": "eyJvYnNlcnZlcl9pZCI6IjhjMjAwZGUzNTMwNjljOWUxMzM1NTdjNzg2YzIxNzdjZmRjNGM0NTE2MmUwZGFhZDliOGRmODU0Nzg5YjNiN2YiLCJzZWVuIjp7fX0",
+        "last_disconnect_reason": null,
+        "last_http_status": 200,
+        "last_sse_status": 200,
+        "grant_expires_at": 1790824904.6475973,
+        "stream_attempts": 1,
+        "last_byte_at": "2026-10-01T03:06:58.213Z",
+        "transport_client_version": "shared-transport-v3 / sha256:b7f69d4f0640",
+        "transport_sha256": "b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0",
+        "transport_asset_url": "/v1/observer/transport.js?v=b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0",
+        "transport_baseline_commit": "9f94c5a01d4d0ca843cfdb3a322df5968671935f",
+        "transport_matches_baseline": false,
+        "server_build": "sha256:7dd8afc59cc50a03f24266cdeec68157215d9b92277062faaae50bd921791058",
+        "server_build_kind": "observer-source-sha256",
+        "server_git_commit": null,
+        "package_version": "uninstalled source checkout"
+      },
+      "requests": [
+        "http://127.0.0.1:40605/visualizer?mode=observer",
+        "http://127.0.0.1:40605/v1/observer/transport.js?v=b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0",
+        "http://127.0.0.1:40605/v1/observer/exchange",
+        "http://127.0.0.1:40605/v1/observer/events?",
+        "http://127.0.0.1:40605/v1/observer/stream?cursor=eyJvYnNlcnZlcl9pZCI6IjhjMjAwZGUzNTMwNjljOWUxMzM1NTdjNzg2YzIxNzdjZmRjNGM0NTE2MmUwZGFhZDliOGRmODU0Nzg5YjNiN2YiLCJzZWVuIjp7fX0"
+      ],
+      "wire": [
+        {
+          "requestId": "102.6",
+          "timestamp": 1654.5927,
+          "eventName": "ready",
+          "eventId": "",
+          "data": "{\"transport\":\"SSE\",\"protocol\":\"ember-agent-observer.v1\",\"observed_agent_id\":\"agent-b41ef1b1-c357-4d9b-ab25-9ffbe3d35ba2\",\"stream_id\":\"8791c43e08f448ffafcd5caa0ea915be\",\"expires_at\":1790824904.6475973,\"remaining_seconds\":886.4771938323975}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1654.59333,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1655.555362,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1656.557067,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1657.559055,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1658.56126,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1659.562782,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1660.565642,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1661.567433,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1662.5692,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1663.571104,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1664.573145,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1665.574885,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1666.576216,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1667.577703,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1668.579774,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1669.581507,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1670.583212,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1671.587291,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1672.586475,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1673.58988,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1674.593013,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1675.594425,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1676.595959,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1677.597674,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1678.599549,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1679.601101,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1680.603223,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1681.604687,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1682.607411,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1683.609447,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1684.613305,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1685.614023,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1686.615878,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1687.618571,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1688.619935,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1689.62143,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1690.623612,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1691.626309,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1692.628891,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1693.631095,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1694.632251,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1695.634212,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1696.636319,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1697.639516,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1698.64107,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1699.644079,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1700.646217,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1701.647667,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1702.649432,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1703.653889,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1704.655706,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1705.657876,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1706.659253,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1707.660447,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1708.662299,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1709.664417,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1710.66655,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1711.668552,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1712.67268,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1713.672642,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1714.67471,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1715.676308,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1716.677767,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1717.679377,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1718.6823,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1719.685392,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1720.686985,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1721.687814,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1722.689926,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1723.692124,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1724.693626,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1725.695844,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1726.697506,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1727.700062,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1728.70172,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1729.703398,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1730.705093,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1731.706788,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1732.708468,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1733.710531,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1734.712539,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1735.714716,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1736.717187,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1737.719334,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1738.722327,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1739.722574,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1740.724272,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1741.726333,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1742.727423,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1743.729416,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1744.731059,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1745.733089,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1746.735352,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1747.737483,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1748.73952,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1749.741766,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1750.744292,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1751.746253,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1752.74858,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1753.750797,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1754.752777,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1755.754433,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1756.755935,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1757.757284,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1758.759576,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1759.761248,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1760.762835,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1761.765029,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1762.766923,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1763.768345,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1764.770104,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1765.771647,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1766.773696,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1767.775433,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1768.777487,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1769.779253,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1770.781968,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1771.783557,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1772.785886,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1773.788937,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1774.790586,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1775.791685,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1776.793848,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1777.795087,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1778.796381,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1779.80056,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1780.803611,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1781.805469,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1782.807517,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1783.809109,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1784.810705,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1785.812668,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1786.813931,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1787.8166,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1788.817975,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1789.81944,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1790.821493,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1791.826374,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1792.828175,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1793.829556,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1794.831341,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1795.832305,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1796.834601,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1797.83652,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1798.837609,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1799.839844,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1800.842291,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1801.843647,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1802.845148,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1803.846997,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1804.84917,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1805.850753,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1806.85305,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1807.854991,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1808.858336,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1809.860561,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1810.867456,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1811.870419,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1812.871879,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1813.874116,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1814.876243,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1815.910109,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1816.911515,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1817.913576,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1818.91497,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1819.915972,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1820.919553,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1821.923042,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1822.924808,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1823.927359,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1824.929495,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1825.932091,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1826.935173,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1827.937045,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1828.939065,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1829.941805,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1830.944419,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1831.94604,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1832.94788,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1833.949413,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1834.951472,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"8791c43e08f448ffafcd5caa0ea915be\"}"
+        },
+        {
+          "requestId": "102.6",
+          "timestamp": 1835.410525,
+          "eventName": "observer",
+          "eventId": "eyJvYnNlcnZlcl9pZCI6IjhjMjAwZGUzNTMwNjljOWUxMzM1NTdjNzg2YzIxNzdjZmRjNGM0NTE2MmUwZGFhZDliOGRmODU0Nzg5YjNiN2YiLCJzZWVuIjp7InN1cmZhY2UtQSI6MX19",
+          "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"8c200de353069c9e133557c786c2177cfdc4c45162e0daad9b8df854789b3b7f\",\"observed_agent_id\":\"agent-b41ef1b1-c357-4d9b-ab25-9ffbe3d35ba2\",\"events\":[{\"namespace\":\"surface-A\",\"session\":null,\"context\":\"test\",\"contexts\":[\"test\"],\"memory_ids\":[\"97e45702-a827-45a6-b19a-02106393e366\"],\"event_type\":\"CONTRIBUTED\",\"event_id\":\"usefulness-8985b13dfe7a596e9450325c9bf091d7-000000000001\",\"revision\":1,\"timestamp\":1790824199.0172896,\"observed_agent_id\":\"agent-b41ef1b1-c357-4d9b-ab25-9ffbe3d35ba2\",\"request_id\":\"surfaces-feedback\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-8985b13dfe7a596e9450325c9bf091d7-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-8985b13dfe7a596e9450325c9bf091d7-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"97e45702-a827-45a6-b19a-02106393e366\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"CONTRIBUTED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"test\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"97e45702-a827-45a6-b19a-02106393e366\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.6,\"N_eff\":1.0,\"context\":\"test\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"97e45702-a827-45a6-b19a-02106393e366\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.19999999999999996,\"alpha\":0.25,\"multiplier\":1.05,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"97e45702-a827-45a6-b19a-02106393e366\",\"namespace\":\"surface-A\",\"preview\":\"Fictional surface transport fixture\",\"subject\":\"Surface test\",\"primary_context\":null,\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-8985b13dfe7a596e9450325c9bf091d7-000000000001:report\",\"experience_id\":\"usefulness-8985b13dfe7a596e9450325c9bf091d7-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":false,\"report_count\":1,\"effective_mass_changed\":true},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"REPORTED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjhjMjAwZGUzNTMwNjljOWUxMzM1NTdjNzg2YzIxNzdjZmRjNGM0NTE2MmUwZGFhZDliOGRmODU0Nzg5YjNiN2YiLCJzZWVuIjp7InN1cmZhY2UtQSI6MX19\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}"
+        }
+      ],
+      "after_idle": {
+        "transport": "SSE",
+        "connected": true,
+        "connection_state": "LIVE",
+        "stream_id": "8791c43e08f448ffafcd5caa0ea915be",
+        "last_received_event_id": null,
+        "reconnect_count": 0,
+        "snapshot_gets": 1,
+        "fallback_count": 0,
+        "pushed_events": 0,
+        "last_pushed": null,
+        "last_snapshot": "eyJvYnNlcnZlcl9pZCI6IjhjMjAwZGUzNTMwNjljOWUxMzM1NTdjNzg2YzIxNzdjZmRjNGM0NTE2MmUwZGFhZDliOGRmODU0Nzg5YjNiN2YiLCJzZWVuIjp7fX0",
+        "last_disconnect_reason": null,
+        "last_http_status": 200,
+        "last_sse_status": 200,
+        "grant_expires_at": 1790824904.6475973,
+        "stream_attempts": 1,
+        "last_byte_at": "2026-10-01T03:09:58.571Z",
+        "transport_client_version": "shared-transport-v3 / sha256:b7f69d4f0640",
+        "transport_sha256": "b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0",
+        "transport_asset_url": "/v1/observer/transport.js?v=b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0",
+        "transport_baseline_commit": "9f94c5a01d4d0ca843cfdb3a322df5968671935f",
+        "transport_matches_baseline": false,
+        "server_build": "sha256:7dd8afc59cc50a03f24266cdeec68157215d9b92277062faaae50bd921791058",
+        "server_build_kind": "observer-source-sha256",
+        "server_git_commit": null,
+        "package_version": "uninstalled source checkout"
+      },
+      "stream_requests": 1,
+      "scripts": [
+        "/v1/observer/transport.js?v=b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0"
+      ]
+    },
+    {
+      "surface": "observer-alias",
+      "initial": {
+        "transport": "SSE",
+        "connected": true,
+        "connection_state": "LIVE",
+        "stream_id": "0c35d0a93cb0494891234a93c38db5d0",
+        "last_received_event_id": null,
+        "reconnect_count": 0,
+        "snapshot_gets": 1,
+        "fallback_count": 0,
+        "pushed_events": 0,
+        "last_pushed": null,
+        "last_snapshot": "eyJvYnNlcnZlcl9pZCI6IjhjMjAwZGUzNTMwNjljOWUxMzM1NTdjNzg2YzIxNzdjZmRjNGM0NTE2MmUwZGFhZDliOGRmODU0Nzg5YjNiN2YiLCJzZWVuIjp7fX0",
+        "last_disconnect_reason": null,
+        "last_http_status": 200,
+        "last_sse_status": 200,
+        "grant_expires_at": 1790824904.6475973,
+        "stream_attempts": 1,
+        "last_byte_at": "2026-10-01T03:06:58.509Z",
+        "transport_client_version": "shared-transport-v3 / sha256:b7f69d4f0640",
+        "transport_sha256": "b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0",
+        "transport_asset_url": "/v1/observer/transport.js?v=b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0",
+        "transport_baseline_commit": "9f94c5a01d4d0ca843cfdb3a322df5968671935f",
+        "transport_matches_baseline": false,
+        "server_build": "sha256:7dd8afc59cc50a03f24266cdeec68157215d9b92277062faaae50bd921791058",
+        "server_build_kind": "observer-source-sha256",
+        "server_git_commit": null,
+        "package_version": "uninstalled source checkout"
+      },
+      "requests": [
+        "http://127.0.0.1:40605/observer",
+        "http://127.0.0.1:40605/v1/observer/transport.js?v=b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0",
+        "http://127.0.0.1:40605/v1/observer/exchange",
+        "http://127.0.0.1:40605/v1/observer/events?",
+        "http://127.0.0.1:40605/v1/observer/stream?cursor=eyJvYnNlcnZlcl9pZCI6IjhjMjAwZGUzNTMwNjljOWUxMzM1NTdjNzg2YzIxNzdjZmRjNGM0NTE2MmUwZGFhZDliOGRmODU0Nzg5YjNiN2YiLCJzZWVuIjp7fX0"
+      ],
+      "wire": [
+        {
+          "requestId": "114.6",
+          "timestamp": 1654.888618,
+          "eventName": "ready",
+          "eventId": "",
+          "data": "{\"transport\":\"SSE\",\"protocol\":\"ember-agent-observer.v1\",\"observed_agent_id\":\"agent-b41ef1b1-c357-4d9b-ab25-9ffbe3d35ba2\",\"stream_id\":\"0c35d0a93cb0494891234a93c38db5d0\",\"expires_at\":1790824904.6475973,\"remaining_seconds\":886.1844539642334}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1654.889673,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1655.852123,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1656.856353,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1657.856532,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1658.859249,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1659.861969,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1660.86379,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1661.866649,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1662.868308,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1663.870622,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1664.872351,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1665.874331,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1666.876274,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1667.877997,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1668.881017,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1669.882662,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1670.884865,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1671.886466,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1672.888293,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1673.890362,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1674.89258,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1675.895898,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1676.895449,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1677.897437,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1678.899031,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1679.900231,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1680.903519,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1681.904887,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1682.906551,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1683.909589,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1684.911742,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1685.915272,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1686.91464,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1687.916256,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1688.918513,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1689.920797,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1690.922706,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1691.92488,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1692.926117,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1693.928229,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1694.930314,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1695.932433,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1696.934962,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1697.936659,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1698.938576,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1699.940283,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1700.943418,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1701.945066,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1702.946603,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1703.947955,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1704.950002,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1705.952095,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1706.953599,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1707.954852,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1708.957442,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1709.959435,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1710.961697,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1711.963187,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1712.966504,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1713.968208,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1714.97052,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1715.972296,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1716.974504,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1717.975487,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1718.978595,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1719.981894,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1720.984623,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1721.986124,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1722.987994,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1723.990292,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1724.99176,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1725.994086,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1726.99844,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1727.998408,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1729.000354,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1730.001835,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1731.004833,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1732.008338,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1733.009646,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1734.012043,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1735.013847,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1736.015789,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1737.028104,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1738.019423,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1739.023695,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1740.024129,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1741.026038,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1742.028157,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1743.030489,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1744.032221,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1745.034408,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1746.036512,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1747.037606,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1748.039862,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1749.041572,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1750.043305,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1751.045487,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1752.047512,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1753.049342,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1754.052194,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1755.054516,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1756.055837,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1757.058446,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1758.059865,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1759.061389,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1760.063495,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1761.064945,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1762.067658,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1763.069454,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1764.072261,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1765.073982,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1766.076051,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1767.078015,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1768.080455,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1769.083172,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1770.086326,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1771.088444,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1772.091063,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1773.094383,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1774.096505,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1775.097776,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1776.100896,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1777.102995,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1778.105713,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1779.107473,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1780.109075,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1781.11103,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1782.112798,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1783.11564,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1784.11775,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1785.119027,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1786.121813,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1787.123315,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1788.12508,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1789.127262,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1790.130439,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1791.131968,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1792.136338,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1793.138335,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1794.139805,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1795.141488,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1796.14298,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1797.146666,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1798.148073,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1799.150234,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1800.151975,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1801.155166,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1802.156844,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1803.158489,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1804.160546,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1805.162953,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1806.16506,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1807.167115,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1808.16935,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1809.171756,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1810.173778,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1811.175978,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1812.178004,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1813.180977,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1814.18236,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1815.184046,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1816.185686,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1817.188164,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1818.189541,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1819.190798,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1820.192514,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1821.193757,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1822.195843,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1823.19785,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1824.199489,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1825.201893,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1826.203156,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1827.205789,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1828.2072,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1829.20893,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1830.210847,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1831.213764,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1832.215159,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1833.217119,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1834.218765,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1835.220749,
+          "eventName": "keepalive",
+          "eventId": "",
+          "data": "{\"stream_id\": \"0c35d0a93cb0494891234a93c38db5d0\"}"
+        },
+        {
+          "requestId": "114.6",
+          "timestamp": 1835.40994,
+          "eventName": "observer",
+          "eventId": "eyJvYnNlcnZlcl9pZCI6IjhjMjAwZGUzNTMwNjljOWUxMzM1NTdjNzg2YzIxNzdjZmRjNGM0NTE2MmUwZGFhZDliOGRmODU0Nzg5YjNiN2YiLCJzZWVuIjp7InN1cmZhY2UtQSI6MX19",
+          "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"8c200de353069c9e133557c786c2177cfdc4c45162e0daad9b8df854789b3b7f\",\"observed_agent_id\":\"agent-b41ef1b1-c357-4d9b-ab25-9ffbe3d35ba2\",\"events\":[{\"namespace\":\"surface-A\",\"session\":null,\"context\":\"test\",\"contexts\":[\"test\"],\"memory_ids\":[\"97e45702-a827-45a6-b19a-02106393e366\"],\"event_type\":\"CONTRIBUTED\",\"event_id\":\"usefulness-8985b13dfe7a596e9450325c9bf091d7-000000000001\",\"revision\":1,\"timestamp\":1790824199.0172896,\"observed_agent_id\":\"agent-b41ef1b1-c357-4d9b-ab25-9ffbe3d35ba2\",\"request_id\":\"surfaces-feedback\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-8985b13dfe7a596e9450325c9bf091d7-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-8985b13dfe7a596e9450325c9bf091d7-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"97e45702-a827-45a6-b19a-02106393e366\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"CONTRIBUTED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"test\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"97e45702-a827-45a6-b19a-02106393e366\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.6,\"N_eff\":1.0,\"context\":\"test\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"97e45702-a827-45a6-b19a-02106393e366\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.19999999999999996,\"alpha\":0.25,\"multiplier\":1.05,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"97e45702-a827-45a6-b19a-02106393e366\",\"namespace\":\"surface-A\",\"preview\":\"Fictional surface transport fixture\",\"subject\":\"Surface test\",\"primary_context\":null,\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-8985b13dfe7a596e9450325c9bf091d7-000000000001:report\",\"experience_id\":\"usefulness-8985b13dfe7a596e9450325c9bf091d7-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":false,\"report_count\":1,\"effective_mass_changed\":true},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"REPORTED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjhjMjAwZGUzNTMwNjljOWUxMzM1NTdjNzg2YzIxNzdjZmRjNGM0NTE2MmUwZGFhZDliOGRmODU0Nzg5YjNiN2YiLCJzZWVuIjp7InN1cmZhY2UtQSI6MX19\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}"
+        }
+      ],
+      "after_idle": {
+        "transport": "SSE",
+        "connected": true,
+        "connection_state": "LIVE",
+        "stream_id": "0c35d0a93cb0494891234a93c38db5d0",
+        "last_received_event_id": null,
+        "reconnect_count": 0,
+        "snapshot_gets": 1,
+        "fallback_count": 0,
+        "pushed_events": 0,
+        "last_pushed": null,
+        "last_snapshot": "eyJvYnNlcnZlcl9pZCI6IjhjMjAwZGUzNTMwNjljOWUxMzM1NTdjNzg2YzIxNzdjZmRjNGM0NTE2MmUwZGFhZDliOGRmODU0Nzg5YjNiN2YiLCJzZWVuIjp7fX0",
+        "last_disconnect_reason": null,
+        "last_http_status": 200,
+        "last_sse_status": 200,
+        "grant_expires_at": 1790824904.6475973,
+        "stream_attempts": 1,
+        "last_byte_at": "2026-10-01T03:09:58.840Z",
+        "transport_client_version": "shared-transport-v3 / sha256:b7f69d4f0640",
+        "transport_sha256": "b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0",
+        "transport_asset_url": "/v1/observer/transport.js?v=b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0",
+        "transport_baseline_commit": "9f94c5a01d4d0ca843cfdb3a322df5968671935f",
+        "transport_matches_baseline": false,
+        "server_build": "sha256:7dd8afc59cc50a03f24266cdeec68157215d9b92277062faaae50bd921791058",
+        "server_build_kind": "observer-source-sha256",
+        "server_git_commit": null,
+        "package_version": "uninstalled source checkout"
+      },
+      "stream_requests": 1,
+      "scripts": [
+        "/v1/observer/transport.js?v=b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0"
+      ]
+    }
+  ],
+  "invalid_links": "ACCESS EXPIRED",
+  "query_stripped_observer": "PASS",
+  "event_id": "usefulness-8985b13dfe7a596e9450325c9bf091d7-000000000001",
+  "javascript_errors": []
+}

@@ -91,6 +91,7 @@ class EmberDB:
                  enforce_attribution: bool = False,
                  max_store_bytes: int = 0,
                  max_record_bytes: int = 0,
+                 max_total_bytes: int = 0,
                  runtime_config=None):
         self._path = Path(store_path)
         self._runtime_config = runtime_config
@@ -103,6 +104,7 @@ class EmberDB:
             self._path,
             max_store_bytes=max_store_bytes,
             max_record_bytes=max_record_bytes,
+            max_total_bytes=max_total_bytes,
         )
         self._writer = WriteEngine(self._store)
 
@@ -148,6 +150,7 @@ class EmberDB:
                 enforce_attribution: bool = False,
                 max_store_bytes: int = 0,
                 max_record_bytes: int = 0,
+                 max_total_bytes: int = 0,
                 runtime_config=None) -> "EmberDB":
         """Connect to (or create) an Ember's Diaries store.
 
@@ -161,6 +164,7 @@ class EmberDB:
                    enforce_attribution=enforce_attribution,
                    max_store_bytes=max_store_bytes,
                    max_record_bytes=max_record_bytes,
+            max_total_bytes=max_total_bytes,
                    runtime_config=runtime_config)
 
     def _rebuild_indexes_if_needed(self):
@@ -202,12 +206,13 @@ class EmberDB:
             record.id, record.namespace, record.created_at.isoformat())
 
         # Full-text index
-        self._fulltext_index.add(
-            record.id, record.data, record.namespace,
-            extra_text=" ".join(record.tags))
+        if record.retrieval_candidate:
+            self._fulltext_index.add(
+                record.id, record.data, record.namespace,
+                extra_text=" ".join(record.tags))
 
         # Vector index (if record has embedding)
-        if record.embedding:
+        if record.embedding and record.retrieval_candidate:
             self._vector_index.add(record.id, record.embedding, record.namespace)
 
         # Graph index (if record has connections)
@@ -230,6 +235,10 @@ class EmberDB:
                 edge_id=f"df:{record.id}:{target_id}", label="derived_from")
 
     # ── Write ─────────────────────────────────────────────────────────────────
+
+    def storage_usage(self) -> dict:
+        """Logical bytes under the store root, not RAM or allocated blocks."""
+        return self._store.byte_usage()
 
     def write(self, record: EmberRecord) -> str:
         """
@@ -1521,7 +1530,17 @@ class EmberDB:
             return merged
         return {"value": discovery, **meta}
 
-    def memory_status(self, memory_id: str) -> "MemoryStatus":
+    def memory_status(self, memory_id: str):
+        """Explicit status. Unknown/unverified memories are provisional, never verified by absence."""
+        from .core.domain import explicit_truth
+        from .core.types import MemoryStatus
+        rec = self._reader.get_current(memory_id) or self._reader.get(memory_id, True, True)
+        if rec is None: raise KeyError(memory_id)
+        value = explicit_truth(rec, any(c.status.value == 'open' for c in self.conflicts_for(rec.id)))['status']
+        if value == 'superseded': return MemoryStatus.SUPERSEDED
+        return MemoryStatus.VERIFIED if value == 'verified' else MemoryStatus.DISPUTED if value in ('disputed','contested','incorrect') else MemoryStatus.PROVISIONAL
+
+    def legacy_memory_status(self, memory_id: str) -> "MemoryStatus":
         """The current epistemic status of a durable memory.
 
         Reads the CURRENT version (status changes are new versions). Defaults to
@@ -1744,14 +1763,19 @@ class EmberDB:
 
     def link(self, from_id: str, to_id: str,
              edge_type: str = "relates_to",
-             weight: float = 1.0, label: str = "") -> bool:
-        """Create a graph edge between two records."""
+             weight: float = 1.0, label: str = "", **kwargs) -> bool:
+        """Create a graph edge; primary_context is optional, explicit edge metadata."""
+        if set(kwargs) - {'primary_context'}:
+            raise TypeError('unsupported link fields')
+        if 'primary_context' in kwargs:
+            from .core.primary_context import validate_context
+            validate_context(kwargs['primary_context'])
         if not self.exists(from_id) or not self.exists(to_id):
             return False
         import uuid
         self._graph_index.add_edge(
             from_id, to_id, edge_type, weight,
-            edge_id=str(uuid.uuid4()), label=label)
+            edge_id=str(uuid.uuid4()), label=label, metadata=kwargs)
         return True
 
     def neighbors(self, record_id: str, depth: int = 1,

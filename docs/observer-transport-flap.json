@@ -1,0 +1,43 @@
+{
+  "result": "PASS",
+  "rapid_ready_disconnect_fallback": {
+    "transport": "POLLING",
+    "connected": false,
+    "connection_state": "POLLING FALLBACK",
+    "stream_id": "b8f0f47eb4a745dfa0a1620944e33abf",
+    "last_received_event_id": null,
+    "reconnect_count": 2,
+    "snapshot_gets": 2,
+    "fallback_count": 1,
+    "pushed_events": 0,
+    "last_pushed": null,
+    "last_snapshot": "eyJvYnNlcnZlcl9pZCI6IjY3Zjk2NzY5NzEyYTQwN2ZhMGU0NThjZjYyNWI3OTlkM2FjYTY2YTkxNGM3MzVlYTQ3ZGM0NGRkMzhlMjRmNzIiLCJzZWVuIjp7fX0",
+    "last_disconnect_reason": "EventSource network error (HTTP status not exposed by browser)",
+    "last_http_status": 200,
+    "last_sse_status": "DISCONNECTED",
+    "grant_expires_at": 1790666695.1203134,
+    "stream_attempts": 3,
+    "last_byte_at": "2026-09-29T07:09:56.740Z"
+  },
+  "half_open_detection_seconds": 45,
+  "recovered": {
+    "transport": "SSE",
+    "connected": true,
+    "connection_state": "LIVE",
+    "stream_id": "a0f72846e9f54fbc83b741e7d5419727",
+    "last_received_event_id": null,
+    "reconnect_count": 4,
+    "snapshot_gets": 3,
+    "fallback_count": 1,
+    "pushed_events": 0,
+    "last_pushed": null,
+    "last_snapshot": "eyJvYnNlcnZlcl9pZCI6IjY3Zjk2NzY5NzEyYTQwN2ZhMGU0NThjZjYyNWI3OTlkM2FjYTY2YTkxNGM3MzVlYTQ3ZGM0NGRkMzhlMjRmNzIiLCJzZWVuIjp7fX0",
+    "last_disconnect_reason": "No SSE event/keepalive for 45 seconds",
+    "last_http_status": 200,
+    "last_sse_status": 200,
+    "grant_expires_at": 1790666695.1203134,
+    "stream_attempts": 5,
+    "last_byte_at": "2026-09-29T07:11:09.837Z"
+  },
+  "memory_unchanged": true
+}

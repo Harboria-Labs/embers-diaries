@@ -1,0 +1,38 @@
+{
+  "invalid_config_no_write": true,
+  "settings_commit_revision": 1,
+  "mobile_no_horizontal_overflow": true,
+  "activation_push_latency_seconds": 0.021725568999954703,
+  "browser_matches_committed_rust_dynamics": true,
+  "healthy_snapshot_GETs": 0,
+  "observer_mutated_memory": false,
+  "raw_SSE": "event: ready\ndata: {\"transport\":\"SSE\",\"protocol\":\"ember-agent-observer.v1\",\"observed_agent_id\":\"agent-75efae9f-6001-45f8-8232-ddf1a2a5f577\"}\n\n: heartbeat\n\nid: eyJvYnNlcnZlcl9pZCI6ImU4YjM1NTA1NTFhNDc2ZmZiZWY1MjY0MTlmNzViNmFiNDI4NGMzMmI4MTBmYzc3YjdhZDQwODZiMmZlNzVmYjIiLCJzZWVuIjp7ImRlbW8iOjJ9fQ\nevent: observer\ndata: {\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"e8b3550551a476ffbef526419f75b6ab4284c32b810fc77b7ad4086b2fe75fb2\",\"observed_agent_id\":\"agent-75efae9f-6001-45f8-8232-ddf1a2a5f577\",\"events\":[{\"namespace\":\"demo\",\"session\":null,\"context\":\"mathematics\",\"contexts\":[\"mathematics\"],\"memory_ids\":[\"5cb94260-e368-45bd-ab05-f330dba9c727\"],\"event_type\":\"CONTRIBUTED\",\"event_id\":\"usefulness-da8f0037f4b151ee98fc6b84bd1b99aa-000000000002\",\"revision\":2,\"timestamp\":1790561814.1323428,\"observed_agent_id\":\"agent-75efae9f-6001-45f8-8232-ddf1a2a5f577\",\"request_id\":\"helpful\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-da8f0037f4b151ee98fc6b84bd1b99aa-000000000002:experience\"],\"experiences\":[{\"id\":\"usefulness-da8f0037f4b151ee98fc6b84bd1b99aa-000000000002:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"5cb94260-e368-45bd-ab05-f330dba9c727\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"CONTRIBUTED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"mathematics\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"5cb94260-e368-45bd-ab05-f330dba9c727\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.6,\"N_eff\":1.0,\"context\":\"mathematics\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"5cb94260-e368-45bd-ab05-f330dba9c727\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.3,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.19999999999999996,\"alpha\":0.3,\"multiplier\":1.06,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"5cb94260-e368-45bd-ab05-f330dba9c727\",\"namespace\":\"demo\",\"preview\":\"Fictional latent reactivation evidence\",\"subject\":\"Ember research\",\"primary_context\":\"mathematics\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-da8f0037f4b151ee98fc6b84bd1b99aa-000000000002:report\",\"experience_id\":\"usefulness-da8f0037f4b151ee98fc6b84bd1b99aa-000000000002:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":false,\"report_count\":1,\"effective_mass_changed\":true},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":1,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"REPORTED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6ImU4YjM1NTA1NTFhNDc2ZmZiZWY1MjY0MTlmNzViNmFiNDI4NGMzMmI4MTBmYzc3YjdhZDQwODZiMmZlNzVmYjIiLCJzZWVuIjp7ImRlbW8iOjJ9fQ\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}\n\nid: eyJvYnNlcnZlcl9pZCI6ImU4YjM1NTA1NTFhNDc2ZmZiZWY1MjY0MTlmNzViNmFiNDI4NGMzMmI4MTBmYzc3YjdhZDQwODZiMmZlNzVmYjIiLCJzZWVuIjp7ImRlbW8iOjN9fQ\nevent: observer\ndata: {\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"e8b3550551a476ffbef526419f75b6ab4284c32b810fc77b7ad4086b2fe75fb2\",\"observed_agent_id\":\"agent-75efae9f-6001-45f8-8232-ddf1a2a5f577\",\"events\":[{\"namespace\":\"demo\",\"session\":null,\"context\":\"mathematics\",\"contexts\":[],\"memory_ids\":[\"5cb94260-e368-45bd-ab05-f330dba9c727\"],\"event_type\":\"ember_research_recall\",\"event_id\":\"usefulness-da8f0037f4b151ee98fc6b84bd1b99aa-000000000003\",\"revision\":3,\"timestamp\":1790561814.1465998,\"observed_agent_id\":\"agent-75efae9f-6001-45f8-8232-ddf1a2a5f577\",\"request_id\":\"query1\",\"action\":\"activation\",\"affected_experience_ids\":[],\"experiences\":[],\"changes\":[],\"memories\":[{\"id\":\"5cb94260-e368-45bd-ab05-f330dba9c727\",\"namespace\":\"demo\",\"preview\":\"Fictional latent reactivation evidence\",\"subject\":\"Ember research\",\"primary_context\":\"mathematics\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[{\"Q\":0.8,\"direct\":0.8,\"U\":0.6,\"B\":0.19999999999999996,\"alpha\":0.3,\"multiplier\":1.06,\"Q_prime\":0.8480000000000001,\"u\":0.8480000000000001,\"v\":0.24999999999999994,\"activation_before\":0.02,\"equilibrium\":0.7614207650273224,\"activation\":0.5141291425050616,\"latent\":0.4858708574949384,\"threshold\":0.4,\"stage\":\"ACTIVE\",\"reactivated\":true,\"elapsed\":1.0,\"model_version\":\"ember-fur-activation-v1\",\"id\":\"5cb94260-e368-45bd-ab05-f330dba9c727\",\"context\":\"mathematics\",\"N_eff\":1.0}],\"report_state\":null,\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":1,\"actual_H\":{\"5cb94260-e368-45bd-ab05-f330dba9c727\":0.5141291425050616},\"heat_source\":\"ember-fur-activation-v1\",\"query\":null,\"returned_ids\":[\"5cb94260-e368-45bd-ab05-f330dba9c727\"],\"candidate_ids\":[\"5cb94260-e368-45bd-ab05-f330dba9c727\"],\"budget\":{\"token_budget\":2048,\"token_count\":357,\"tokenizer\":\"tiktoken:cl100k_base\"},\"pipeline\":{\"query\":\"OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"NOT OBSERVED\",\"evidence\":\"NOT OBSERVED\",\"U_W_update\":\"NOT OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6ImU4YjM1NTA1NTFhNDc2ZmZiZWY1MjY0MTlmNzViNmFiNDI4NGMzMmI4MTBmYzc3YjdhZDQwODZiMmZlNzVmYjIiLCJzZWVuIjp7ImRlbW8iOjN9fQ\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}\n\n: heartbeat\n\n: heartbeat\n\n: heartbeat\n\n: heartbeat\n\n: heartbeat\n\n: heartbeat\n\n",
+  "dynamics": [
+    {
+      "Q": 0.8,
+      "direct": 0.8,
+      "U": 0.6,
+      "B": 0.19999999999999996,
+      "alpha": 0.3,
+      "multiplier": 1.06,
+      "Q_prime": 0.8480000000000001,
+      "u": 0.8480000000000001,
+      "v": 0.24999999999999994,
+      "activation_before": 0.02,
+      "equilibrium": 0.7614207650273224,
+      "activation": 0.5141291425050616,
+      "latent": 0.4858708574949384,
+      "threshold": 0.4,
+      "stage": "ACTIVE",
+      "reactivated": true,
+      "elapsed": 1.0,
+      "model_version": "ember-fur-activation-v1",
+      "id": "5cb94260-e368-45bd-ab05-f330dba9c727",
+      "context": "mathematics",
+      "N_eff": 1.0
+    }
+  ],
+  "retry_exact": true,
+  "javascript_errors": [],
+  "result": "PASS"
+}

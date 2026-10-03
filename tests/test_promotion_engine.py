@@ -143,15 +143,16 @@ class TestStatusSemantics:
         assert MemoryStatus.VERIFIED.value in statuses
         assert MemoryStatus.DISPUTED.value in statuses
 
-    def test_plain_memory_reads_as_verified(self, tmp_path):
+    def test_plain_memory_is_not_verified_by_absence(self, tmp_path):
         """A memory written directly (no promotion) has no _status key and must
-        read back as VERIFIED with an unchanged hash (§15 backwards-compat)."""
+        remain PROVISIONAL with an unchanged hash; the explicit legacy reader preserves historical behavior."""
         db = _db(tmp_path)
         mid = db.write(EmberRecord(namespace="p", data={"claim": "direct"}))
         rec = db.get(mid)
         assert "_status" not in (rec.data or {})
         assert rec.verify_integrity()
-        assert db.memory_status(mid) == MemoryStatus.VERIFIED
+        assert db.memory_status(mid) == MemoryStatus.PROVISIONAL
+        assert db.legacy_memory_status(mid) == MemoryStatus.VERIFIED
         assert db.promotion_method(mid) is None
 
 

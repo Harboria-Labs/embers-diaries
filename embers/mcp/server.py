@@ -34,7 +34,8 @@ from ..integration.conflict_protocol import (
 )
 from .tools import TOOLS
 
-PROTOCOL = "2024-11-05"
+PROTOCOL = "2025-06-18"
+SUPPORTED_PROTOCOLS = ("2025-06-18", "2025-03-26", "2024-11-05")
 
 
 def _text(obj: Any) -> dict:
@@ -75,8 +76,11 @@ class EmberMCP:
                 promotion_policy=policy,
                 max_store_bytes=config.storage.max_store_bytes,
                 max_record_bytes=config.storage.max_record_bytes,
+                max_total_bytes=config.storage.max_total_bytes,
                 runtime_config=config,
             )
+            from ..integration.server_memory import prepare_memory_services
+            prepare_memory_services(db, config.storage.path)
         else:
             config.require_runtime_supported()
             if not config.api.mcp_enabled:
@@ -94,18 +98,33 @@ class EmberMCP:
         if not agent_id or not token:
             raise PermissionError(
                 "agent_id and token required (args or EMBER_AGENT_ID / EMBER_TOKEN)")
-        return self.registry.authenticate(agent_id, token)
+        identity=self.registry.authenticate(agent_id, token)
+        from ..integration.write_observation import bind
+        bind(identity.agent_id,args.get('session_id'),args.get('request_id'))
+        return identity
 
     def call_tool(self, name: str, args: dict | None) -> dict:
         args = args or {}
+        from ..integration.write_observation import context
+        observation_token=context.set(None)
         try:
-            return self._call(name, args)
+            import time
+            started = time.monotonic()
+            result = self._call(name, args)
+            if name in ('ember_recall', 'ember_orient', 'ember_candidate_recall') and not result.get('isError'):
+                from ..integration.usefulness_service import record_request
+                actor = self._auth(args).agent_id
+                record_request(self.db, args.get('namespace') or self.protocol.namespace, actor,
+                    name, args, json.loads(result['content'][0]['text']), started)
+            return result
         except PermissionError as e:
             return _err(str(e))
         except KeyError as e:
             return _err(str(e))
         except Exception as e:
             return _err(f"{type(e).__name__}: {e}")
+        finally:
+            context.reset(observation_token)
 
     def _call(self, name: str, args: dict) -> dict:
         if name == "ember_register":
@@ -138,6 +157,7 @@ class EmberMCP:
                 session_id=args.get("session_id"),
                 creation_reason=args.get("creation_reason"),
                 tags=args.get("tags"),
+                primary_context=args.get("primary_context"),
             )
             if args.get("session_id") and self.db.get_session(args["session_id"]):
                 self.db.record_memory_write(
@@ -244,6 +264,68 @@ class EmberMCP:
                 "records": [record.to_dict() for record in records],
             })
 
+        if name in ('ember_research_recall','ember_research_settings','ember_research_configure'):
+            from ..integration import consolidated
+            actor=self._auth(args).agent_id
+            ns=args['namespace']
+            if name=='ember_research_settings':return _text(consolidated.settings(self.db,ns,actor))
+            if name=='ember_research_configure':return _text(consolidated.configure(self.db,ns,actor,{k:args[k] for k in ('config','policy','request_id','expected_revision','reason')}))
+            return _text(consolidated.recall(self.db,ns,actor,**{k:args[k] for k in ('query_id','direct_scores','elapsed','context','format','session_id') if k in args}))
+        if name == "ember_pair_relationship":
+            from ..integration.pairing import link
+            actor=self._auth(args).agent_id
+            return _text(link(self.db,actor,**{k:args[k] for k in ('source','target','relation','primary_context')}))
+        if name == "ember_visualize":
+            from ..integration.research_observer import issue, revoke
+            actor=self._auth(args).agent_id
+            if args.get('action','create')=='revoke':
+                return _text(revoke(self.db,args.get('observer_id'),actor))
+            if args.get('action','create')!='create':raise ValueError('Invalid action')
+            base=args.get('server_url') or os.environ.get('EMBER_PUBLIC_URL')
+            if base:
+                from urllib.parse import urlsplit
+                parsed=urlsplit(base)
+                if parsed.scheme not in ('http','https') or not parsed.netloc or parsed.username or parsed.password or parsed.query or parsed.fragment:
+                    raise ValueError('server_url must be an HTTP(S) origin without credentials/query/fragment')
+            result=issue(self.db,actor,ttl_seconds=args.get('ttl_seconds',3600),namespaces=args.get('namespaces'),
+                         session_id=args.get('session_id'),span_sessions=args.get('span_sessions',True),observer_target=args.get('observer_target'))
+            if base:result['visualization_url']=parsed.scheme+'://'+parsed.netloc+result['viewer_path']
+            return _text(result)
+        if name == "ember_visualizer_access":
+            from ..integration.visualizer_access import issue, revoke
+            actor = self._auth(args).agent_id
+            if args.get('action','create') == 'revoke':
+                return _text(revoke(self.db,args.get('grant_id'),actor))
+            if args.get('action','create') != 'create':
+                raise ValueError('Unsupported action')
+            base = args.get('server_url') or os.environ.get('EMBER_PUBLIC_URL')
+            if base:
+                from urllib.parse import urlsplit
+                parsed=urlsplit(base)
+                if parsed.scheme not in ('http','https') or not parsed.netloc or parsed.username or parsed.password or parsed.query or parsed.fragment:
+                    raise ValueError('server_url must be an HTTP(S) server origin without credentials/query/fragment')
+            result = issue(self.db,args['namespace'],actor,ttl_seconds=args.get('ttl_seconds',900),session_id=args.get('session_id'))
+            if base:
+                result['viewer_url']=parsed.scheme+'://'+parsed.netloc+result['viewer_path']
+            return _text(result)
+        if name == "ember_usefulness_update":
+            from ..integration.usefulness_service import update
+            actor = self._auth(args).agent_id
+            return _text(update(self.db, args["namespace"], actor,
+                {k:args[k] for k in ("action","payload","request_id","expected_revision") if k in args}, session_id=args.get("session_id")))
+        if name == "ember_usefulness_state":
+            from ..integration.usefulness_service import snapshot
+            actor = self._auth(args).agent_id
+            return _text(snapshot(self.db, args["namespace"], actor,
+                after=args.get("after",0), limit=args.get("limit",100),
+                request_id=args.get("request_id"), session_id=args.get("filter_session_id")))
+        if name == "ember_orient":
+            agent = self._auth(args)
+            namespace = args.get("namespace") or self.protocol.namespace
+            self.db.require_namespace_access(namespace, agent.agent_id, "read")
+            return _text(self.protocol.orient(args["clues"], namespace,
+                hints=args.get("hints"), limits=args.get("limits"), signals=args.get("signals")))
+
         if name == "ember_recall":
             agent = self._auth(args)
             namespace = args.get("namespace") or self.protocol.namespace
@@ -254,6 +336,8 @@ class EmberMCP:
                 top_k=int(args.get("top_k", 10)),
                 namespace=args.get("namespace"),
                 format="structured",
+                primary_context=args.get("primary_context"),
+                inspect_context=args.get("inspect_context", False),
             )
             return _text(result)
 
@@ -506,11 +590,13 @@ class EmberMCP:
         if method == "initialize":
             if is_notification:
                 return None
+            params = message.get("params") or {}
+            requested = params.get("protocolVersion")
             return {
                 "jsonrpc": "2.0",
                 "id": msg_id,
                 "result": {
-                    "protocolVersion": PROTOCOL,
+                    "protocolVersion": requested if requested in SUPPORTED_PROTOCOLS else PROTOCOL,
                     "capabilities": {"tools": {}},
                     "serverInfo": {"name": "ember-diaries", "version": "0.2.0"},
                 },
@@ -583,6 +669,9 @@ def _read() -> dict | None:
 
 
 def main(argv: list[str] | None = None) -> None:
+    # MCP stdio is UTF-8 even when the Windows console defaults to CP1252.
+    sys.stdin.reconfigure(encoding="utf-8")
+    sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description="Ember MCP stdio server")
     parser.add_argument("--config", help="path to an Ember TOML configuration file")
     parser.add_argument("--store", help="override storage.path")

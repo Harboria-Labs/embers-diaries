@@ -160,6 +160,11 @@ class ContextBuilder:
 
         return messages
 
+    @staticmethod
+    def _explicit_status(record):
+        from ..core.domain import explicit_truth
+        return explicit_truth(record)['status']
+
     def _format_record_message(self, record: EmberRecord,
                                 effective_confidence: float) -> str:
         """Format a record as a chat message content string."""
@@ -175,7 +180,7 @@ class ContextBuilder:
         return (
             f"[Memory {record.id[:8]} | "
             f"confidence: {effective_confidence:.2f} | "
-            f"{'verified' if effective_confidence > 0.8 else 'uncertain'}]\n"
+            f"{self._explicit_status(record)}]\n"
             f"{content}"
         )
 

@@ -1,0 +1,38 @@
+[
+  {
+    "path": "/visualizer",
+    "sha256": "6249521cff7b0c2bbd0a2bd0957f6e55334632562491ccca7a4ae508daaffa27",
+    "bytes": 64104,
+    "legacy": true,
+    "observer_html": false,
+    "native": false,
+    "headers": "HTTP/1.1 200 OK\ndate: Thu, 01 Oct 2026 02:58:57 GMT\n\nHTTP/1.1 200 OK\nCache-Control: no-store\nContent-Length: 64104\nContent-Security-Policy: default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'\nContent-Type: text/html; charset=utf-8\nDate: Thu, 01 Oct 2026 02:58:57 GMT\nReferrer-Policy: no-referrer\nServer: uvicorn\nX-Robots-Tag: noindex, nofollow\n"
+  },
+  {
+    "path": "/visualizer?mode=observer",
+    "sha256": "31071678dba385ba8caed2c04d4630e461ed157c5af04d670a571c9dddb67e6e",
+    "bytes": 19776,
+    "legacy": false,
+    "observer_html": true,
+    "native": false,
+    "headers": "HTTP/1.1 200 OK\ndate: Thu, 01 Oct 2026 02:59:04 GMT\n\nHTTP/1.1 200 OK\nCache-Control: no-store, no-cache, must-revalidate, no-transform\nContent-Length: 19776\nContent-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'\nContent-Type: text/html; charset=utf-8\nDate: Thu, 01 Oct 2026 02:59:04 GMT\nReferrer-Policy: no-referrer\nServer: uvicorn\nX-Ember-Observer-Build: sha256:8d111b984c8990dec425e49259619a35ae84bac9dce988191ede1a25cbd95686\nX-Ember-Transport-Sha256: 6b6d262295d56d9f71546a6b79f6eeb0f0caded00fc242c5b9cd28cf1e4274e9\nX-Ember-Transport-Version: 9f94c5a / transport-v2\nX-Robots-Tag: noindex, nofollow\n"
+  },
+  {
+    "path": "/observer",
+    "sha256": "37ec4665a8102d115ffd1ac20dae94c98b4dac64b0c1a68228aa2a531caeb35d",
+    "bytes": 22,
+    "legacy": false,
+    "observer_html": false,
+    "native": false,
+    "headers": "HTTP/1.1 200 OK\ndate: Thu, 01 Oct 2026 02:59:10 GMT\n\nHTTP/1.1 404 Not Found\nContent-Length: 22\nContent-Type: application/json\nDate: Thu, 01 Oct 2026 02:59:10 GMT\nServer: uvicorn\nX-Robots-Tag: noindex, nofollow\n"
+  },
+  {
+    "path": "/v1/observer/transport.js",
+    "sha256": "6b6d262295d56d9f71546a6b79f6eeb0f0caded00fc242c5b9cd28cf1e4274e9",
+    "bytes": 7987,
+    "legacy": false,
+    "observer_html": false,
+    "native": true,
+    "headers": "HTTP/1.1 200 OK\ndate: Thu, 01 Oct 2026 02:59:16 GMT\n\nHTTP/1.1 200 OK\nCache-Control: no-store, no-cache, must-revalidate, no-transform\nContent-Length: 7987\nContent-Type: application/javascript\nDate: Thu, 01 Oct 2026 02:59:16 GMT\nServer: uvicorn\nX-Ember-Observer-Build: sha256:8d111b984c8990dec425e49259619a35ae84bac9dce988191ede1a25cbd95686\nX-Ember-Transport-Sha256: 6b6d262295d56d9f71546a6b79f6eeb0f0caded00fc242c5b9cd28cf1e4274e9\nX-Ember-Transport-Version: 9f94c5a / transport-v2\nX-Robots-Tag: noindex, nofollow\n"
+  }
+]
