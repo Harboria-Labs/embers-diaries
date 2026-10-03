@@ -220,11 +220,25 @@ class EmberDB:
         if record.embedding and record.retrieval_candidate:
             self._vector_index.add(record.id, record.embedding, record.namespace)
 
+        # A master-index rebuild can run while the durable graph already has
+        # these edges. Keep reindexing idempotent by persisted edge identity.
+        if record.connections or record.derived_from:
+            existing = {
+                (edge['target'], edge['edge_type'], edge['edge_id'])
+                for edge in self._graph_index.get_edges(record.id, direction='outgoing')
+            }
+        else:
+            existing = set()
+
         # Graph index (if record has connections)
         for edge in record.connections:
+            identity = (edge.target_id, edge.edge_type.value, edge.edge_id)
+            if identity in existing:
+                continue
             self._graph_index.add_edge(
                 record.id, edge.target_id,
                 edge.edge_type.value, edge.weight, edge.edge_id)
+            existing.add(identity)
 
         # Causal-derivation edges (Features #2/#3): make each record's
         # `derived_from` provenance a first-class edge in the graph, so
@@ -233,11 +247,16 @@ class EmberDB:
         # edge points from the new record to its source, matching the
         # backward-in-time convention of `supersedes`. The edge_id is
         # deterministic per (child, source) so the link is identifiable; edges
-        # are created once per write (rebuild only runs against an empty graph).
+        # are created once per write or recovered if missing during rebuild.
         for target_id in record.derived_from:
+            edge_id = f"df:{record.id}:{target_id}"
+            identity = (target_id, EdgeType.DERIVED_FROM.value, edge_id)
+            if identity in existing:
+                continue
             self._graph_index.add_edge(
                 record.id, target_id, EdgeType.DERIVED_FROM.value,
-                edge_id=f"df:{record.id}:{target_id}", label="derived_from")
+                edge_id=edge_id, label="derived_from")
+            existing.add(identity)
 
     # ── Write ─────────────────────────────────────────────────────────────────
 

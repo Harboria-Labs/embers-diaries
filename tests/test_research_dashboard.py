@@ -33,15 +33,35 @@ def test_shared_presentation_and_unchanged_transport():
         assert 'Memory Flow' in html and 'Pairing Matrix' in html
         assert 'observer/transport.js?v=' in html
     assert observer_build.TRANSPORT_SHA256=='b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0'
-    source=Path('embers/api/research_dashboard.js').read_text()
+    source=Path('embers/api/research_dashboard.js').read_text(encoding='utf-8')
     assert "fetch('/health'" not in source
-    assert "STATUS_MONITOR" in Path('embers/api/observer_build.py').read_text()
+    assert "STATUS_MONITOR" in Path('embers/api/observer_build.py').read_text(encoding='utf-8')
     assert "method:'POST'" not in source and 'fixture()' not in source
 
 
 def test_settings_wording_is_current():
-    schema=Path('embers/integration/research_schema.py').read_text()
-    page=Path('embers/api/research_settings.html').read_text()
+    schema=Path('embers/integration/research_schema.py').read_text(encoding='utf-8')
+    page=Path('embers/api/research_settings.html').read_text(encoding='utf-8')
     assert 'W uncoupled' not in schema and 'W does not expand retrieval' not in schema
     assert 'does not use it to expand retrieval' not in page
     assert 'Pairing Matrix V1' in schema and 'at most one paired memory' in page
+
+
+def test_rebuild_does_not_duplicate_provenance_graph_edges(tmp_path):
+    root = tmp_path / 'store'
+    db = EmberDB.connect(str(root));enable(db, {'admin'})
+    proto = MemoryProtocol(db, default_namespace='graph-rebuild')
+    source = proto.remember({'content': 'source'})
+    derived = proto.remember({'content': 'derived'}, derived_from=[source])
+    for _ in range(3):
+        db = EmberDB.connect(str(root));enable(db, {'admin'})
+    persisted = [e for e in db._graph_index.get_edges(derived)
+                 if e['target'] == source and e['edge_type'] == 'derived_from']
+    assert len(persisted) == 1
+
+    from embers.integration.usefulness_service import snapshot
+    graph = snapshot(db, 'graph-rebuild', 'admin', observations=True)
+    projected = [e for e in graph['edges'] if e['from'] == derived
+                 and e['to'] == source and e['type'] == 'derived_from']
+    assert len(projected) == 1
+    assert projected[0]['kind'] == 'recorded_provenance'

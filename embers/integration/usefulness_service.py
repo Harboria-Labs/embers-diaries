@@ -166,14 +166,24 @@ def _snapshot(db, namespace, actor, *, after=0, limit=100, request_id=None, sess
             'observation_scope': 'candidate/return from latest matching displayed request; used/unused are historical individual reports',
             'why_retrieved': observed.get('reasons',{}).get(rid)})
     visible = {n['id'] for n in nodes}
+    provenance_sources = {n['id']: set(n['provenance']['source_ids']) for n in nodes}
     edges = []
+    seen_stored_edges = set()
     for rid in visible:
         if len(edges) >= 100: break
         for edge in db._graph_index.get_edges(rid, direction='outgoing'):
             if len(edges) >= 100: break
             if edge['target'] in visible:
+                identity = (rid, edge['target'], edge['edge_type'], edge['edge_id'])
+                if identity in seen_stored_edges:
+                    continue
+                seen_stored_edges.add(identity)
+                kind = ('recorded_provenance'
+                        if edge['edge_type'] == 'derived_from'
+                        and edge['target'] in provenance_sources.get(rid, set())
+                        else 'stored_relation')
                 edges.append({'from':rid, 'to':edge['target'], 'type':str(edge.get('edge_type'))[:128],
-                              'kind':'stored_relation', 'traversed':None, 'used':None})
+                              'kind':kind, 'traversed':None, 'used':None})
     for node in nodes:
         for source in node['provenance']['source_ids']:
             if source in visible and len(edges)<200 and not any(e['from']==node['id'] and e['to']==source for e in edges):
