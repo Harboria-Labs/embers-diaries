@@ -16,7 +16,13 @@ def settings(db, namespace, actor):
         from .research_schema import schema
         from ..cognitive.usefulness import UsefulnessPolicy
         from dataclasses import asdict
-        return dict(result, fields=schema(call('config_default',None),asdict(UsefulnessPolicy())), policy=deepcopy(state['policy']), model_version=MODEL_VERSION,
+        # Read-only projection of the existing journal; no new configuration store.
+        recorded = [event for event in ledger._events if event.get('action') in ('research_config', 'configure')]
+        history = [{key: deepcopy(event[key]) for key in
+                    ('id', 'revision', 'configuration_revision', 'actor', 'created_at', 'reason', 'research_config', 'policy')
+                    if key in event} for event in reversed(recorded[-30:])]
+        return dict(result, configuration_history=history, history_limit=30,
+            history_truncated=len(recorded)>30, fields=schema(call('config_default',None),asdict(UsefulnessPolicy())), policy=deepcopy(state['policy']), model_version=MODEL_VERSION,
             configuration_revision=state.get('configuration_revision',0), journal_revision=len(ledger._events),
             defaults=call('config_default',None), can_edit=actor in ledger.admins)
 

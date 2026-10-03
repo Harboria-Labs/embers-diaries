@@ -144,3 +144,49 @@ def test_truth_explicit_status_and_native_final_budget(rig):
     assert call('truth',dict(data={'_status':'superseded'},annotations=[],open_conflict=False))['status']=='superseded'
     cfg=call('config_default',None)
     with pytest.raises(ValueError,match='wrapper'):call('admit',dict(config=cfg,final_tokens=cfg['token_budget']+1))
+
+
+def test_settings_history_bounded_readonly_and_schema(rig):
+    db,ids,root=rig
+    cfg=consolidated.settings(db,'research','admin')
+    assert cfg['configuration_history']==[]
+    for i in range(32):
+        consolidated.configure(db,'research','admin',dict(config=cfg['config'],policy=cfg['policy'],
+            request_id=f'history-{i}',expected_revision=i,reason=f'change {i}'))
+    def hashes():return {str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in root.rglob('*') if p.is_file()}
+    before=hashes()
+    out=consolidated.settings(db,'research','admin')
+    assert hashes()==before
+    assert out['configuration_revision']==32
+    assert out['history_truncated'] and out['history_limit']==30
+    assert [e['revision'] for e in out['configuration_history']]==list(range(32,2,-1))
+    assert out['configuration_history'][0]['reason']=='change 31'
+    assert set(out['configuration_history'][0])<={'id','revision','configuration_revision','actor','created_at','reason','research_config','policy'}
+    assert {f['subsystem'] for f in out['fields']}=={'Retrieval / LADC','Feedback','Pairing Matrix','Capacity'}
+    assert all(f['flow_stage'] for f in out['fields'])
+    assert out['config']==cfg['config'] and out['policy']==cfg['policy']
+    reopened=EmberDB.connect(str(root));enable(reopened,{'admin'})
+    assert consolidated.settings(reopened,'research','admin')['configuration_history']==out['configuration_history']
+
+
+def test_settings_view_capability_cannot_read_or_edit(rig,monkeypatch):
+    from fastapi.testclient import TestClient
+    from embers import api
+    from embers.identity.registry import AgentRegistry
+    from embers.integration.research_observer import issue
+    db,ids,root=rig
+    agent,token=AgentRegistry(db).register('reader')
+    monkeypatch.setattr(api,'_get_db',lambda:db)
+    client=TestClient(api.app)
+    code=issue(db,agent.agent_id)['code']
+    assert client.post('/v1/observer/exchange',json={'code':code}).status_code==200
+    before=service(db,'research')._load()
+    assert client.get('/research/settings?mode=observer').status_code==200
+    assert client.get('/v1/research/settings/research').status_code==401
+    assert client.post('/v1/research/settings/research',json={}).status_code==401
+    headers={'X-Ember-Agent-Id':agent.agent_id,'X-Ember-Token':token}
+    cfg=client.get('/v1/research/settings/research',headers=headers).json()
+    assert cfg['can_edit'] is False
+    body=dict(config=cfg['config'],policy=cfg['policy'],request_id='denied',expected_revision=cfg['journal_revision'],reason='not admin')
+    assert client.post('/v1/research/settings/research',headers=headers,json=body).status_code==403
+    assert service(db,'research')._load()==before

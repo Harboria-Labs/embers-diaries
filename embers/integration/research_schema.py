@@ -29,4 +29,17 @@ def schema(config, policy):
         add('config.'+key,symbol,name,range,'Query modulation' if key=='alpha' else 'Activation',equation,effect)
     for key,name,cap in [('max_seeds','Candidate memories',512),('max_state_memories','Activation cache memories',100000),('max_results','Returned memories',100),('token_budget','Total rendered token budget',1000000),('memory_token_cap','Per-memory token cap',1000000),('neighborhood_token_cap','Per-neighborhood token cap',1000000)]:
         add('config.'+key,key,name,f'integer 1..{cap}; compatible with total/candidate limits','Attention','exact tokenizer count ≤ configured cap','Limits admission. W does not influence direct retrieval/LADC admission. Pairing Matrix V1 attempts at most one contextual directional W-selected addition after primary direct selection, within existing capacity.')
+    groups = {'Pair evidence': 'Pairing Matrix', 'Query modulation': 'Retrieval / LADC',
+              'Activation': 'Retrieval / LADC', 'Attention': 'Capacity', 'Feedback': 'Feedback'}
+    stages = {'Feedback': 'Feedback → U / W updates', 'Pairing Matrix': 'Pairing Matrix check → Returned memories',
+              'Retrieval / LADC': 'Direct retrieval → Primary memory selected', 'Capacity': 'Returned memories'}
+    names = {'u0': 'Starting helpfulness before evidence', 'kappa_u': 'Resistance to changing helpfulness',
+             'w0': 'Starting usefulness of a directional connection', 'kappa_w': 'Resistance to changing pair usefulness',
+             'epsilon_a': 'Minimum retained activation', 'rho': 'Speed of activation change',
+             'delta': 'Baseline activation relaxation', 'threshold': 'Boundary for an active memory',
+             'alpha': 'How much helpfulness influences query pressure', 'max_elapsed': 'Largest permitted model-time step'}
+    for row in rows:
+        row['subsystem'] = groups[row['subsystem']]
+        row['flow_stage'] = stages[row['subsystem']]
+        row['name'] = names.get(row['path'].split('.')[-1], row['name'])
     return rows
