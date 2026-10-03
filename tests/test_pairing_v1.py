@@ -169,7 +169,8 @@ def test_legacy_direct_recall_preserves_order_and_capacity(rig,monkeypatch,forma
     assert out['direct_ids']==ids[:1] and out['pair_expansion']['target']==ids[1]
     assert [r['id'] for r in out['results']]==ids[:2]
     out=proto.recall('query',top_k=1,primary_context='ctx',format=format)
-    assert out['pair_expansion'] is None and len(out['results'])==1
+    assert out['direct_ids']==ids[:1] and out['pair_expansion']['target']==ids[1]
+    assert [r['id'] for r in out['results']]==ids[:2]
 
 
 def test_api_mcp_relationship_and_existing_feedback(rig,monkeypatch):
@@ -259,3 +260,57 @@ def test_result_count_capacity_is_authoritative(rig):
     consolidated.configure(db,'pairs','admin',dict(config={**settings['config'],'max_results':1},policy=settings['policy'],reason='one item capacity',request_id='config',expected_revision=settings['journal_revision']))
     out=recall(rig)
     assert out['selected_ids']==ids[:1] and out['pair_expansion'] is None
+
+
+@pytest.mark.parametrize('format',['structured','raw'])
+def test_ordinary_two_direct_plus_one_pair(rig,monkeypatch,format):
+    from dataclasses import replace
+    db,ids,proto=rig;edge(rig);feedback(rig)
+    proto.search_config=replace(proto.search_config,semantic_enabled=False)
+    monkeypatch.setattr(db,'search',lambda *a,**k:[(db._reader.get(ids[0],track_access=False),1.),(db._reader.get(ids[2],track_access=False),.5)])
+    out=proto.recall('query',top_k=2,primary_context='ctx',format=format)
+    assert out['direct_ids']==[ids[0],ids[2]]
+    assert out['primary_memory_id']==ids[0]
+    assert out['pair_expansion']['target']==ids[1]
+    assert [r['id'] for r in out['results']]==[ids[0],ids[2],ids[1]]
+
+
+@pytest.mark.parametrize('format',['structured','raw','text','messages'])
+def test_ordinary_hard_total_cap_preserves_direct(rig,monkeypatch,format):
+    from dataclasses import replace
+    db,ids,proto=rig;edge(rig);feedback(rig)
+    proto.search_config=replace(proto.search_config,semantic_enabled=False,max_results=1)
+    monkeypatch.setattr(db,'search',lambda *a,**k:[(db._reader.get(ids[0],track_access=False),1.)])
+    out=proto.recall('query',top_k=1,primary_context='ctx',format=format)
+    assert out['direct_ids']==ids[:1]
+    assert out['pair_expansion'] is None
+    assert [r['id'] for r in out['results']]==ids[:1]
+
+
+@pytest.mark.parametrize('format',['text','messages'])
+def test_ordinary_token_capacity_preserves_direct_no_substitution(rig,monkeypatch,format):
+    from dataclasses import replace
+    from embers.integration import pairing
+    db,ids,proto=rig;edge(rig);feedback(rig,outcome='strong-one');feedback(rig,outcome='strong-two')
+    edge(rig,b=2);feedback(rig,b=2,outcome='weaker')
+    proto.search_config=replace(proto.search_config,semantic_enabled=False)
+    monkeypatch.setattr(db,'search',lambda *a,**k:[(db._reader.get(ids[0],track_access=False),1.)])
+    with monkeypatch.context() as m:
+        m.setattr(pairing,'select',lambda *a,**k:(None,None))
+        baseline=proto.recall('query',top_k=1,primary_context='ctx',format=format)
+    content=baseline['memories']
+    proto.context_builder.max_tokens=(proto.context_builder._estimate_tokens(content) if format=='text'
+        else sum(len(x['content']) for x in content)/proto.context_builder._chars_per_token)+1
+    original=pairing.select;attempts=[]
+    def track(*args,**kwargs):
+        result=original(*args,**kwargs);attempts.append(result[1]['target']);return result
+    monkeypatch.setattr(pairing,'select',track)
+    out=proto.recall('query',top_k=1,primary_context='ctx',format=format)
+    assert attempts==[ids[1]]
+    assert out['direct_ids']==ids[:1] and out['pair_expansion'] is None
+    if format=='text':
+        assert out['memories']==content
+    else:
+        assert [m['content'] for m in out['memories']]==[m['content'] for m in content]
+        assert [m['metadata']['ember_record_id'] for m in out['memories']]==ids[:1]
+    assert [r['id'] for r in out['results']]==ids[:1]

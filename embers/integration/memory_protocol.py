@@ -262,7 +262,8 @@ class MemoryProtocol:
             if getattr(self.db, '_usefulness_enabled', False) and direct_ids:
                 from .pairing import select
                 paired, route = select(self.db, ns, direct_ids, primary_context)
-                if paired is not None and len(direct_ids) < top_k:
+                # top_k bounds direct retrieval; the separate hard result cap also bounds the pair.
+                if paired is not None and len(direct_ids) < self.search_config.max_results:
                     # Render separately: never reorder or evict already admitted direct rows.
                     from .context import ContextBuilder
                     builder = ContextBuilder(self.decay, self.context_builder.max_tokens,
