@@ -1406,18 +1406,13 @@ class EmberDB:
         touching it. The proposal record is then superseded by a PROMOTED copy
         that records which memory it became.
 
-        EPISTEMIC STATE (spec §12). A promoted memory does NOT assert "this is
-        true" — only "this met the criteria to enter durable memory". So it
-        carries two explicit fields, stored under reserved `_status` /
-        `_promotion_method` keys INSIDE the memory's data (hence inside the
-        content hash and versioned — a status change is a new version):
-          • status           VERIFIED (default) / PROVISIONAL / DISPUTED
-          • promotion_method HOW it was admitted — HUMAN by default, because a
-                             bare promote() call is an explicit caller decision;
-                             the Promotion Engine passes AUTOMATIC / CONSENSUS.
-        Backwards-compat: the keys are added only when set, and read back with a
-        VERIFIED / HUMAN default, so pre-existing promoted memories hash and read
-        exactly as before (§15).
+        ELLA BOUNDARY. Promotion is admission only. New durable memories carry a
+        legacy-compatible reserved `_status=provisional` marker plus their
+        `_promotion_method`, both versioned inside the record hash. The marker is
+        not canonical truth and cannot make the memory VERIFIED. Canonical
+        epistemic state is projected separately by ELLA from accepted evidence
+        assessments. The optional `status` argument remains only to reject old
+        callers that try to set truth during promotion.
 
         Returns (memory_id, proposal_id). Raises if the proposal does not exist
         or is not currently pending.
@@ -1548,11 +1543,11 @@ class EmberDB:
         return MemoryStatus.VERIFIED if value == 'verified' else MemoryStatus.DISPUTED if value in ('disputed','contested','incorrect') else MemoryStatus.PROVISIONAL
 
     def legacy_memory_status(self, memory_id: str) -> "MemoryStatus":
-        """The current epistemic status of a durable memory.
+        """Read the historical `_status` compatibility marker only.
 
-        Reads the CURRENT version (status changes are new versions). Defaults to
-        VERIFIED when the key is absent, so a memory written before this feature
-        — or by a plain db.write() — reads as VERIFIED without any migration."""
+        This is NOT ELLA truth. It intentionally preserves the old default of
+        VERIFIED when the marker is absent so legacy callers/data remain
+        readable without silently rewriting historical records."""
         from .core.types import MemoryStatus
         rec = self._reader.get_current(memory_id) or self._reader.get(
             memory_id, include_deprecated=True, include_superseded=True)
@@ -1578,13 +1573,12 @@ class EmberDB:
     def set_status(self, memory_id: str, status: "MemoryStatus",
                    changed_by: str = "system",
                    reason: str | None = None) -> tuple[str, str]:
-        """Change a memory's epistemic status — as a NEW version (append-only).
+        """Write a legacy `_status` marker as a new memory version.
 
-        A status transition (e.g. VERIFIED → DISPUTED when conflicting evidence
-        appears) never overwrites: it supersedes the memory with a new version
-        carrying the new `_status`, so the history verified→disputed is fully
-        preserved and auditable. The promotion_method is carried forward
-        unchanged. Returns (new_id, old_id)."""
+        Kept for backwards compatibility only. This does not change canonical
+        ELLA state or create epistemic evidence. Because it creates a new exact
+        memory version, that version begins with its own ELLA projection unless
+        evidence is explicitly carried forward and reassessed."""
         from .core.types import MemoryStatus, PromotionMethod
         rec = self._reader.get_current(memory_id)
         if rec is None:
