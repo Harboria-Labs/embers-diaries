@@ -71,6 +71,12 @@ class Evidence:
     def __post_init__(self):
         if self.origin_confidence not in {"SYSTEM_CONFIRMED", "AGENT_DECLARED", "UNKNOWN"}:
             raise ValueError("invalid origin confidence")
+        if self.origin is not None and (not isinstance(self.origin, str) or not self.origin.strip()):
+            raise ValueError("origin must be nonblank text when supplied")
+        if self.event_id is not None and (not isinstance(self.event_id, str) or not self.event_id.strip()):
+            raise ValueError("event_id must be nonblank text when supplied")
+        if self.origin_confidence == "SYSTEM_CONFIRMED" and self.origin is None:
+            raise ValueError("system-confirmed origin requires an origin identity")
         if self.hash_version not in (1, 2):
             raise ValueError("unsupported evidence hash version")
         lineage = self.origin is not None or self.event_id is not None or self.derived_from or self.origin_confidence != "UNKNOWN"
