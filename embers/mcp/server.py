@@ -437,11 +437,11 @@ class EmberMCP:
 
         if name == "ember_promote":
             agent = self._auth(args)
-            status = args.get("status")
+            if "status" in args:
+                raise ValueError("promotion is admission only; submit epistemic evidence separately")
             memory_id, proposal_id = self.db.promote(
                 args["proposal_id"],
                 validated_by=agent.agent_id,
-                status=MemoryStatus(status) if status else None,
                 promotion_method=PromotionMethod.HUMAN,
             )
             return _text({
