@@ -132,8 +132,12 @@ class EpistemicLedger:
                 call('ella_assessment',assessment)
                 if action=='confirm':
                     prior=next_state['assessments'].get(payload.get('confirmation_of'))
-                    if prior is None or prior['status']!='confirmation_required' or prior['target_memory_id']!=rid or prior['evidence_id']!=assessment['evidence_id']:
-                        raise ValueError('pending record-level assessment required')
+                    if (prior is None or prior['status']!='confirmation_required'
+                            or prior['target_memory_id']!=rid
+                            or prior['evidence_id']!=assessment['evidence_id']
+                            or prior.get('requires_confirmation') is not True
+                            or prior.get('confirmation_of') is not None):
+                        raise ValueError('original pending threshold-crossing assessment required; disagreement needs explicit resolution')
                     if prior['assessor_id']==actor:raise PermissionError('distinct confirmation assessor required')
                     if any(a.get('confirmation_of')==prior['assessment_id'] and a['status'] not in ('withdrawn','superseded','resolved') for a in next_state['assessments'].values()):raise ValueError('confirmation already submitted; explicit resolution required')
                     assessment['confirmation_of']=prior['assessment_id']
