@@ -395,3 +395,27 @@ def test_unknown_origin_is_not_lineage_coverage_or_soft_dependency(rig):
 def test_unknown_origin_cannot_be_agent_declared():
     with pytest.raises(ValueError,match='unknown origin'):
         Evidence(origin='unknown',origin_confidence='AGENT_DECLARED')
+
+
+def test_same_evidence_record_can_have_claim_specific_polarity(rig):
+    db,p,first,l=rig
+    second=p.remember({'content':'different exact claim'},namespace='ella')
+    evidence=Evidence(source='shared-artifact',reference='shared-evidence',
+                      origin='artifact:shared',origin_confidence='AGENT_DECLARED')
+    eid=db.attach_evidence(first,evidence)
+    assert db.attach_evidence(second,evidence)==eid
+
+    _,events=l.load()
+    positive=l.apply('report',dict(target_memory_id=first,
+        target_memory_version=db._store.read(first).content_hash,evidence_id=eid,
+        polarity='SUPPORTS',strength='MEDIUM',assessment_note='supports first exact claim'),
+        actor='assessor-one',request_id='claim-one',expected_revision=len(events))
+    _,events=l.load()
+    negative=l.apply('report',dict(target_memory_id=second,
+        target_memory_version=db._store.read(second).content_hash,evidence_id=eid,
+        polarity='OPPOSES',strength='MEDIUM',assessment_note='opposes second exact claim'),
+        actor='assessor-one',request_id='claim-two',expected_revision=len(events))
+    assert positive['score']>0
+    assert negative['score']<0
+    assert l.read(first,'assessor-one')['score']==positive['score']
+    assert l.read(second,'assessor-one')['score']==negative['score']
