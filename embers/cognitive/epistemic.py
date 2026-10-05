@@ -95,8 +95,14 @@ class EpistemicLedger:
                 s=self.db.get_session(session)
                 if s is None or s.agent_id!=actor or s.status.value!='active':raise PermissionError('active own session required')
             if action in ('report','revise','confirm','resolve'):
-                allowed=allowed_common|{'evidence_id','polarity','strength','assessment_note','assessment_id','confirmation_of','assessment_ids'}
-                if set(payload)-allowed:raise ValueError('unsupported assessment fields; numeric likelihoods are forbidden')
+                action_fields={
+                    'report':{'evidence_id','polarity','strength','assessment_note'},
+                    'revise':{'evidence_id','polarity','strength','assessment_note','assessment_id'},
+                    'confirm':{'evidence_id','polarity','strength','assessment_note','confirmation_of'},
+                    'resolve':{'evidence_id','polarity','strength','assessment_note','assessment_ids'},
+                }
+                if set(payload)-(allowed_common|action_fields[action]):
+                    raise ValueError('unsupported assessment fields; numeric likelihoods are forbidden')
                 attached={r.id for r in self.db.evidence_for(rid)}|set(state.get('carried',{}).get(rid,[]))
                 if payload.get('evidence_id') not in attached:raise ValueError('evidence must be attached to this exact memory version')
                 evidence=self.db.get_evidence(payload['evidence_id'])
@@ -138,10 +144,12 @@ class EpistemicLedger:
                 if set(payload)-(allowed_common|{'assessment_id'}):raise ValueError('unsupported withdrawal fields')
                 a=next_state['assessments'].get(payload.get('assessment_id'));self._owned(a,rid,actor,admin);a['status']='withdrawn'
             elif action=='invalidate_evidence':
+                if set(payload)-(allowed_common|{'evidence_id'}):raise ValueError('unsupported evidence invalidation fields')
                 if not admin:raise PermissionError('epistemic decision authority required')
                 if payload.get('evidence_id') not in {r.id for r in self.db.evidence_for(rid)}:raise ValueError('attached evidence required')
                 next_state['evidence_overrides'].setdefault(payload['evidence_id'],{})['invalidated']=True
             elif action=='correct_evidence':
+                if set(payload)-(allowed_common|{'evidence_id','lineage'}):raise ValueError('unsupported evidence correction fields')
                 if not admin:raise PermissionError('epistemic decision authority required')
                 eid=payload.get('evidence_id')
                 if eid not in {r.id for r in self.db.evidence_for(rid)}:raise ValueError('attached evidence required')
@@ -168,9 +176,12 @@ class EpistemicLedger:
                 if not isinstance(ids,list) or not ids or any(eid not in available for eid in ids):raise ValueError('source evidence required')
                 next_state.setdefault('carried',{})[rid]=sorted(set(next_state.get('carried',{}).get(rid,[]))|set(ids))
             elif action=='configure':
+                if set(payload)-(allowed_common|{'policy'}):raise ValueError('unsupported policy fields')
                 if not admin:raise PermissionError('epistemic decision authority required')
                 next_state['policy']=call('ella_policy',payload.get('policy'))
             elif action in ('merge','split'):
+                allowed=allowed_common|({'evidence_ids'} if action=='merge' else {'group_id'})
+                if set(payload)-allowed:raise ValueError('unsupported dependency resolution fields')
                 if not admin:raise PermissionError('epistemic decision authority required')
                 if action=='merge':
                     ids=payload.get('evidence_ids');attached={r.id for r in self.db.evidence_for(rid)}
