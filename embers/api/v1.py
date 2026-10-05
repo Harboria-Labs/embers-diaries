@@ -806,8 +806,10 @@ async def attach_evidence(
     x_ember_agent_id: str | None = Header(default=None),
     x_ember_token: str | None = Header(default=None),
 ):
-    """Attach independent evidence to an existing memory (append-only, so the
-    memory's hash is untouched and its confirmation trail only grows)."""
+    """Attach evidence to an existing memory without asserting independence.
+
+    The memory hash is untouched; ELLA resolves detectable dependency and
+    claim-specific assessment separately."""
     from . import _get_db
     db = _get_db()
     agent = require_agent(db, x_ember_agent_id, x_ember_token)
