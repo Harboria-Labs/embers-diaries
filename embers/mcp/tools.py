@@ -289,9 +289,10 @@ TOOLS = [
     },
     {
         "name": "ember_attach_evidence",
-        "description": ("Attach independent evidence to an EXISTING durable "
-                        "memory. Append-only — the memory is not modified, so its "
-                        "hash is untouched and its confirmation trail only grows."),
+        "description": ("Attach an evidence record to an EXISTING durable memory. "
+                        "Attachment does NOT assert statistical independence or truth strength; "
+                        "ELLA resolves dependency and claim-specific assessment separately. "
+                        "Append-only — the memory hash is untouched."),
         "inputSchema": {
             "type": "object",
             "properties": {
