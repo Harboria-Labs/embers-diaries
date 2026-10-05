@@ -308,7 +308,9 @@ fn context_truth_invariants() {
             json!({"data":{"confidence":x,"U":x},"annotations":[],"open_conflict":false}),
         )
         .unwrap();
-        assert_eq!(t["status"], "unverified");
+        assert_eq!(t["status"], "provisional");
+        assert_eq!(t["source"], "epistemic_ledger");
+        assert_eq!(t["score"], 0.0);
     }
 }
 
