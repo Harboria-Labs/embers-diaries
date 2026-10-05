@@ -17,6 +17,42 @@ pub fn assessment(v:Value)->Result<Value>{
 }
 fn root(p:&BTreeMap<String,String>,x:&str)->String{let mut r=x.to_string();while p[&r]!=r {r=p[&r].clone();}r}
 fn join(p:&mut BTreeMap<String,String>,a:&str,b:&str){if !p.contains_key(a)||!p.contains_key(b){return}let x=root(p,a);let y=root(p,b);if x!=y {let (lo,hi)=if x<y{(x,y)}else{(y,x)};p.insert(hi,lo);}}
+
+pub fn state(v:Value)->Result<Value>{
+ let obj=v.as_object().ok_or("ELLA state object required")?;
+ let expected=["assessments","evidence_overrides","hard_groups","policy","carried"].into_iter().collect::<BTreeSet<_>>();
+ let actual=obj.keys().map(String::as_str).collect::<BTreeSet<_>>();
+ if actual!=expected{return Err("invalid ELLA state fields".into())}
+ policy(v["policy"].clone())?;
+ let assessments=v["assessments"].as_object().ok_or("assessments object required")?;
+ for (id,a) in assessments{
+   assessment(a.clone())?;
+   if a["assessment_id"]!=*id{return Err("assessment key/id mismatch".into())}
+   if !["accepted","confirmation_required","withdrawn","superseded","resolved"].contains(&a["status"].as_str().unwrap_or("")){return Err("invalid assessment status".into())}
+   if let Some(parent)=a.get("confirmation_of").filter(|x|!x.is_null()){text(parent,"confirmation_of")?;}
+   if let Some(flag)=a.get("requires_confirmation"){if !flag.is_boolean(){return Err("requires_confirmation must be boolean".into())}}
+ }
+ let overrides=v["evidence_overrides"].as_object().ok_or("evidence_overrides object required")?;
+ for value in overrides.values(){
+   let o=value.as_object().ok_or("evidence override object required")?;
+   for key in o.keys(){if !["invalidated","reference","event_id","origin","derived_from","origin_confidence"].contains(&key.as_str()){return Err("unsupported evidence override field".into())}}
+   if let Some(flag)=o.get("invalidated"){if !flag.is_boolean(){return Err("invalidated must be boolean".into())}}
+   if let Some(conf)=o.get("origin_confidence"){if !["UNKNOWN","AGENT_DECLARED","SYSTEM_CONFIRMED"].contains(&conf.as_str().unwrap_or("")){return Err("invalid origin confidence".into())}}
+   if let Some(deps)=o.get("derived_from"){let a=deps.as_array().ok_or("derived_from must be array")?;for d in a{text(d,"dependency")?;}}
+ }
+ let groups=v["hard_groups"].as_object().ok_or("hard_groups object required")?;
+ for ids in groups.values(){let a=ids.as_array().ok_or("hard group must be array")?;if a.len()<2{return Err("hard group requires at least two evidence ids".into())}let mut seen=BTreeSet::new();for id in a{let s=text(id,"group evidence id")?;if !seen.insert(s){return Err("duplicate evidence id in hard group".into())}}}
+ let carried=v["carried"].as_object().ok_or("carried object required")?;
+ for ids in carried.values(){let a=ids.as_array().ok_or("carried evidence must be array")?;let mut seen=BTreeSet::new();for id in a{let s=text(id,"carried evidence id")?;if !seen.insert(s){return Err("duplicate carried evidence id".into())}}}
+ Ok(v)
+}
+pub fn reduce(v:Value)->Result<Value>{
+ state(v["state"].clone())?;
+ let event=v["event"].as_object().ok_or("ELLA event object required")?;
+ let next=event.get("state").cloned().ok_or("ELLA event state required")?;
+ state(next)
+}
+
 pub fn project(v:&Value)->Result<Value>{
  let pol=policy(v["policy"].clone())?;let ev=v["evidence"].as_array().ok_or("evidence required")?;let aa=v["assessments"].as_array().ok_or("assessments required")?;
  if ev.len()>pol["max_evidence"].as_u64().unwrap() as usize||aa.len()>pol["max_assessments"].as_u64().unwrap() as usize{return Err("ELLA cap exceeded".into())}
