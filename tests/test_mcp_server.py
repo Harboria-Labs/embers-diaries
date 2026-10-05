@@ -218,7 +218,8 @@ class TestProposalPromotionOverMCP:
         })["content"][0]["text"])
         assert out["promoted"] is True
         assert out["method"] == "automatic", out
-        assert out["status"] in {"verified", "provisional"}
+        assert out["status"] is None, "promotion decision must not assign epistemic truth"
+        assert db.memory_status(out["memory_id"]).value == "provisional"
 
     def test_dry_run_route_writes_nothing(self, tmp_path: Path):
         db = EmberDB.connect(str(tmp_path / "s"))
