@@ -397,6 +397,10 @@ class EmberMCP:
             agent = self._auth(args)
             evidence = []
             for item in args.get("evidence") or []:
+                origin=item.get("origin")
+                origin_confidence=item.get("origin_confidence", "AGENT_DECLARED" if origin else "UNKNOWN")
+                if origin_confidence == "SYSTEM_CONFIRMED":
+                    raise ValueError("SYSTEM_CONFIRMED origin is reserved for system-captured provenance")
                 ev = Evidence(
                     source=item.get("source", ""),
                     source_type=SourceType(item.get("source_type", "directly_observed")),
@@ -404,6 +408,10 @@ class EmberMCP:
                     description=item.get("description", ""),
                     agent_id=agent.agent_id,
                     session_id=args.get("session_id"),
+                    origin=origin or "unknown",
+                    origin_confidence=origin_confidence,
+                    event_id=item.get("event_id"),
+                    derived_from=list(item.get("derived_from") or []),
                 )
                 ev.seal()
                 evidence.append(ev)
@@ -476,6 +484,10 @@ class EmberMCP:
 
         if name == "ember_attach_evidence":
             agent = self._auth(args)
+            origin=args.get("origin")
+            origin_confidence=args.get("origin_confidence", "AGENT_DECLARED" if origin else "UNKNOWN")
+            if origin_confidence == "SYSTEM_CONFIRMED":
+                raise ValueError("SYSTEM_CONFIRMED origin is reserved for system-captured provenance")
             ev = Evidence(
                 source=args["source"],
                 source_type=SourceType(args.get("source_type", "directly_observed")),
@@ -483,6 +495,10 @@ class EmberMCP:
                 description=args.get("description", ""),
                 agent_id=agent.agent_id,
                 session_id=args.get("session_id"),
+                origin=origin or "unknown",
+                origin_confidence=origin_confidence,
+                event_id=args.get("event_id"),
+                derived_from=list(args.get("derived_from") or []),
             )
             ev.seal()
             eid = self.db.attach_evidence(args["memory_id"], ev)
