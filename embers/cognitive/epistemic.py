@@ -50,17 +50,17 @@ class EpistemicLedger:
             record=self.db._store.read(eid)
             if record is None or record.namespace!=self.namespace:raise ValueError('carried evidence unavailable')
             records[eid]=record
-        for record in records.values():
+        for record in sorted(records.values(),key=lambda item:item.id):
             ev=self.db.get_evidence(record.id)
             if ev is None or not ev.verify_integrity():raise ValueError('evidence integrity failure')
             evidence.append({**ev.to_dict(),'id':record.id,**state['evidence_overrides'].get(record.id,{})})
         conflicts=self.db.conflicts_for(rid)
         active=[c.status.value for c in conflicts if c.status.value in ('open','investigating')]
         result=call('ella_project',dict(policy=state['policy'],evidence=evidence,
-            assessments=list(state['assessments'].values()),hard_groups=list(state['hard_groups'].values()),
+            assessments=[state['assessments'][key] for key in sorted(state['assessments'])],hard_groups=[sorted(state['hard_groups'][key]) for key in sorted(state['hard_groups'])],
             target_memory_id=rid,target_memory_version=target.content_hash,revision=revision,
             conflict_overlay='open' if 'open' in active else 'investigating' if active else 'none'))
-        pending=[a for a in state['assessments'].values() if a['target_memory_id']==rid and a['target_memory_version']==target.content_hash and a['status']=='confirmation_required']
+        pending=sorted((a for a in state['assessments'].values() if a['target_memory_id']==rid and a['target_memory_version']==target.content_hash and a['status']=='confirmation_required'),key=lambda a:a['assessment_id'])
         result.update(confirmation_required=bool(pending),confirmation_assessment_ids=[a['assessment_id'] for a in pending],
             target_memory_id=rid,target_memory_version=target.content_hash,
             lifecycle=dict(deprecated=self.db._writer.is_deprecated(rid),superseded_by=self.db._writer.get_superseded_by(rid)))
