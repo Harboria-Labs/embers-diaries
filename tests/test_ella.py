@@ -419,3 +419,14 @@ def test_same_evidence_record_can_have_claim_specific_polarity(rig):
     assert negative['score']<0
     assert l.read(first,'assessor-one')['score']==positive['score']
     assert l.read(second,'assessor-one')['score']==negative['score']
+
+
+def test_lineage_correction_cannot_self_upgrade_to_system_confirmed(rig):
+    db,_,rid,l=rig;eid=ev(rig,'lineage-correction')
+    _,events=l.load()
+    with pytest.raises(PermissionError,match='SYSTEM_CONFIRMED'):
+        l.apply('correct_evidence',dict(target_memory_id=rid,
+            target_memory_version=db._store.read(rid).content_hash,
+            evidence_id=eid,lineage={'origin':'claimed-origin','origin_confidence':'SYSTEM_CONFIRMED'},
+            reason='attempted authority upgrade'),actor='admin',
+            request_id='forbidden-origin-upgrade',expected_revision=len(events))
