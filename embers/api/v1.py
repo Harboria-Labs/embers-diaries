@@ -721,17 +721,17 @@ async def promote_proposal(
     Promotion means the proposal met the criteria to become durable memory,
     NOT that it is true; the memory carries its own epistemic status."""
     from . import _get_db
-    from ..core.types import MemoryStatus, PromotionMethod
+    from ..core.types import PromotionMethod
     db = _get_db()
     agent = require_agent(db, x_ember_agent_id, x_ember_token)
     pid = body.get("proposal_id")
     if not pid:
         raise HTTPException(400, "proposal_id required")
-    status = body.get("status")
+    if "status" in body:
+        raise HTTPException(400, "promotion is admission only; submit epistemic evidence separately")
     try:
         memory_id, proposal_id = db.promote(
             pid, validated_by=agent.agent_id,
-            status=MemoryStatus(status) if status else None,
             promotion_method=PromotionMethod.HUMAN,
         )
     except KeyError as e:
