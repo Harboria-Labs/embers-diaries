@@ -635,6 +635,10 @@ async def propose_memory(
     agent = require_agent(db, x_ember_agent_id, x_ember_token)
     evidence = []
     for item in body.get("evidence", []):
+        origin=item.get("origin")
+        origin_confidence=item.get("origin_confidence", "AGENT_DECLARED" if origin else "UNKNOWN")
+        if origin_confidence == "SYSTEM_CONFIRMED":
+            raise HTTPException(400, "SYSTEM_CONFIRMED origin is reserved for system-captured provenance")
         ev = Evidence(
             source=item.get("source", ""),
             source_type=SourceType(item.get("source_type", "directly_observed")),
@@ -642,6 +646,10 @@ async def propose_memory(
             description=item.get("description", ""),
             agent_id=agent.agent_id,
             session_id=body.get("session_id"),
+            origin=origin or "unknown",
+            origin_confidence=origin_confidence,
+            event_id=item.get("event_id"),
+            derived_from=list(item.get("derived_from") or []),
         )
         ev.seal()
         evidence.append(ev)
@@ -806,6 +814,10 @@ async def attach_evidence(
     source = body.get("source")
     if not source:
         raise HTTPException(400, "source required")
+    origin=body.get("origin")
+    origin_confidence=body.get("origin_confidence", "AGENT_DECLARED" if origin else "UNKNOWN")
+    if origin_confidence == "SYSTEM_CONFIRMED":
+        raise HTTPException(400, "SYSTEM_CONFIRMED origin is reserved for system-captured provenance")
     ev = Evidence(
         source=source,
         source_type=SourceType(body.get("source_type", "directly_observed")),
@@ -813,6 +825,10 @@ async def attach_evidence(
         description=body.get("description", ""),
         agent_id=agent.agent_id,
         session_id=body.get("session_id"),
+        origin=origin or "unknown",
+        origin_confidence=origin_confidence,
+        event_id=body.get("event_id"),
+        derived_from=list(body.get("derived_from") or []),
     )
     ev.seal()
     try:
