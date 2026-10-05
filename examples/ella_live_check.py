@@ -107,6 +107,7 @@ def main() -> None:
             one=epistemic("report",{**base,"evidence_id":e1,"polarity":"SUPPORTS","strength":"STRONG",
                 "assessment_note":"first independent observable unit"},"report-one",0)
             assert one["base_epistemic_verdict"]=="PROVISIONAL" and not one["confirmation_required"]
+            first_assessment=one["units"][0]["assessment_ids"][0]
 
             two_payload={**base,"evidence_id":e2,"polarity":"SUPPORTS","strength":"STRONG",
                 "assessment_note":"second independent observable unit"}
@@ -170,9 +171,9 @@ def main() -> None:
 
             # Open a real HTTP SSE stream, then revise an accepted assessment.
             state=get(f"/v1/epistemic/state/{namespace}",{"memory_id":rid})
-            accepted_ids=[a for u in state["units"] if u.get("status")=="accepted" for a in u.get("assessment_ids",[])]
-            assert accepted_ids
-            revise_id=accepted_ids[0]
+            accepted_ids=[a for unit in state["units"] if unit.get("status")=="accepted" for a in unit.get("assessment_ids",[])]
+            assert first_assessment in accepted_ids
+            revise_id=first_assessment
             sse_result={}
             ready=threading.Event()
 
@@ -208,10 +209,6 @@ def main() -> None:
             assert "error" not in sse_result,sse_result
 
             current=get(f"/v1/epistemic/state/{namespace}",{"memory_id":rid})
-            # Find evidence identity for the assessment from the canonical unit.
-            target_unit=next(u for u in current["units"] if revise_id in u.get("assessment_ids",[]))
-            # Map assessment back to evidence through the journal is deliberately not exposed;
-            # use e1 here because report-one is the earliest accepted assessment.
             revised=epistemic("revise",{**base,"evidence_id":e1,"assessment_id":revise_id,
                 "polarity":"SUPPORTS","strength":"MEDIUM","assessment_note":"corrected live assessment"},
                 "revise-live",current["epistemic_revision"])
