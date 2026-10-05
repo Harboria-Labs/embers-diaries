@@ -284,3 +284,50 @@ def test_mcp_schema_exposes_lineage_without_system_confirmed():
     propose=next(t for t in TOOLS if t['name']=='ember_propose_memory')
     item=propose['inputSchema']['properties']['evidence']['items']
     assert item['properties']['origin_confidence']['enum']==['UNKNOWN','AGENT_DECLARED']
+
+
+def test_epistemic_rest_mcp_state_parity(tmp_path,monkeypatch):
+    from fastapi.testclient import TestClient
+    from embers import api
+    from embers.identity.registry import AgentRegistry
+    from embers.mcp.server import EmberMCP
+    db=EmberDB.connect(str(tmp_path/'parity-store'))
+    agent,token=AgentRegistry(db).register('ella-parity')
+    proto=MemoryProtocol(db,default_namespace='parity')
+    rid=proto.remember({'content':'parity claim'},written_by=agent.agent_id,agent_id=agent.agent_id)
+    evidence=Evidence(source='fixture',reference='parity-evidence',agent_id=agent.agent_id,
+                      origin='fixture-origin',origin_confidence='AGENT_DECLARED')
+    eid=db.attach_evidence(rid,evidence)
+    version=db._store.read(rid).content_hash
+    monkeypatch.setattr(api,'_get_db',lambda:db)
+    client=TestClient(api.app)
+    headers={'X-Ember-Agent-Id':agent.agent_id,'X-Ember-Token':token}
+    body={'action':'report','request_id':'rest-report','expected_revision':0,'payload':{
+        'target_memory_id':rid,'target_memory_version':version,'evidence_id':eid,
+        'polarity':'SUPPORTS','strength':'MEDIUM','assessment_note':'REST parity assessment'}}
+    response=client.post('/v1/epistemic/feedback/parity',headers=headers,json=body)
+    assert response.status_code==200,response.text
+    rest_state=response.json()
+
+    mcp=EmberMCP(db=db)
+    mcp_state=mcp.call_tool('ember_epistemic_state',{'namespace':'parity','memory_id':rid,
+        'agent_id':agent.agent_id,'token':token})
+    assert not mcp_state['isError']
+    mcp_state=json.loads(mcp_state['content'][0]['text'])
+    canonical=('base_epistemic_verdict','public_epistemic_state','score','support_mass',
+               'opposition_mass','accepted_unit_count','raw_evidence_count',
+               'assessment_started','epistemic_revision','evidence_dispute','conflict_overlay')
+    assert {k:mcp_state[k] for k in canonical}=={k:rest_state[k] for k in canonical}
+
+    # MCP mutation must project identically back through REST.
+    eid2=db.attach_evidence(rid,Evidence(source='fixture-2',reference='parity-evidence-2',
+        agent_id=agent.agent_id,origin='fixture-origin-2',origin_confidence='AGENT_DECLARED'))
+    mcp_mut=mcp.call_tool('ember_epistemic_feedback',{'namespace':'parity','action':'report',
+        'request_id':'mcp-report','expected_revision':1,'payload':{
+            'target_memory_id':rid,'target_memory_version':version,'evidence_id':eid2,
+            'polarity':'OPPOSES','strength':'WEAK','assessment_note':'MCP parity assessment'},
+        'agent_id':agent.agent_id,'token':token})
+    assert not mcp_mut['isError']
+    rest_read=client.get('/v1/epistemic/state/parity',headers=headers,params={'memory_id':rid})
+    assert rest_read.status_code==200,rest_read.text
+    assert rest_read.json()['score']==json.loads(mcp_mut['content'][0]['text'])['score']
