@@ -361,6 +361,24 @@ def test_carry_forward_is_explicit_same_lineage_and_not_new_independence(rig):
         request_id='assess-carried',expected_revision=len(events))
     assert assessed['accepted_unit_count']==1
 
+    # Carried evidence is part of the target version's accepted evidence set:
+    # it can be dependency-resolved together with evidence attached directly
+    # to the revised claim, without inventing a second copy of the carried item.
+    direct=db.attach_evidence(new_id,Evidence(reference='new-version-evidence'))
+    _,events=ledger.load()
+    with_direct=ledger.apply('report',dict(target_memory_id=new_id,
+        target_memory_version=db._store.read(new_id).content_hash,
+        evidence_id=direct,polarity='SUPPORTS',strength='MEDIUM',
+        assessment_note='direct evidence on revised claim'),actor='admin',
+        request_id='assess-direct-new-version',expected_revision=len(events))
+    assert with_direct['accepted_unit_count']==2
+    _,events=ledger.load()
+    merged=ledger.apply('merge',dict(target_memory_id=new_id,
+        target_memory_version=db._store.read(new_id).content_hash,
+        evidence_ids=[evidence_id,direct],reason='same underlying observation'),
+        actor='admin',request_id='merge-carried-with-direct',expected_revision=len(events))
+    assert merged['accepted_unit_count']==1
+
     unrelated=p.remember({'content':'unrelated claim'},namespace='ella')
     _,events=ledger.load()
     with pytest.raises(ValueError,match='same memory history'):
