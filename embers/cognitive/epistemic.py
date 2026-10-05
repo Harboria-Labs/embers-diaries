@@ -124,6 +124,8 @@ class EpistemicLedger:
                     self._owned(prior,rid,actor,admin)
                     if prior['status'] not in ('accepted','confirmation_required'):
                         raise ValueError('only active assessments may be revised')
+                    if prior['target_memory_version']!=target.content_hash or prior['evidence_id']!=payload.get('evidence_id'):
+                        raise ValueError('revision must preserve exact claim version and evidence record')
                     prior['status']='superseded'
                 assessment=dict(assessment_id=event_id+':assessment',target_memory_id=rid,target_memory_version=target.content_hash,
                     evidence_id=payload['evidence_id'],assessor_id=actor,session_id=session,
