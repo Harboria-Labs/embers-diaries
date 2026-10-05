@@ -386,3 +386,24 @@ fn ella_rejects_arbitrary_numeric_strength_and_source_type_has_no_weight() {
     ]),"none");
     assert!((f(&weak,"score")-2.0*1.5_f64.ln()).abs()<1e-15);
 }
+
+
+#[test]
+fn ella_unknown_origin_is_not_soft_dependency_or_lineage_coverage() {
+    let mut p=ella::defaults();
+    p["soft_same_origin"]=json!(true);
+    let out=ella::project(&json!({"policy":p,"evidence":[
+        {"id":"e1","evidence_id":"e1","content_hash":"h1","reference":"",
+         "origin":"unknown","session_id":Value::Null,"event_id":Value::Null,"derived_from":[]},
+        {"id":"e2","evidence_id":"e2","content_hash":"h2","reference":"",
+         "origin":"unknown","session_id":Value::Null,"event_id":Value::Null,"derived_from":[]}
+    ],"assessments":[
+        ella_assessment("a1","e1","SUPPORTS","WEAK"),
+        ella_assessment("a2","e2","SUPPORTS","WEAK")
+    ],"hard_groups":[],"target_memory_id":"m","target_memory_version":"v",
+      "revision":1,"conflict_overlay":"none"})).unwrap();
+    assert_eq!(out["accepted_unit_count"],2);
+    assert_eq!(out["soft_cluster_count"],0);
+    assert_eq!(out["lineage_coverage"],0.0);
+    assert_eq!(out["unresolved_independence_count"],2);
+}
