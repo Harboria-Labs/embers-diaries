@@ -430,3 +430,41 @@ def test_lineage_correction_cannot_self_upgrade_to_system_confirmed(rig):
             evidence_id=eid,lineage={'origin':'claimed-origin','origin_confidence':'SYSTEM_CONFIRMED'},
             reason='attempted authority upgrade'),actor='admin',
             request_id='forbidden-origin-upgrade',expected_revision=len(events))
+
+
+def test_assessment_lifecycle_rejects_reusing_inactive_records(rig):
+    db,_,rid,l=rig;eid=ev(rig,'lifecycle')
+    first=report(rig,eid,strength='WEAK')
+    state,events=l.load();aid=next(iter(state['assessments']))
+    withdrawn=l.apply('withdraw',dict(target_memory_id=rid,
+        target_memory_version=db._store.read(rid).content_hash,assessment_id=aid,
+        reason='withdraw mistaken assessment'),actor='admin',request_id='withdraw-once',
+        expected_revision=len(events))
+    assert withdrawn['accepted_unit_count']==0
+    _,events=l.load()
+    with pytest.raises(ValueError,match='active assessments'):
+        l.apply('withdraw',dict(target_memory_id=rid,
+            target_memory_version=db._store.read(rid).content_hash,assessment_id=aid,
+            reason='cannot withdraw twice'),actor='admin',request_id='withdraw-twice',
+            expected_revision=len(events))
+    with pytest.raises(ValueError,match='active assessments'):
+        l.apply('revise',dict(target_memory_id=rid,
+            target_memory_version=db._store.read(rid).content_hash,evidence_id=eid,
+            assessment_id=aid,polarity='SUPPORTS',strength='MEDIUM',
+            assessment_note='cannot revive withdrawn record'),actor='admin',
+            request_id='revise-withdrawn',expected_revision=len(events))
+
+
+def test_explicit_resolution_replaces_mixed_assessment_without_multiplying_mass(rig):
+    db,_,rid,l=rig;eid=ev(rig,'resolution')
+    report(rig,eid,polarity='SUPPORTS',strength='STRONG',actor='one')
+    mixed=report(rig,eid,polarity='OPPOSES',strength='STRONG',actor='two')
+    assert mixed['accepted_unit_count']==0 and mixed['evidence_dispute']
+    state,events=l.load();chosen=sorted(state['assessments'])
+    resolved=l.apply('resolve',dict(target_memory_id=rid,
+        target_memory_version=db._store.read(rid).content_hash,evidence_id=eid,
+        assessment_ids=chosen,polarity='SUPPORTS',strength='MEDIUM',
+        assessment_note='authorized resolution from observable evidence'),
+        actor='admin',request_id='resolve-mixed',expected_revision=len(events))
+    assert resolved['accepted_unit_count']==1
+    assert resolved['score']==pytest.approx(call('ella_policy_default',None)['strengths']['MEDIUM'])
