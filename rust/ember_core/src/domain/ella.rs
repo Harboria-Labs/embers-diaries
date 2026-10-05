@@ -27,7 +27,7 @@ pub fn state(v:Value)->Result<Value>{
  let assessments=v["assessments"].as_object().ok_or("assessments object required")?;
  for (id,a) in assessments{
    assessment(a.clone())?;
-   if a["assessment_id"]!=*id{return Err("assessment key/id mismatch".into())}
+   if a["assessment_id"].as_str()!=Some(id.as_str()){return Err("assessment key/id mismatch".into())}
    if !["accepted","confirmation_required","withdrawn","superseded","resolved"].contains(&a["status"].as_str().unwrap_or("")){return Err("invalid assessment status".into())}
    if let Some(parent)=a.get("confirmation_of").filter(|x|!x.is_null()){text(parent,"confirmation_of")?;}
    if let Some(flag)=a.get("requires_confirmation"){if !flag.is_boolean(){return Err("requires_confirmation must be boolean".into())}}
