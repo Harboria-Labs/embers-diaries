@@ -25,5 +25,7 @@ jobs:
         run: python -m pytest -q tests/test_split_feedback.py tests/test_feedback_replay.py tests/test_feedback_lifecycle.py tests/test_feedback_durable.py tests/test_candidate_recall.py tests/test_total_store_quota.py
       - name: Full regression suite
         run: python -m pytest -q
+      - name: Rust research-domain tests
+        run: cargo test --release --manifest-path rust/ember_core/Cargo.toml --test research_domain
       - name: Rust type and build checks
         run: cargo check --manifest-path rust/ember_core/Cargo.toml
