@@ -314,3 +314,50 @@ def test_ordinary_token_capacity_preserves_direct_no_substitution(rig,monkeypatc
         assert [m['content'] for m in out['memories']]==[m['content'] for m in content]
         assert [m['metadata']['ember_record_id'] for m in out['memories']]==ids[:1]
     assert [r['id'] for r in out['results']]==ids[:1]
+
+
+def test_ordinary_pair_capacity_is_invariant_to_ella_verdict(rig,monkeypatch):
+    from dataclasses import replace
+    from embers.cognitive.epistemic import EpistemicLedger
+    from embers.core.evidence import Evidence
+    db,ids,proto=rig;edge(rig);feedback(rig)
+    proto.search_config=replace(proto.search_config,semantic_enabled=False)
+    monkeypatch.setattr(db,'search',lambda *a,**k:[(db._reader.get(ids[0],track_access=False),1.)])
+
+    # Measure direct-only and direct+pair message sizes under the historical inline
+    # representation, then choose a boundary where the pair misses by one char.
+    from embers.integration import pairing
+    with monkeypatch.context() as m:
+        m.setattr(pairing,'select',lambda *a,**k:(None,None))
+        direct=proto.recall('query',top_k=1,primary_context='ctx',format='messages')['memories']
+    normal=proto.recall('query',top_k=1,primary_context='ctx',format='messages')['memories']
+    total_chars=sum(len(m['content']) for m in normal)
+    assert len(normal)==2
+    proto.context_builder.max_tokens=(total_chars-1)/proto.context_builder._chars_per_token
+    before=proto.recall('query',top_k=1,primary_context='ctx',format='messages')
+    assert before['pair_expansion'] is None and [r['id'] for r in before['results']]==ids[:1]
+
+    # Drive the pair target to canonical VERIFIED using two independent evidence
+    # units plus threshold confirmation. Only epistemic state changes.
+    ledger=EpistemicLedger(db,'pairs')
+    def assess(ref,actor):
+        ev=Evidence(reference=ref);ev.seal();eid=db.attach_evidence(ids[1],ev)
+        state,events=ledger.load()
+        payload=dict(target_memory_id=ids[1],target_memory_version=db._store.read(ids[1]).content_hash,
+                     evidence_id=eid,polarity='SUPPORTS',strength='STRONG',
+                     assessment_note='capacity invariance test')
+        return ledger.apply('report',payload,actor=actor,request_id='ep-'+ref,expected_revision=len(events))
+    assess('one','assessor-one')
+    pending=assess('two','assessor-two')
+    aid=pending['confirmation_assessment_ids'][0]
+    state,events=ledger.load()
+    ledger.apply('confirm',dict(target_memory_id=ids[1],target_memory_version=db._store.read(ids[1]).content_hash,
+        evidence_id=next(a['evidence_id'] for a in state['assessments'].values() if a['assessment_id']==aid),
+        polarity='SUPPORTS',strength='STRONG',assessment_note='independent threshold confirmation',
+        confirmation_of=aid),actor='assessor-three',request_id='ep-confirm',expected_revision=len(events))
+    assert ledger.read(ids[1],'admin')['base_epistemic_verdict']=='VERIFIED'
+
+    after=proto.recall('query',top_k=1,primary_context='ctx',format='messages')
+    assert after['pair_expansion'] is None
+    assert [r['id'] for r in after['results']]==ids[:1]
+    assert [m['content'] for m in after['memories']]==[m['content'] for m in before['memories']]
