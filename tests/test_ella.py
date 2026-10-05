@@ -494,3 +494,18 @@ def test_explicit_resolution_replaces_mixed_assessment_without_multiplying_mass(
         actor='admin',request_id='resolve-mixed',expected_revision=len(events))
     assert resolved['accepted_unit_count']==1
     assert resolved['score']==pytest.approx(call('ella_policy_default',None)['strengths']['MEDIUM'])
+
+
+def test_revision_cannot_move_assessment_to_different_evidence(rig):
+    db,_,rid,l=rig
+    first=ev(rig,'revision-first')
+    second=ev(rig,'revision-second')
+    report(rig,first,strength='WEAK')
+    state,events=l.load()
+    aid=next(iter(state['assessments']))
+    with pytest.raises(ValueError,match='preserve exact claim version and evidence'):
+        l.apply('revise',dict(target_memory_id=rid,
+            target_memory_version=db._store.read(rid).content_hash,
+            evidence_id=second,assessment_id=aid,polarity='SUPPORTS',strength='MEDIUM',
+            assessment_note='must not move an assessment to another evidence record'),
+            actor='admin',request_id='cross-evidence-revision',expected_revision=len(events))
