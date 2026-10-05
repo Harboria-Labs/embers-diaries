@@ -30,7 +30,9 @@ class EpistemicLedger:
             if event['previous']!=(events[-1]['seal'] if events else None) or digest({k:v for k,v in event.items() if k!='seal'})!=event['seal']:
                 raise ValueError('epistemic journal chain failure')
             events.append(event)
-        state=deepcopy(events[-1]['state']) if events else dict(assessments={},evidence_overrides={},hard_groups={},policy=call('ella_policy_default',None),carried={})
+        state=dict(assessments={},evidence_overrides={},hard_groups={},policy=call('ella_policy_default',None),carried={})
+        for event in events:
+            state=call('ella_reduce',{'state':state,'event':event})
         return state,events
 
     def target(self,rid):
@@ -202,6 +204,7 @@ class EpistemicLedger:
                     if group not in next_state['hard_groups']:raise ValueError('explicit merge group required; correct raw lineage separately')
                     del next_state['hard_groups'][group]
             else:raise ValueError('unsupported epistemic action')
+            next_state=call('ella_state',next_state)
             response=self.project(rid,next_state,revision)
             response.update(event_id=event_id)
             event=dict(kind=KIND,id=event_id,namespace=self.namespace,revision=revision,actor=actor,request_id=request_id,
