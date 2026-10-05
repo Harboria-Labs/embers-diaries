@@ -181,9 +181,9 @@ class EpistemicLedger:
                     raise ValueError('unsupported carry-forward fields')
                 source=self.target(payload.get('source_memory_id'))
                 if payload.get('source_memory_version')!=source.content_hash:raise ValueError('exact source version required')
-                history={record.id for record in self.db.get_history(rid)}
-                if source.id not in history:
-                    raise ValueError('carry-forward is limited to versions in the same memory history')
+                lineage=set(self.db._writer.get_supersession_chain(source.id))
+                if rid not in lineage:
+                    raise ValueError('carry-forward is limited to later versions in the same memory history')
                 ids=payload.get('evidence_ids');available={r.id for r in self.db.evidence_for(source.id)}|set(state.get('carried',{}).get(source.id,[]))
                 if not isinstance(ids,list) or not ids or any(eid not in available for eid in ids):raise ValueError('source evidence required')
                 next_state.setdefault('carried',{})[rid]=sorted(set(next_state.get('carried',{}).get(rid,[]))|set(ids))
