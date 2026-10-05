@@ -161,7 +161,11 @@ class EpistemicLedger:
                 if 'derived_from' in changes:
                     if not isinstance(changes['derived_from'],list):raise ValueError('dependency list required')
                     for dep in changes['derived_from']:identifier(dep,'dependency')
-                if changes.get('origin_confidence','UNKNOWN') not in {'UNKNOWN','SYSTEM_CONFIRMED','AGENT_DECLARED'}:raise ValueError('invalid origin confidence')
+                confidence=changes.get('origin_confidence')
+                if confidence not in (None,'UNKNOWN','AGENT_DECLARED','SYSTEM_CONFIRMED'):raise ValueError('invalid origin confidence')
+                if confidence=='SYSTEM_CONFIRMED':raise PermissionError('SYSTEM_CONFIRMED origin is reserved for system-captured provenance')
+                if changes.get('origin')=='unknown' and confidence not in (None,'UNKNOWN'):
+                    raise ValueError('unknown origin cannot carry declared identity confidence')
                 next_state['evidence_overrides'].setdefault(eid,{}).update(changes)
             elif action=='carry_forward':
                 if not admin:raise PermissionError('epistemic decision authority required')
