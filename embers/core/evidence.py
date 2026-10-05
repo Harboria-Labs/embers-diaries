@@ -77,6 +77,8 @@ class Evidence:
             raise ValueError("event_id must be nonblank text when supplied")
         if self.origin_confidence == "SYSTEM_CONFIRMED" and self.origin is None:
             raise ValueError("system-confirmed origin requires an origin identity")
+        if self.origin == "unknown" and self.origin_confidence != "UNKNOWN":
+            raise ValueError("unknown origin cannot carry a declared or confirmed identity confidence")
         if self.hash_version not in (1, 2):
             raise ValueError("unsupported evidence hash version")
         lineage = self.origin is not None or self.event_id is not None or self.derived_from or self.origin_confidence != "UNKNOWN"
