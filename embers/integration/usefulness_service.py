@@ -140,11 +140,12 @@ def _snapshot(db, namespace, actor, *, after=0, limit=100, request_id=None, sess
         measured=heat_event['observation'] if heat_event else {}
         reports = [r for r in state['reports'] if r['target']['kind'] == 'memory' and r['target']['memory_ids'] == [rid]]
         from .write_observation import provenance
+        from ..core.domain import explicit_truth
         origin=provenance(db,rec)
-        creation=next((e for e in ledger._events if rid in e.get('observation',{}).get('memory_ids',[])),None)
+        creation=next((e for e in ledger._events if e.get('observation',{}).get('operation','').startswith('memory_written') and rid in e.get('observation',{}).get('memory_ids',[])),None)
         if creation:origin.update(creation_event=creation['id'],originating_agent=creation['actor'])
         nodes.append({'provenance':origin,'id': rid, 'subject': data.get('subject'), 'primary_context': data.get('primary_context'),
-            'preview': str(data.get('content',data.get('summary','')))[:500], 'verify_status': data.get('verify_status'),
+            'preview': str(data.get('content',data.get('summary','')))[:500], 'verify_status': explicit_truth(rec)['status'],'epistemic':explicit_truth(rec),
             'usefulness': [s for s in state['states'] if s['target']['kind']=='memory' and s['target']['memory_ids']==[rid]][:30],
             'heat': measured.get('observed_heat',{}).get(rid), 'heat_source': measured.get('heat_source'),
             'heat_observed_at':heat_event['created_at'] if heat_event else None,

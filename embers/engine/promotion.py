@@ -73,7 +73,7 @@ class PromotionPolicy:
                             is routed to the human gate instead of auto-promoted
     """
     min_confidence: float = 0.7
-    verified_confidence: float = 0.85
+    verified_confidence: float = 0.85  # Deprecated compatibility input; ignored for admission/truth.
     require_evidence: bool = True
     minimum_evidence_items: int = 1
     consensus_threshold: int = 2
@@ -187,18 +187,10 @@ class PromotionEngine:
             return PromotionResult(decision, memory_id=None)
         memory_id, _ = self._db.promote(
             proposal_id, validated_by=validated_by,
-            status=decision.status, promotion_method=decision.method)
+            promotion_method=decision.method)
         return PromotionResult(decision, memory_id=memory_id)
 
     # ── Mode policies ──────────────────────────────────────────────────────────
-
-    def _status_for(self, confidence: float) -> MemoryStatus:
-        """Map confidence onto the admitted status. Above verified_confidence a
-        memory is VERIFIED; in the [min, verified) band it is admitted but only
-        PROVISIONAL — 'met the criteria to enter memory' ≠ 'known true'."""
-        if confidence >= self.policy.verified_confidence:
-            return MemoryStatus.VERIFIED
-        return MemoryStatus.PROVISIONAL
 
     def _automatic_gates(self, proposal) -> list[tuple[bool, str]]:
         """The AUTOMATIC-mode criteria, each as (passed, explanation). Shared by
@@ -233,7 +225,7 @@ class PromotionEngine:
             return PromotionDecision(
                 proposal.proposal_id, PromotionOutcome.PROMOTE, self.mode,
                 method=PromotionMethod.AUTOMATIC,
-                status=self._status_for(proposal.confidence),
+                
                 reasons=reasons)
         return PromotionDecision(
             proposal.proposal_id, PromotionOutcome.HOLD, self.mode,
@@ -273,7 +265,7 @@ class PromotionEngine:
             return PromotionDecision(
                 proposal.proposal_id, PromotionOutcome.PROMOTE, self.mode,
                 method=PromotionMethod.CONSENSUS,
-                status=self._status_for(proposal.confidence),
+                
                 reasons=reasons)
         return PromotionDecision(
             proposal.proposal_id, PromotionOutcome.HOLD, self.mode,

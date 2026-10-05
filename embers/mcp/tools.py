@@ -571,3 +571,8 @@ TOOLS.append({"name":"ember_pair_relationship",
  "primary_context":{"type":["string","null"]},
  "agent_id":{"type":"string"},"token":{"type":"string"},"session_id":{"type":"string"}},
  "required":["source","target","relation","primary_context"]}})
+
+for _name,_props,_required in [
+    ('ember_epistemic_state',{'memory_id':{'type':'string'}},['memory_id']),
+    ('ember_epistemic_feedback',{'action':{'type':'string','enum':['report','revise','confirm','withdraw','resolve','invalidate_evidence','correct_evidence','merge','split','carry_forward','configure']},'payload':{'type':'object'},'request_id':{'type':'string'},'expected_revision':{'type':'integer','minimum':0}},['action','payload','request_id','expected_revision'])]:
+    TOOLS.append({'name':_name,'description':'ELLA V1 exact-version evidence assessment; usefulness and retrieval remain separate. Feedback requires exact target content hash, evidence record ID, SUPPORTS/OPPOSES, WEAK/MEDIUM/STRONG and a concise assessment_note. Numeric likelihoods are forbidden.', 'inputSchema':{'type':'object','properties':{'namespace':{'type':'string'},'agent_id':{'type':'string'},'token':{'type':'string'},'session_id':{'type':'string'},**_props},'required':['namespace',*_required]}})

@@ -9,4 +9,5 @@ def call(operation, value):
 
 
 def explicit_truth(record, open_conflict=False):
-    return call('truth', {'data':record.data, 'annotations':[a.to_dict() for a in record.annotations], 'open_conflict':open_conflict})
+    provider=getattr(record,'_epistemic_provider',None)
+    return call('truth', {'data':record.data, 'projection':provider() if provider else None, 'open_conflict':open_conflict})

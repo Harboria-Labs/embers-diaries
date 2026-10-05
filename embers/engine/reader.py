@@ -62,6 +62,8 @@ class ReadEngine:
                 record.access_count = count
                 record.last_accessed = last
 
+        if hasattr(self, '_epistemic_provider'):
+            record._epistemic_provider = lambda: self._epistemic_provider(record)
         return record
 
     def get_current(self, record_id: str) -> EmberRecord | None:

@@ -78,7 +78,7 @@ def recall(db, namespace, actor, *, query_id, direct_scores, elapsed, context=No
         selected=[]
         for rid in plan['order']:
             rec=records[rid]
-            truth=explicit_truth(rec,any(c.status.value=='open' for c in db.conflicts_for(rid)))
+            truth=explicit_truth(rec,any(c.status.value in ('open','investigating') for c in db.conflicts_for(rid)))
             row={'id':rid,'data':rec.data,'truth_status':truth['status'],'truth_projection':truth,'written_by':rec.written_by,'content_hash':rec.content_hash,
                  'dynamics':next(r for r in candidates if r['id']==rid)}
             if call('admit',dict(admission,item_tokens=counter(_render([row],format)),total_tokens=counter(_render(selected+[row],format)),selected_count=len(selected)))['admit']:
@@ -88,7 +88,7 @@ def recall(db, namespace, actor, *, query_id, direct_scores, elapsed, context=No
         paired, pair_route=select(db,namespace,direct_ids,context,state,query_id)
         pair_expansion=None
         if paired is not None:
-            truth=explicit_truth(paired,any(c.status.value=='open' for c in db.conflicts_for(paired.id)))
+            truth=explicit_truth(paired,any(c.status.value in ('open','investigating') for c in db.conflicts_for(paired.id)))
             row={'id':paired.id,'data':paired.data,'truth_status':truth['status'],'truth_projection':truth,
                  'written_by':paired.written_by,'content_hash':paired.content_hash,'retrieval':pair_route}
             if call('admit',dict(admission,item_tokens=counter(_render([row],format)),total_tokens=counter(_render(selected+[row],format)),selected_count=len(selected)))['admit']:

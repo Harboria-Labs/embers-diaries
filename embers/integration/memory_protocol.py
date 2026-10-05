@@ -327,6 +327,8 @@ class MemoryProtocol:
                status: str = "verified",
                note: str = "",
                written_by: str = "llm") -> bool:
+        import warnings
+        warnings.warn('verify() records a legacy annotation only; use ember_epistemic_feedback for authoritative evidence', DeprecationWarning, stacklevel=2)
         valid_statuses = {"verified", "hypothesis", "contested", "deprecated"}
         if status not in valid_statuses:
             raise ValueError(f"Invalid status: {status}. Must be one of {valid_statuses}")

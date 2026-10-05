@@ -113,6 +113,11 @@ class EmberDB:
         # to the unindexed store.all_ids() scan.
         self._master_index = MasterIndex(self._path)
         self._reader = ReadEngine(self._store, self._writer, self._master_index)
+        def epistemic_projection(record):
+            if record.record_type not in self._DURABLE_MEMORY_TYPES:return None
+            from .cognitive.epistemic import EpistemicLedger
+            with self._writer.lock:return EpistemicLedger(self,record.namespace).project(record.id)
+        self._reader._epistemic_provider = epistemic_projection
         self._graph_index = GraphIndex(self._path)
         self._timeline_index = TimelineIndex(self._path)
         self._vector_index = VectorIndex(self._path)
@@ -1418,7 +1423,9 @@ class EmberDB:
         or is not currently pending.
         """
         from .core.types import MemoryStatus, PromotionMethod
-        status = status or MemoryStatus.VERIFIED
+        if status is not None:
+            raise ValueError('Promotion is admission only; use ember_epistemic_feedback for truth evidence')
+        status = MemoryStatus.PROVISIONAL
         promotion_method = promotion_method or PromotionMethod.HUMAN
 
         proposal = self.get_proposal(proposal_id)
@@ -1536,7 +1543,7 @@ class EmberDB:
         from .core.types import MemoryStatus
         rec = self._reader.get_current(memory_id) or self._reader.get(memory_id, True, True)
         if rec is None: raise KeyError(memory_id)
-        value = explicit_truth(rec, any(c.status.value == 'open' for c in self.conflicts_for(rec.id)))['status']
+        value = explicit_truth(rec, any(c.status.value in ('open','investigating') for c in self.conflicts_for(rec.id)))['status']
         if value == 'superseded': return MemoryStatus.SUPERSEDED
         return MemoryStatus.VERIFIED if value == 'verified' else MemoryStatus.DISPUTED if value in ('disputed','contested','incorrect') else MemoryStatus.PROVISIONAL
 

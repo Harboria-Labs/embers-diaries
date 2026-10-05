@@ -271,6 +271,14 @@ class EmberMCP:
             if name=='ember_research_settings':return _text(consolidated.settings(self.db,ns,actor))
             if name=='ember_research_configure':return _text(consolidated.configure(self.db,ns,actor,{k:args[k] for k in ('config','policy','request_id','expected_revision','reason')}))
             return _text(consolidated.recall(self.db,ns,actor,**{k:args[k] for k in ('query_id','direct_scores','elapsed','context','format','session_id') if k in args}))
+        if name in ('ember_epistemic_feedback','ember_epistemic_state'):
+            from ..cognitive.epistemic import EpistemicLedger
+            actor=self._auth(args).agent_id
+            ledger=EpistemicLedger(self.db,args['namespace'])
+            if name=='ember_epistemic_state':return _text(ledger.read(args['memory_id'],actor))
+            payload={**args.get('payload',{})}
+            if args.get('session_id'):payload['session_id']=args['session_id']
+            return _text(ledger.apply(args.get('action'),payload,actor=actor,request_id=args.get('request_id'),expected_revision=args.get('expected_revision')))
         if name == "ember_pair_relationship":
             from ..integration.pairing import link
             actor=self._auth(args).agent_id

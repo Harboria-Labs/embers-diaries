@@ -61,6 +61,26 @@ class Evidence:
     # ── Integrity ──────────────────────────────────────────────────────────────
     content_hash: str | None = None                    # set by seal()
 
+    # V1 hashes remain byte-for-byte compatible; lineage-aware evidence uses V2.
+    origin: str | None = None
+    origin_confidence: str = "UNKNOWN"
+    event_id: str | None = None
+    derived_from: list[str] = field(default_factory=list)
+    hash_version: int = 1
+
+    def __post_init__(self):
+        if self.origin_confidence not in {"SYSTEM_CONFIRMED", "AGENT_DECLARED", "UNKNOWN"}:
+            raise ValueError("invalid origin confidence")
+        if self.hash_version not in (1, 2):
+            raise ValueError("unsupported evidence hash version")
+        lineage = self.origin is not None or self.event_id is not None or self.derived_from or self.origin_confidence != "UNKNOWN"
+        if lineage and self.hash_version == 1:
+            if self.content_hash is not None:
+                raise ValueError("legacy hash cannot authenticate new lineage fields")
+            self.hash_version = 2
+        if not isinstance(self.derived_from, list) or any(not isinstance(x, str) or not x.strip() for x in self.derived_from):
+            raise ValueError("derived_from must contain evidence identities")
+
     def canonical_hash_payload(self) -> dict:
         """The immutable fields that define this evidence's identity.
 
@@ -82,6 +102,9 @@ class Evidence:
             payload["agent_id"] = self.agent_id
         if self.session_id is not None:
             payload["session_id"] = self.session_id
+        if self.hash_version == 2:
+            payload.update(hash_version=2, origin=self.origin, origin_confidence=self.origin_confidence,
+                           event_id=self.event_id, derived_from=self.derived_from)
         return payload
 
     def compute_content_hash(self) -> str:
@@ -106,7 +129,7 @@ class Evidence:
         return self.compute_content_hash() == self.content_hash
 
     def to_dict(self) -> dict:
-        return {
+        result = {
             "evidence_id": self.evidence_id,
             "source": self.source,
             "source_type": self.source_type.value,
@@ -118,9 +141,16 @@ class Evidence:
             "content_hash": self.content_hash,
         }
 
+        if self.hash_version == 2:
+            result.update(hash_version=2, origin=self.origin, origin_confidence=self.origin_confidence,
+                          event_id=self.event_id, derived_from=list(self.derived_from))
+        return result
+
     @classmethod
     def from_dict(cls, d: dict) -> "Evidence":
         return cls(
+            origin=d.get('origin'), origin_confidence=d.get('origin_confidence','UNKNOWN'),
+            event_id=d.get('event_id'), derived_from=d.get('derived_from',[]), hash_version=d.get('hash_version',1),
             evidence_id  = d["evidence_id"],
             source       = d.get("source", ""),
             source_type  = SourceType(d.get("source_type", "directly_observed")),
