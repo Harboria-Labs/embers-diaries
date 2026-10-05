@@ -1638,8 +1638,10 @@ class EmberDB:
     def attach_evidence(self, memory_id: str, ev: Evidence) -> str:
         """Attach a new piece of evidence to an EXISTING durable memory.
 
-        This is the multi-agent confirmation path: any agent can add independent
-        evidence to a memory over time WITHOUT modifying (superseding) it —
+        This is the multi-agent evidence path: any agent can add an evidence
+        record over time WITHOUT modifying (superseding) the memory. Attachment
+        does not claim epistemic independence; ELLA resolves detectable
+        dependence and claim-specific assessment separately —
         append a new EVIDENCE record with a SUPPORTS edge. Append-only, so the
         memory's hash is untouched and its confirmation trail only grows.
         Returns the evidence record id.
