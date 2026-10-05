@@ -46,11 +46,176 @@ pub fn state(v:Value)->Result<Value>{
  for ids in carried.values(){let a=ids.as_array().ok_or("carried evidence must be array")?;let mut seen=BTreeSet::new();for id in a{let s=text(id,"carried evidence id")?;if !seen.insert(s){return Err("duplicate carried evidence id".into())}}}
  Ok(v)
 }
+fn unchanged_components(before:&Value,after:&Value,changed:&str)->Result<()>{
+ for key in ["assessments","evidence_overrides","hard_groups","policy","carried"]{
+  if key!=changed && before[key]!=after[key]{return Err(format!("ELLA transition unexpectedly changed {key}"))}
+ }
+ Ok(())
+}
+fn expected_new_assessment<'a>(before:&'a Value,after:&'a Value,event:&Value)->Result<&'a Value>{
+ let prev=before["assessments"].as_object().ok_or("assessments object required")?;
+ let next=after["assessments"].as_object().ok_or("assessments object required")?;
+ let expected=format!("{}:assessment",text(&event["id"],"event id")?);
+ if prev.contains_key(&expected)||next.len()!=prev.len()+1{return Err("ELLA assessment transition cardinality mismatch".into())}
+ let a=next.get(&expected).ok_or("ELLA event assessment id mismatch")?;
+ assessment(a.clone())?;
+ if a["assessment_id"]!=expected || a["assessor_id"]!=event["actor"] || a["request_id"]!=event["request_id"]{
+  return Err("ELLA assessment audit identity mismatch".into())
+ }
+ Ok(a)
+}
+fn unchanged_assessments_except(before:&Value,after:&Value,allowed:&BTreeSet<String>)->Result<()>{
+ let prev=before["assessments"].as_object().ok_or("assessments object required")?;
+ let next=after["assessments"].as_object().ok_or("assessments object required")?;
+ for (id,a) in prev{
+  if !allowed.contains(id) && next.get(id)!=Some(a){return Err("unrelated assessment changed during ELLA transition".into())}
+ }
+ Ok(())
+}
+fn validate_transition(before:&Value,after:&Value,event:&Value)->Result<()>{
+ state(before.clone())?;state(after.clone())?;
+ let action=text(&event["action"],"action")?;
+ let p=event["payload"].as_object().ok_or("ELLA payload object required")?;
+ let payload=&event["payload"];
+ let target=&payload["target_memory_id"];
+ let version=&payload["target_memory_version"];
+ match action{
+  "report"=>{
+   unchanged_components(before,after,"assessments")?;
+   let a=expected_new_assessment(before,after,event)?;
+   if a["target_memory_id"]!=*target||a["target_memory_version"]!=*version||a["evidence_id"]!=payload["evidence_id"]||
+      a["polarity"]!=payload["polarity"]||a["strength"]!=payload["strength"]{
+    return Err("ELLA report assessment does not match command".into())
+   }
+   if a["status"]=="confirmation_required"{
+    if a["requires_confirmation"]!=true{return Err("pending threshold crossing must be marked requires_confirmation".into())}
+   }else if a["status"]!="accepted"||a.get("requires_confirmation")==Some(&Value::Bool(true)){
+    return Err("invalid report assessment state".into())
+   }
+   unchanged_assessments_except(before,after,&BTreeSet::new())?;
+  },
+  "revise"=>{
+   unchanged_components(before,after,"assessments")?;
+   let a=expected_new_assessment(before,after,event)?;
+   let prior=text(&payload["assessment_id"],"assessment_id")?.to_string();
+   let old=&before["assessments"][&prior];let new=&after["assessments"][&prior];
+   if !["accepted","confirmation_required"].contains(&old["status"].as_str().unwrap_or(""))||new["status"]!="superseded"{
+    return Err("invalid ELLA revision lifecycle".into())
+   }
+   if a["target_memory_id"]!=*target||a["target_memory_version"]!=*version||a["evidence_id"]!=payload["evidence_id"]||
+      a["polarity"]!=payload["polarity"]||a["strength"]!=payload["strength"]{
+    return Err("ELLA revised assessment does not match command".into())
+   }
+   let mut allowed=BTreeSet::new();allowed.insert(prior);unchanged_assessments_except(before,after,&allowed)?;
+  },
+  "confirm"=>{
+   unchanged_components(before,after,"assessments")?;
+   let a=expected_new_assessment(before,after,event)?;
+   let prior=text(&payload["confirmation_of"],"confirmation_of")?.to_string();
+   let old=&before["assessments"][&prior];let new=&after["assessments"][&prior];
+   if old["status"]!="confirmation_required"||old["requires_confirmation"]!=true||!old["confirmation_of"].is_null()||
+      old["target_memory_id"]!=*target||old["target_memory_version"]!=*version||old["evidence_id"]!=payload["evidence_id"]{
+    return Err("confirmation must target the original pending threshold assessment".into())
+   }
+   if old["assessor_id"]==event["actor"]||a["confirmation_of"]!=prior{return Err("invalid confirmation identity".into())}
+   if a["target_memory_id"]!=*target||a["target_memory_version"]!=*version||a["evidence_id"]!=payload["evidence_id"]||
+      a["polarity"]!=payload["polarity"]||a["strength"]!=payload["strength"]{
+    return Err("ELLA confirmation assessment does not match command".into())
+   }
+   if old["polarity"]==a["polarity"]{
+    if new["status"]!="accepted"||a["status"]!="accepted"{return Err("same-polarity confirmation must accept the crossing evidence".into())}
+   }else if new!=old||a["status"]!="confirmation_required"{
+    return Err("opposing confirmation must remain unresolved".into())
+   }
+   let mut allowed=BTreeSet::new();allowed.insert(prior);unchanged_assessments_except(before,after,&allowed)?;
+  },
+  "resolve"=>{
+   unchanged_components(before,after,"assessments")?;
+   let a=expected_new_assessment(before,after,event)?;
+   let ids=payload["assessment_ids"].as_array().ok_or("assessment_ids required")?;
+   let mut allowed=BTreeSet::new();
+   for id in ids{
+    let id=text(id,"assessment_id")?.to_string();allowed.insert(id.clone());
+    let old=&before["assessments"][&id];let new=&after["assessments"][&id];
+    if !["accepted","confirmation_required"].contains(&old["status"].as_str().unwrap_or(""))||new["status"]!="resolved"{
+     return Err("invalid ELLA resolution lifecycle".into())
+    }
+   }
+   unchanged_assessments_except(before,after,&allowed)?;
+   if a["target_memory_id"]!=*target||a["target_memory_version"]!=*version||a["evidence_id"]!=payload["evidence_id"]||
+      a["polarity"]!=payload["polarity"]||a["strength"]!=payload["strength"]{
+    return Err("ELLA resolution assessment does not match command".into())
+   }
+  },
+  "withdraw"=>{
+   unchanged_components(before,after,"assessments")?;
+   let id=text(&payload["assessment_id"],"assessment_id")?.to_string();
+   let prev=before["assessments"].as_object().unwrap();let next=after["assessments"].as_object().unwrap();
+   if prev.len()!=next.len(){return Err("withdraw may not create assessments".into())}
+   let old=&before["assessments"][&id];let new=&after["assessments"][&id];
+   if !["accepted","confirmation_required"].contains(&old["status"].as_str().unwrap_or(""))||new["status"]!="withdrawn"{
+    return Err("invalid ELLA withdrawal lifecycle".into())
+   }
+   let mut allowed=BTreeSet::new();allowed.insert(id);unchanged_assessments_except(before,after,&allowed)?;
+  },
+  "invalidate_evidence"=>{
+   unchanged_components(before,after,"evidence_overrides")?;
+   let eid=text(&payload["evidence_id"],"evidence_id")?;
+   let mut expected=before["evidence_overrides"][eid].clone();
+   if !expected.is_object(){expected=json!({})}
+   expected["invalidated"]=json!(true);
+   if after["evidence_overrides"][eid]!=expected{return Err("evidence invalidation transition mismatch".into())}
+   for (id,value) in before["evidence_overrides"].as_object().unwrap(){if id!=eid&&after["evidence_overrides"][id]!=*value{return Err("unrelated evidence override changed".into())}}
+  },
+  "correct_evidence"=>{
+   unchanged_components(before,after,"evidence_overrides")?;
+   let eid=text(&payload["evidence_id"],"evidence_id")?;
+   let changes=payload["lineage"].as_object().ok_or("lineage correction object required")?;
+   let mut expected=before["evidence_overrides"][eid].clone();if !expected.is_object(){expected=json!({})}
+   for (k,v) in changes{expected[k]=v.clone();}
+   if after["evidence_overrides"][eid]!=expected{return Err("evidence correction transition mismatch".into())}
+   for (id,value) in before["evidence_overrides"].as_object().unwrap(){if id!=eid&&after["evidence_overrides"][id]!=*value{return Err("unrelated evidence override changed".into())}}
+  },
+  "carry_forward"=>{
+   unchanged_components(before,after,"carried")?;
+   let rid=text(target,"target_memory_id")?;
+   let ids=payload["evidence_ids"].as_array().ok_or("evidence_ids required")?;
+   let mut expected=before["carried"][rid].as_array().cloned().unwrap_or_default();
+   expected.extend(ids.iter().cloned());expected.sort_by(|a,b|a.as_str().cmp(&b.as_str()));expected.dedup();
+   if after["carried"][rid]!=Value::Array(expected){return Err("carry-forward transition mismatch".into())}
+   for (id,value) in before["carried"].as_object().unwrap(){if id!=rid&&after["carried"][id]!=*value{return Err("unrelated carry-forward state changed".into())}}
+  },
+  "configure"=>{
+   unchanged_components(before,after,"policy")?;
+   if after["policy"]!=payload["policy"]{return Err("ELLA policy transition mismatch".into())}
+   policy(after["policy"].clone())?;
+  },
+  "merge"=>{
+   unchanged_components(before,after,"hard_groups")?;
+   let id=text(&event["id"],"event id")?;
+   let prev=before["hard_groups"].as_object().unwrap();let next=after["hard_groups"].as_object().unwrap();
+   if next.len()!=prev.len()+1||next[id]!=payload["evidence_ids"]{return Err("ELLA merge transition mismatch".into())}
+   for (k,value) in prev{if next[k]!=*value{return Err("existing dependency group changed during merge".into())}}
+  },
+  "split"=>{
+   unchanged_components(before,after,"hard_groups")?;
+   let id=text(&payload["group_id"],"group_id")?;
+   let prev=before["hard_groups"].as_object().unwrap();let next=after["hard_groups"].as_object().unwrap();
+   if !prev.contains_key(id)||next.contains_key(id)||next.len()+1!=prev.len(){return Err("ELLA split transition mismatch".into())}
+   for (k,value) in prev{if k!=id&&next[k]!=*value{return Err("unrelated dependency group changed during split".into())}}
+  },
+  _=>return Err("unsupported ELLA journal action".into())
+ }
+ if p.get("target_memory_id").is_none()||p.get("target_memory_version").is_none(){return Err("exact target required".into())}
+ Ok(())
+}
 pub fn reduce(v:Value)->Result<Value>{
- state(v["state"].clone())?;
+ let before=v["state"].clone();state(before.clone())?;
  let event=v["event"].as_object().ok_or("ELLA event object required")?;
  let next=event.get("state").cloned().ok_or("ELLA event state required")?;
- state(next)
+ state(next.clone())?;
+ validate_transition(&before,&next,&Value::Object(event.clone()))?;
+ Ok(next)
 }
 
 pub fn project(v:&Value)->Result<Value>{
