@@ -414,12 +414,26 @@ fn ella_native_state_reducer_validates_persisted_lifecycle() {
     let state=json!({"assessments":{},"evidence_overrides":{},"hard_groups":{},
         "policy":ella::defaults(),"carried":{}});
     assert_eq!(ella::state(state.clone()).unwrap(),state);
+    let assessment=json!({"assessment_id":"evt:assessment","target_memory_id":"m",
+        "target_memory_version":"v","evidence_id":"e","assessor_id":"assessor",
+        "assessment_note":"bounded semantic judgment","polarity":"SUPPORTS",
+        "strength":"WEAK","request_id":"req","revision":1,"created_at":1.0,
+        "status":"accepted"});
     let mut next=state.clone();
-    next["assessments"]["a"]=ella_assessment("a","e","SUPPORTS","WEAK");
-    next["assessments"]["a"]["status"]=json!("accepted");
-    let reduced=ella::reduce(json!({"state":state,"event":{"state":next}})).unwrap();
-    assert_eq!(reduced["assessments"]["a"]["status"],"accepted");
-    let mut bad=reduced.clone();
-    bad["assessments"]["a"]["status"]=json!("invented");
-    assert!(ella::reduce(json!({"state":reduced,"event":{"state":bad}})).is_err());
+    next["assessments"]["evt:assessment"]=assessment;
+    let payload=json!({"target_memory_id":"m","target_memory_version":"v",
+        "evidence_id":"e","polarity":"SUPPORTS","strength":"WEAK",
+        "assessment_note":"bounded semantic judgment"});
+    let event=json!({"id":"evt","actor":"assessor","request_id":"req","action":"report",
+        "payload":payload,"state":next});
+    let reduced=ella::reduce(json!({"state":state,"event":event})).unwrap();
+    assert_eq!(reduced["assessments"]["evt:assessment"]["status"],"accepted");
+
+    // A structurally valid state that changes the semantic strength without a
+    // matching command is rejected: replay is a native transition check, not
+    // merely deserialization of a Python-produced snapshot.
+    let mut tampered=event.clone();
+    tampered["state"]["assessments"]["evt:assessment"]["strength"]=json!("STRONG");
+    assert!(ella::reduce(json!({"state":json!({"assessments":{},"evidence_overrides":{},"hard_groups":{},
+        "policy":ella::defaults(),"carried":{}}),"event":tampered})).is_err());
 }
