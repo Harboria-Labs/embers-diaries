@@ -192,7 +192,7 @@ TOOLS = [
                 "confidence": {"type": "number"},
                 "namespace": {"type": "string"},
                 "session_id": {"type": "string"},
-                "evidence": {"type": "array","items":{"type":"object","additionalProperties":false,"properties":{
+                "evidence": {"type": "array","items":{"type":"object","additionalProperties":False,"properties":{
                     "source":{"type":"string"},
                     "source_type":{"type":"string"},
                     "reference":{"type":"string"},
@@ -200,7 +200,7 @@ TOOLS = [
                     "origin":{"type":"string","description":"Underlying source/origin identity. If omitted, Ember records origin=unknown."},
                     "origin_confidence":{"type":"string","enum":["UNKNOWN","AGENT_DECLARED"],"description":"Identity confidence only; never evidence strength. SYSTEM_CONFIRMED is reserved for system-captured provenance."},
                     "event_id":{"type":"string","description":"Optional observation/event identity used for dependency detection."},
-                    "derived_from":{"type":"array","items":{"type":"string"},"uniqueItems":true,"description":"Evidence identities this item derives from."}
+                    "derived_from":{"type":"array","items":{"type":"string"},"uniqueItems":True,"description":"Evidence identities this item derives from."}
                 },"required":["source"]}},
                 "agent_id": {"type": "string"},
                 "token": {"type": "string"},
