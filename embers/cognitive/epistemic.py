@@ -88,6 +88,7 @@ class EpistemicLedger:
             rid=payload.get('target_memory_id');target=self.target(rid)
             if payload.get('target_memory_version')!=target.content_hash:raise ValueError('exact target content hash required')
             admin=actor in getattr(self.db,'_usefulness_admins',())
+            available_evidence={r.id for r in self.db.evidence_for(rid)}|set(state.get('carried',{}).get(rid,[]))
             next_state=deepcopy(state);revision=len(events)+1;event_id=self.prefix+f'{revision:012d}'
             reason=payload.get('assessment_note') or payload.get('reason')
             identifier(reason,'audit note')
@@ -105,8 +106,7 @@ class EpistemicLedger:
                 }
                 if set(payload)-(allowed_common|action_fields[action]):
                     raise ValueError('unsupported assessment fields; numeric likelihoods are forbidden')
-                attached={r.id for r in self.db.evidence_for(rid)}|set(state.get('carried',{}).get(rid,[]))
-                if payload.get('evidence_id') not in attached:raise ValueError('evidence must be attached to this exact memory version')
+                if payload.get('evidence_id') not in available_evidence:raise ValueError('evidence must be attached or explicitly carried to this exact memory version')
                 evidence=self.db.get_evidence(payload['evidence_id'])
                 if evidence is None or not evidence.verify_integrity():raise ValueError('evidence integrity failure')
                 if next_state['evidence_overrides'].get(payload['evidence_id'],{}).get('invalidated'):raise ValueError('evidence invalidated')
@@ -158,13 +158,13 @@ class EpistemicLedger:
             elif action=='invalidate_evidence':
                 if set(payload)-(allowed_common|{'evidence_id'}):raise ValueError('unsupported evidence invalidation fields')
                 if not admin:raise PermissionError('epistemic decision authority required')
-                if payload.get('evidence_id') not in {r.id for r in self.db.evidence_for(rid)}:raise ValueError('attached evidence required')
+                if payload.get('evidence_id') not in available_evidence:raise ValueError('available evidence required')
                 next_state['evidence_overrides'].setdefault(payload['evidence_id'],{})['invalidated']=True
             elif action=='correct_evidence':
                 if set(payload)-(allowed_common|{'evidence_id','lineage'}):raise ValueError('unsupported evidence correction fields')
                 if not admin:raise PermissionError('epistemic decision authority required')
                 eid=payload.get('evidence_id')
-                if eid not in {r.id for r in self.db.evidence_for(rid)}:raise ValueError('attached evidence required')
+                if eid not in available_evidence:raise ValueError('available evidence required')
                 changes=payload.get('lineage')
                 if not isinstance(changes,dict) or set(changes)-{'reference','event_id','origin','derived_from','origin_confidence'}:
                     raise ValueError('explicit lineage correction required')
@@ -200,8 +200,8 @@ class EpistemicLedger:
                 if set(payload)-allowed:raise ValueError('unsupported dependency resolution fields')
                 if not admin:raise PermissionError('epistemic decision authority required')
                 if action=='merge':
-                    ids=payload.get('evidence_ids');attached={r.id for r in self.db.evidence_for(rid)}
-                    if not isinstance(ids,list) or len(ids)<2 or any(x not in attached for x in ids):raise ValueError('attached evidence ids required')
+                    ids=payload.get('evidence_ids')
+                    if not isinstance(ids,list) or len(ids)<2 or any(x not in available_evidence for x in ids):raise ValueError('available evidence ids required')
                     next_state['hard_groups'][event_id]=ids
                 else:
                     group=payload.get('group_id')
