@@ -331,3 +331,43 @@ def test_epistemic_rest_mcp_state_parity(tmp_path,monkeypatch):
     rest_read=client.get('/v1/epistemic/state/parity',headers=headers,params={'memory_id':rid})
     assert rest_read.status_code==200,rest_read.text
     assert rest_read.json()['score']==json.loads(mcp_mut['content'][0]['text'])['score']
+
+
+def test_carry_forward_is_explicit_same_lineage_and_not_new_independence(rig):
+    db,p,old_id,_=rig
+    evidence_id=ev(rig,'versioned-evidence')
+    new_id,_=db.update(old_id,{'content':'exact claim revised','verify_status':'hypothesis'},written_by='admin')
+    ledger=EpistemicLedger(db,'ella')
+    _,events=ledger.load()
+    carried=ledger.apply('carry_forward',dict(target_memory_id=new_id,
+        target_memory_version=db._store.read(new_id).content_hash,
+        source_memory_id=old_id,source_memory_version=db._store.read(old_id).content_hash,
+        evidence_ids=[evidence_id],reason='same claim lineage, evidence still applicable'),
+        actor='admin',request_id='carry-version',expected_revision=len(events))
+    assert carried['raw_evidence_count']==1
+    _,events=ledger.load()
+    assessed=ledger.apply('report',dict(target_memory_id=new_id,
+        target_memory_version=db._store.read(new_id).content_hash,
+        evidence_id=evidence_id,polarity='SUPPORTS',strength='MEDIUM',
+        assessment_note='reassessed against revised claim'),actor='admin',
+        request_id='assess-carried',expected_revision=len(events))
+    assert assessed['accepted_unit_count']==1
+
+    unrelated=p.remember({'content':'unrelated claim'},namespace='ella')
+    _,events=ledger.load()
+    with pytest.raises(ValueError,match='same memory history'):
+        ledger.apply('carry_forward',dict(target_memory_id=unrelated,
+            target_memory_version=db._store.read(unrelated).content_hash,
+            source_memory_id=old_id,source_memory_version=db._store.read(old_id).content_hash,
+            evidence_ids=[evidence_id],reason='must not cross unrelated claims'),
+            actor='admin',request_id='bad-carry',expected_revision=len(events))
+
+
+def test_epistemic_actions_reject_unused_fields(rig):
+    db,_,rid,l=rig;eid=ev(rig,'strict-fields')
+    _,events=l.load()
+    base=dict(target_memory_id=rid,target_memory_version=db._store.read(rid).content_hash,
+              evidence_id=eid,polarity='SUPPORTS',strength='WEAK',
+              assessment_note='strict schema test',confirmation_of='should-not-be-accepted')
+    with pytest.raises(ValueError,match='unsupported assessment fields'):
+        l.apply('report',base,actor='admin',request_id='extra-field',expected_revision=len(events))
