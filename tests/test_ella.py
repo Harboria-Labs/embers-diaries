@@ -371,3 +371,27 @@ def test_epistemic_actions_reject_unused_fields(rig):
               assessment_note='strict schema test',confirmation_of='should-not-be-accepted')
     with pytest.raises(ValueError,match='unsupported assessment fields'):
         l.apply('report',base,actor='admin',request_id='extra-field',expected_revision=len(events))
+
+
+def test_unknown_origin_is_not_lineage_coverage_or_soft_dependency(rig):
+    db,_,rid,l=rig
+    a=db.attach_evidence(rid,Evidence(source='relay-a',origin='unknown',origin_confidence='UNKNOWN'))
+    b=db.attach_evidence(rid,Evidence(source='relay-b',origin='unknown',origin_confidence='UNKNOWN'))
+    report(rig,a,strength='WEAK',actor='one')
+    state=report(rig,b,strength='WEAK',actor='two')
+    assert state['accepted_unit_count']==2
+    assert state['lineage_coverage']==0
+    assert state['unresolved_independence_count']==2
+
+    raw,events=l.load()
+    configured={**raw['policy'],'soft_same_origin':True}
+    result=l.apply('configure',dict(target_memory_id=rid,target_memory_version=db._store.read(rid).content_hash,
+        policy=configured,reason='test unknown-origin soft grouping'),actor='admin',
+        request_id='unknown-origin-policy',expected_revision=len(events))
+    assert result['accepted_unit_count']==2
+    assert result['soft_cluster_count']==0
+
+
+def test_unknown_origin_cannot_be_agent_declared():
+    with pytest.raises(ValueError,match='unknown origin'):
+        Evidence(origin='unknown',origin_confidence='AGENT_DECLARED')
