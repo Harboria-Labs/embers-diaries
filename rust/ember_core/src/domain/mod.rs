@@ -74,6 +74,8 @@ pub fn call(op: &str, v: Value) -> Result<Value> {
         "ella_policy_default" => Ok(ella::defaults()),
         "ella_policy" => ella::policy(v),
         "ella_assessment" => ella::assessment(v),
+        "ella_state" => ella::state(v),
+        "ella_reduce" => ella::reduce(v),
         "ella_project" => ella::project(&v),
         "pair_select" => pairing::select(&v),
         "context" => context(&v),
