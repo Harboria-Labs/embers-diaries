@@ -34,6 +34,31 @@ def configure(db, namespace, actor, body):
         actor=actor,request_id=body['request_id'],expected_revision=body['expected_revision'])
 
 
+def _historical_truth(record, open_conflict=False):
+    """Compatibility-only inline truth rendering used by the pre-ELLA context budget.
+
+    This projection is deliberately NOT canonical epistemic state. Keeping its
+    bounded historical shape means ELLA evidence growth cannot change recall
+    admission merely by making truth metadata larger. Canonical ELLA state is
+    returned separately in response/observer metadata.
+    """
+    data=record.data if isinstance(record.data,dict) else {}
+    status='unverified';source='unset'
+    allowed={'verified','hypothesis','unverified','contested','deprecated','incorrect','provisional','disputed','superseded'}
+    for key in ('_status','verify_status'):
+        value=data.get(key)
+        if value in allowed:
+            status=value;source=key;break
+    for ann in getattr(record,'annotations',[]) or []:
+        if getattr(ann,'annotation_type',None)=='validation' and getattr(ann,'context',None)=='verification':
+            tags=[t for t in (getattr(ann,'tags',[]) or []) if t in {'verified','hypothesis','unverified','contested','deprecated','incorrect'}]
+            if len(tags)==1:
+                status=tags[0];source='verification_annotation'
+    if open_conflict:
+        status='contested';source='open_conflict'
+    return {'status':status,'source':source,'projection_version':'explicit-epistemic-v1'}
+
+
 def _render(rows, format):
     if format=='structured':return json.dumps(rows,ensure_ascii=False,separators=(',',':'),sort_keys=True,allow_nan=False)
     text='\n\n'.join(f"[{r['id']}; truth={r['truth_status']}; source={r['written_by']}]\n{json.dumps(r['data'],ensure_ascii=False,sort_keys=True)}" for r in rows)
@@ -75,30 +100,35 @@ def recall(db, namespace, actor, *, query_id, direct_scores, elapsed, context=No
         import tiktoken
         encoding=tiktoken.get_encoding(os.environ.get('EMBER_TOKEN_ENCODING','cl100k_base'))
         counter=lambda text:len(encoding.encode(text,disallowed_special=()))
-        selected=[]
+        selected=[];epistemic={}
         for rid in plan['order']:
             rec=records[rid]
-            truth=explicit_truth(rec,any(c.status.value in ('open','investigating') for c in db.conflicts_for(rid)))
-            row={'id':rid,'data':rec.data,'truth_status':truth['status'],'truth_projection':truth,'written_by':rec.written_by,'content_hash':rec.content_hash,
+            open_conflict=any(c.status.value in ('open','investigating') for c in db.conflicts_for(rid))
+            inline_truth=_historical_truth(rec,open_conflict)
+            row={'id':rid,'data':rec.data,'truth_status':inline_truth['status'],'truth_projection':inline_truth,'written_by':rec.written_by,'content_hash':rec.content_hash,
                  'dynamics':next(r for r in candidates if r['id']==rid)}
             if call('admit',dict(admission,item_tokens=counter(_render([row],format)),total_tokens=counter(_render(selected+[row],format)),selected_count=len(selected)))['admit']:
                 selected.append(row)
+                epistemic[rid]=explicit_truth(rec,open_conflict)
         direct_ids=[r['id'] for r in selected]
         from .pairing import select
         paired, pair_route=select(db,namespace,direct_ids,context,state,query_id)
         pair_expansion=None
         if paired is not None:
-            truth=explicit_truth(paired,any(c.status.value in ('open','investigating') for c in db.conflicts_for(paired.id)))
-            row={'id':paired.id,'data':paired.data,'truth_status':truth['status'],'truth_projection':truth,
+            open_conflict=any(c.status.value in ('open','investigating') for c in db.conflicts_for(paired.id))
+            inline_truth=_historical_truth(paired,open_conflict)
+            row={'id':paired.id,'data':paired.data,'truth_status':inline_truth['status'],'truth_projection':inline_truth,
                  'written_by':paired.written_by,'content_hash':paired.content_hash,'retrieval':pair_route}
             if call('admit',dict(admission,item_tokens=counter(_render([row],format)),total_tokens=counter(_render(selected+[row],format)),selected_count=len(selected)))['admit']:
                 selected.append(row)
+                epistemic[paired.id]=explicit_truth(paired,open_conflict)
                 pair_expansion=pair_route
         rendered=_render(selected,format)
         call('admit',dict(config=cfg,final_tokens=counter(rendered)))
         response=dict(context=rendered,format=format,token_count=counter(rendered),selected_ids=[r['id'] for r in selected],candidate_ids=list(records),
             query_id=query_id,primary_context=context,model_version=MODEL_VERSION,configuration_revision=state.get('configuration_revision',0),
-            dynamics=batch['rows'],latent_inspected=plan['latent_inspected'],pair_expansion=pair_expansion,direct_ids=direct_ids,primary_memory_id=direct_ids[0] if direct_ids else None,tokenizer='tiktoken:'+encoding.name)
+            dynamics=batch['rows'],latent_inspected=plan['latent_inspected'],pair_expansion=pair_expansion,direct_ids=direct_ids,primary_memory_id=direct_ids[0] if direct_ids else None,tokenizer='tiktoken:'+encoding.name,
+            epistemic=epistemic)
         old[key]={'sequence':scoped['sequence']+1,'memories':batch['state']}
         event={'kind':KIND,'id':ledger.prefix+f'{len(ledger._events)+1:012d}','revision':len(ledger._events)+1,
             'namespace':namespace,'actor':actor,'request_id':query_id,'action':'activation','fingerprint':fingerprint,'created_at':float(ledger.clock()),
@@ -107,6 +137,7 @@ def recall(db, namespace, actor, *, query_id, direct_scores, elapsed, context=No
             'observation':{'operation':'ember_research_recall','context':context,'session_id':session_id,'query':None,
                 'direct_ids':direct_ids,'pair_expansion':pair_expansion,'candidate_ids':list(records),'returned_ids':response['selected_ids'],'dynamics':batch['rows'],
                 'observed_heat':{r['id']:r['activation'] for r in batch['rows']},'heat_source':MODEL_VERSION,
-                'budget':{'token_budget':cfg['token_budget'],'token_count':response['token_count'],'tokenizer':response['tokenizer']},'latency_ms':None}}
+                'budget':{'token_budget':cfg['token_budget'],'token_count':response['token_count'],'tokenizer':response['tokenizer']},'latency_ms':None,
+                'epistemic':epistemic}}
         ledger._append(event)
         return response
