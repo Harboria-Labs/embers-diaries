@@ -27,5 +27,7 @@ jobs:
         run: python -m pytest -q
       - name: Rust research-domain tests
         run: cargo test --release --manifest-path rust/ember_core/Cargo.toml --test research_domain
+      - name: Isolated real-server ELLA acceptance
+        run: python examples/ella_live_check.py
       - name: Rust type and build checks
         run: cargo check --manifest-path rust/ember_core/Cargo.toml
