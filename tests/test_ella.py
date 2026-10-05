@@ -67,6 +67,14 @@ def test_opposing_confirmation_stays_unresolved(rig):
     a=ev(rig,'one');b=ev(rig,'two');report(rig,a);pending=report(rig,b)
     result=apply(rig,'confirm',actor='second',evidence_id=b,polarity='OPPOSES',strength='STRONG',confirmation_of=pending['confirmation_assessment_ids'][0])
     assert result['confirmation_required'] and result['base_epistemic_verdict']=='PROVISIONAL'
+    # A disagreement is not a new threshold-crossing proposal that a third
+    # assessor may confirm. V1 requires explicit resolution; no voting chain.
+    _,_,_,ledger=rig
+    state,_=ledger.load()
+    disagreement=next(a for a in state['assessments'].values() if a.get('confirmation_of'))
+    with pytest.raises(ValueError,match='explicit resolution'):
+        apply(rig,'confirm',actor='third',evidence_id=b,polarity='OPPOSES',
+              strength='STRONG',confirmation_of=disagreement['assessment_id'])
 
 
 def test_same_reference_many_assessors_one_unit(rig):
