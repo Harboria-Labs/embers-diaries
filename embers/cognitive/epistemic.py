@@ -215,6 +215,11 @@ class EpistemicLedger:
                 action=action,payload=deepcopy(payload),created_at=time.time(),fingerprint=fingerprint,
                 observation=dict(operation='epistemic_'+action,memory_ids=[rid],session_id=session,epistemic=response),
                 previous=events[-1]['seal'] if events else None,state=next_state,response=response)
+            # The Rust reducer owns journal transition validation both at commit
+            # time and replay time. Python supplies authenticated IO context but
+            # cannot persist a state mutation the native reducer rejects.
+            reduced=call('ella_reduce',{'state':state,'event':event})
+            if reduced!=next_state:raise RuntimeError('native ELLA reducer returned a different state')
             event['seal']=digest(event)
             self.db._writer.write(EmberRecord(id=event_id,namespace=self.namespace,record_type=RecordType.RAW,
                 data=event,written_by=actor,agent_id=actor,retrieval_candidate=False,training_candidate=False))
