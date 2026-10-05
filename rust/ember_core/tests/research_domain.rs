@@ -407,3 +407,19 @@ fn ella_unknown_origin_is_not_soft_dependency_or_lineage_coverage() {
     assert_eq!(out["lineage_coverage"],0.0);
     assert_eq!(out["unresolved_independence_count"],2);
 }
+
+
+#[test]
+fn ella_native_state_reducer_validates_persisted_lifecycle() {
+    let state=json!({"assessments":{},"evidence_overrides":{},"hard_groups":{},
+        "policy":ella::defaults(),"carried":{}});
+    assert_eq!(ella::state(state.clone()).unwrap(),state);
+    let mut next=state.clone();
+    next["assessments"]["a"]=ella_assessment("a","e","SUPPORTS","WEAK");
+    next["assessments"]["a"]["status"]=json!("accepted");
+    let reduced=ella::reduce(json!({"state":state,"event":{"state":next}})).unwrap();
+    assert_eq!(reduced["assessments"]["a"]["status"],"accepted");
+    let mut bad=reduced.clone();
+    bad["assessments"]["a"]["status"]=json!("invented");
+    assert!(ella::reduce(json!({"state":reduced,"event":{"state":bad}})).is_err());
+}
