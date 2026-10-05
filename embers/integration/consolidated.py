@@ -2,7 +2,7 @@
 from copy import deepcopy
 import json
 import os
-from ..core.domain import call, MODEL_VERSION, explicit_truth
+from ..core.domain import call, MODEL_VERSION, explicit_truth, historical_inline_truth
 from ..cognitive.usefulness import derive, digest, KIND
 from .usefulness_service import service
 
@@ -32,31 +32,6 @@ def configure(db, namespace, actor, body):
         raise ValueError('config, policy, request_id, expected_revision and reason required')
     return service(db,namespace).apply('research_config',{'config':body['config'],'policy':body['policy'],'reason':body['reason']},
         actor=actor,request_id=body['request_id'],expected_revision=body['expected_revision'])
-
-
-def _historical_truth(record, open_conflict=False):
-    """Compatibility-only inline truth rendering used by the pre-ELLA context budget.
-
-    This projection is deliberately NOT canonical epistemic state. Keeping its
-    bounded historical shape means ELLA evidence growth cannot change recall
-    admission merely by making truth metadata larger. Canonical ELLA state is
-    returned separately in response/observer metadata.
-    """
-    data=record.data if isinstance(record.data,dict) else {}
-    status='unverified';source='unset'
-    allowed={'verified','hypothesis','unverified','contested','deprecated','incorrect','provisional','disputed','superseded'}
-    for key in ('_status','verify_status'):
-        value=data.get(key)
-        if value in allowed:
-            status=value;source=key;break
-    for ann in getattr(record,'annotations',[]) or []:
-        if getattr(ann,'annotation_type',None)=='validation' and getattr(ann,'context',None)=='verification':
-            tags=[t for t in (getattr(ann,'tags',[]) or []) if t in {'verified','hypothesis','unverified','contested','deprecated','incorrect'}]
-            if len(tags)==1:
-                status=tags[0];source='verification_annotation'
-    if open_conflict:
-        status='contested';source='open_conflict'
-    return {'status':status,'source':source,'projection_version':'explicit-epistemic-v1'}
 
 
 def _render(rows, format):
@@ -104,7 +79,7 @@ def recall(db, namespace, actor, *, query_id, direct_scores, elapsed, context=No
         for rid in plan['order']:
             rec=records[rid]
             open_conflict=any(c.status.value in ('open','investigating') for c in db.conflicts_for(rid))
-            inline_truth=_historical_truth(rec,open_conflict)
+            inline_truth=historical_inline_truth(rec,open_conflict)
             row={'id':rid,'data':rec.data,'truth_status':inline_truth['status'],'truth_projection':inline_truth,'written_by':rec.written_by,'content_hash':rec.content_hash,
                  'dynamics':next(r for r in candidates if r['id']==rid)}
             if call('admit',dict(admission,item_tokens=counter(_render([row],format)),total_tokens=counter(_render(selected+[row],format)),selected_count=len(selected)))['admit']:
@@ -116,7 +91,7 @@ def recall(db, namespace, actor, *, query_id, direct_scores, elapsed, context=No
         pair_expansion=None
         if paired is not None:
             open_conflict=any(c.status.value in ('open','investigating') for c in db.conflicts_for(paired.id))
-            inline_truth=_historical_truth(paired,open_conflict)
+            inline_truth=historical_inline_truth(paired,open_conflict)
             row={'id':paired.id,'data':paired.data,'truth_status':inline_truth['status'],'truth_projection':inline_truth,
                  'written_by':paired.written_by,'content_hash':paired.content_hash,'retrieval':pair_route}
             if call('admit',dict(admission,item_tokens=counter(_render([row],format)),total_tokens=counter(_render(selected+[row],format)),selected_count=len(selected)))['admit']:
