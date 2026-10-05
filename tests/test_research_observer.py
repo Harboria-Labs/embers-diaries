@@ -292,3 +292,54 @@ def test_build_render_uses_process_asset_snapshot(env,monkeypatch):
     assert client.get('/v1/observer/transport.js').content==build.TRANSPORT
     assert client.get('/visualizer?mode=observer').status_code==200
     assert client.get('/v1/observer/build').json()['server_build']==build.SERVER_BUILD
+
+
+def test_ella_correction_arrives_on_open_stream_without_observer_mutation(env):
+    from embers.cognitive.epistemic import EpistemicLedger
+    from embers.core.evidence import Evidence
+    db,agent,*_=env
+    grant=ro.issue(db,agent)
+    proto=MemoryProtocol(db,default_namespace='ella-observer')
+    rid=proto.remember({'content':'observer epistemic claim'},written_by=agent,agent_id=agent)
+    evidence=Evidence(source='fixture',reference='observer-evidence',agent_id=agent)
+    eid=db.attach_evidence(rid,evidence)
+    ledger=EpistemicLedger(db,'ella-observer')
+    version=db._store.read(rid).content_hash
+
+    async def disconnected():return False
+    async def run():
+        gen=ro.stream(db,grant['code'],None,{},disconnected,interval=3600)
+        assert 'event: ready' in await anext(gen)
+        initial=await anext(gen)
+        cursor=json.loads(next(x[6:] for x in initial.splitlines() if x.startswith('data: ')))['cursor']
+
+        pending=asyncio.create_task(anext(gen));await asyncio.sleep(.02)
+        first=ledger.apply('report',dict(target_memory_id=rid,target_memory_version=version,
+            evidence_id=eid,polarity='SUPPORTS',strength='WEAK',
+            assessment_note='initial observable assessment'),actor=agent,
+            request_id='ella-observer-report',expected_revision=0)
+        frame=await asyncio.wait_for(pending,1)
+        payload=json.loads(next(x[6:] for x in frame.splitlines() if x.startswith('data: ')))
+        assert payload['events'][0]['epistemic']['score']==first['score']
+        cursor=payload['cursor']
+
+        state,events=ledger.load()
+        aid=next(iter(state['assessments']))
+        pending=asyncio.create_task(anext(gen));await asyncio.sleep(.02)
+        revised=ledger.apply('revise',dict(target_memory_id=rid,target_memory_version=version,
+            evidence_id=eid,assessment_id=aid,polarity='SUPPORTS',strength='MEDIUM',
+            assessment_note='corrected observable assessment'),actor=agent,
+            request_id='ella-observer-revise',expected_revision=len(events))
+        frame=await asyncio.wait_for(pending,1)
+        payload=json.loads(next(x[6:] for x in frame.splitlines() if x.startswith('data: ')))
+        event=payload['events'][0]
+        assert event['event_type']=='epistemic_revise'
+        assert event['epistemic']['score']==revised['score']
+        assert event['epistemic']['score']>first['score']
+        await gen.aclose()
+
+    asyncio.run(run())
+    # Reading/replaying observer state must not create another ELLA revision.
+    before=len(ledger.load()[1])
+    ro.page(db,grant['code'])
+    assert len(ledger.load()[1])==before
