@@ -186,3 +186,101 @@ def test_research_recall_capacity_ignores_ella_projection_growth(rig):
     rendered=json.loads(after['context'])
     assert rendered[0]['truth_projection']['projection_version']=='explicit-epistemic-v1'
     assert 'support_mass' not in rendered[0]['truth_projection']
+
+
+def test_conflict_overlay_never_mutates_score(rig):
+    db,p,rid,l=rig
+    from embers.core.types import ConflictStatus
+    other=p.remember({'content':'contradictory claim'},namespace='ella')
+    eid=ev(rig,'support');report(rig,eid,strength='MEDIUM')
+    baseline=l.read(rid,'admin')
+    cid=db.map_conflict(rid,other,detected_by='admin')
+    opened=l.read(rid,'admin')
+    assert opened['score']==baseline['score']
+    assert opened['base_epistemic_verdict']==baseline['base_epistemic_verdict']
+    assert opened['public_epistemic_state']=='DISPUTED'
+    assert opened['conflict_overlay']=='open'
+
+    db.update_conflict_status(cid,ConflictStatus.INVESTIGATING,'checking','admin')
+    investigating=l.read(rid,'admin')
+    assert investigating['score']==baseline['score']
+    assert investigating['public_epistemic_state']=='DISPUTED'
+    assert investigating['conflict_overlay']=='investigating'
+
+    db.update_conflict_status(cid,ConflictStatus.ACCEPTED_BOTH,'both are contextually valid','admin')
+    accepted=l.read(rid,'admin')
+    assert accepted['score']==baseline['score']
+    assert accepted['base_epistemic_verdict']==baseline['base_epistemic_verdict']
+    assert accepted['public_epistemic_state']==baseline['public_epistemic_state']
+    assert accepted['conflict_overlay']=='none'
+
+
+def test_conflict_winner_does_not_change_ella_score(rig):
+    db,p,rid,l=rig
+    from embers.core.types import ConflictStatus
+    other=p.remember({'content':'opposite'},namespace='ella')
+    report(rig,ev(rig,'support'),strength='MEDIUM')
+    before=l.read(rid,'admin')
+    cid=db.map_conflict(rid,other,detected_by='admin')
+    db.update_conflict_status(cid,ConflictStatus.RESOLVED,'prefer first','admin',winner_id=rid)
+    after=l.read(rid,'admin')
+    assert after['score']==before['score']
+    assert after['support_mass']==before['support_mass']
+    assert after['opposition_mass']==before['opposition_mass']
+
+
+def test_source_type_and_origin_confidence_do_not_set_strength(rig):
+    from embers.core.types import SourceType
+    db,_,rid,l=rig
+    strong_source=Evidence(source='sensor',source_type=SourceType.EXPERIMENTALLY_VERIFIED,
+        reference='a',origin='sensor-origin',origin_confidence='AGENT_DECLARED')
+    weak_source=Evidence(source='person',source_type=SourceType.REPORTED,
+        reference='b',origin='person-origin',origin_confidence='UNKNOWN')
+    a=db.attach_evidence(rid,strong_source);b=db.attach_evidence(rid,weak_source)
+    one=report(rig,a,strength='WEAK',actor='one')
+    two=report(rig,b,strength='WEAK',actor='two')
+    expected=2*call('ella_policy_default',None)['strengths']['WEAK']
+    assert two['score']==pytest.approx(expected)
+    assert all(unit['magnitude']==pytest.approx(call('ella_policy_default',None)['strengths']['WEAK'])
+               for unit in two['units'] if unit['status']=='accepted')
+
+
+def test_mcp_origin_semantics_and_reserved_system_confirmation(tmp_path):
+    import json as _json
+    from embers.mcp.server import EmberMCP
+    db=EmberDB.connect(str(tmp_path/'mcp-origin'));mcp=EmberMCP(db=db)
+    reg=mcp.call_tool('ember_register',{'name':'assessor','provider':'local','model':'test'})
+    auth=_json.loads(reg['content'][0]['text'])
+    def call_tool(name,args):
+        return mcp.call_tool(name,{**args,'agent_id':auth['agent_id'],'token':auth['token']})
+    written=call_tool('ember_write',{'content':'claim','namespace':'origin'})
+    rid=_json.loads(written['content'][0]['text'])['id']
+
+    unknown=call_tool('ember_attach_evidence',{'memory_id':rid,'source':'report'})
+    assert not unknown['isError']
+    unknown_id=_json.loads(unknown['content'][0]['text'])['evidence_id']
+    stored=db.get_evidence(unknown_id)
+    assert stored.origin=='unknown' and stored.origin_confidence=='UNKNOWN'
+
+    declared=call_tool('ember_attach_evidence',{'memory_id':rid,'source':'report-2',
+        'origin':'person:alice','origin_confidence':'AGENT_DECLARED','event_id':'observation-2'})
+    assert not declared['isError']
+    declared_id=_json.loads(declared['content'][0]['text'])['evidence_id']
+    stored=db.get_evidence(declared_id)
+    assert stored.origin=='person:alice' and stored.origin_confidence=='AGENT_DECLARED'
+    assert stored.event_id=='observation-2'
+
+    denied=call_tool('ember_attach_evidence',{'memory_id':rid,'source':'report-3',
+        'origin':'person:bob','origin_confidence':'SYSTEM_CONFIRMED'})
+    assert denied['isError']
+
+
+def test_mcp_schema_exposes_lineage_without_system_confirmed():
+    from embers.mcp.tools import TOOLS
+    attach=next(t for t in TOOLS if t['name']=='ember_attach_evidence')
+    props=attach['inputSchema']['properties']
+    assert {'origin','origin_confidence','event_id','derived_from'} <= set(props)
+    assert props['origin_confidence']['enum']==['UNKNOWN','AGENT_DECLARED']
+    propose=next(t for t in TOOLS if t['name']=='ember_propose_memory')
+    item=propose['inputSchema']['properties']['evidence']['items']
+    assert item['properties']['origin_confidence']['enum']==['UNKNOWN','AGENT_DECLARED']
