@@ -234,14 +234,12 @@ TOOLS = [
         "description": ("Explicitly promote a pending proposal into durable memory "
                         "(an authenticated caller's own decision, recorded as "
                         "promotion_method=human). Promotion means it met the "
-                        "criteria to become durable memory, NOT that it is true — "
-                        "the memory carries its own status."),
+                        "criteria to become durable memory, NOT that it is true. "
+                        "Epistemic state is maintained separately by ELLA."),
         "inputSchema": {
             "type": "object",
             "properties": {
                 "proposal_id": {"type": "string"},
-                "status": {"type": "string",
-                            "description": "verified / provisional / disputed"},
                 "agent_id": {"type": "string"},
                 "token": {"type": "string"},
             },
