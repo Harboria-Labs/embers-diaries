@@ -854,6 +854,10 @@ async def evidence_for(
         "source": (r.data or {}).get("source"),
         "source_type": (r.data or {}).get("source_type"),
         "description": (r.data or {}).get("description"),
+        "origin": (r.data or {}).get("origin"),
+        "origin_confidence": (r.data or {}).get("origin_confidence", "UNKNOWN"),
+        "event_id": (r.data or {}).get("event_id"),
+        "derived_from": (r.data or {}).get("derived_from", []),
         "agent_id": r.agent_id,
         "content_hash": r.content_hash,
     } for r in records]}
