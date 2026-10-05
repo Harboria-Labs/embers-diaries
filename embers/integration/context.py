@@ -162,8 +162,8 @@ class ContextBuilder:
 
     @staticmethod
     def _explicit_status(record):
-        from ..core.domain import explicit_truth
-        return explicit_truth(record)['status']
+        from ..core.domain import historical_inline_truth
+        return historical_inline_truth(record)['status']
 
     def _format_record_message(self, record: EmberRecord,
                                 effective_confidence: float) -> str:
