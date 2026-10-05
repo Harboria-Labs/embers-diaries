@@ -2,6 +2,7 @@
 from copy import deepcopy
 from dataclasses import replace
 import hashlib
+import json
 import pytest
 from embers.db import EmberDB
 from embers.core.evidence import Evidence
@@ -124,3 +125,64 @@ def test_known_limitation_unlinked_hidden_origin_can_verify(rig):
     result=apply(rig,'confirm',actor='independent-id-only',evidence_id=b,polarity='SUPPORTS',strength='STRONG',confirmation_of=pending['confirmation_assessment_ids'][0])
     assert result['base_epistemic_verdict']=='VERIFIED'
     assert result['lineage_coverage']==0 and result['unresolved_independence_count']==2
+
+
+def test_projection_order_is_deterministic(rig):
+    db,p,rid,l=rig
+    a=ev(rig,'one');b=ev(rig,'two')
+    report(rig,a,strength='MEDIUM',actor='z-assessor')
+    report(rig,b,strength='WEAK',actor='a-assessor')
+    first=l.read(rid,'admin')
+    state,events=l.load()
+    # Reordering dictionary insertion must not alter the canonical projection.
+    state['assessments']={k:state['assessments'][k] for k in reversed(list(state['assessments']))}
+    second=l.project(rid,state,len(events))
+    assert first['units']==second['units']
+    assert json.dumps(first['units'],sort_keys=True)==json.dumps(second['units'],sort_keys=True)
+
+
+def test_high_confidence_promotion_stays_provisional(rig):
+    db,_,_,_=rig
+    from embers.core.proposal import MemoryProposal
+    from embers.core.types import SourceType
+    evidence=Evidence(source='tool://promotion',source_type=SourceType.EXPERIMENTALLY_VERIFIED,
+                      reference='promotion-evidence',agent_id='agent')
+    pid=db.propose(MemoryProposal(namespace='ella',discovery={'content':'promoted claim'},
+                                  reason='admission test',evidence=[evidence],
+                                  confidence=.99,agent_id='agent'))
+    result=db.submit(pid)
+    assert result.promoted
+    assert db.memory_status(result.memory_id).value=='provisional'
+
+
+def test_explicit_promotion_status_override_is_rejected(rig):
+    db,_,_,_=rig
+    from embers.core.proposal import MemoryProposal
+    from embers.core.types import MemoryStatus
+    pid=db.propose(MemoryProposal(namespace='ella',discovery={'content':'human admit'},
+                                  reason='manual admission',confidence=.2,agent_id='agent'))
+    with pytest.raises(ValueError,match='admission only'):
+        db.promote(pid,status=MemoryStatus.VERIFIED)
+
+
+def test_research_recall_capacity_ignores_ella_projection_growth(rig):
+    db,_,rid,l=rig
+    from embers.integration import consolidated
+    from embers.integration.usefulness_service import enable
+    enable(db,{'admin'})
+    before=consolidated.recall(db,'ella','admin',query_id='before',
+        direct_scores={rid:1.0},elapsed=0,context='ctx',format='structured')
+    assert rid in before['selected_ids']
+    # Grow canonical ELLA state while leaving memory content and retrieval signals untouched.
+    for i in range(8):
+        eid=ev(rig,f'artifact-{i}')
+        report(rig,eid,strength='WEAK',actor=f'assessor-{i}')
+    after=consolidated.recall(db,'ella','admin',query_id='after',
+        direct_scores={rid:1.0},elapsed=0,context='ctx',format='structured')
+    assert after['selected_ids']==before['selected_ids']
+    assert rid in after['epistemic']
+    assert len(json.dumps(after['epistemic'][rid],sort_keys=True)) > len(json.dumps(before['epistemic'][rid],sort_keys=True))
+    # Inline rendered context remains the bounded historical compatibility shape.
+    rendered=json.loads(after['context'])
+    assert rendered[0]['truth_projection']['projection_version']=='explicit-epistemic-v1'
+    assert 'support_mass' not in rendered[0]['truth_projection']
