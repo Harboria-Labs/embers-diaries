@@ -111,13 +111,17 @@ class EpistemicLedger:
                 if action=='resolve':
                     if not admin:raise PermissionError('epistemic decision authority required')
                     chosen=payload.get('assessment_ids')
-                    if not isinstance(chosen,list) or not chosen:raise ValueError('assessment_ids required')
+                    if not isinstance(chosen,list) or not chosen or len(set(chosen))!=len(chosen):raise ValueError('unique assessment_ids required')
                     for aid in chosen:
                         prior=next_state['assessments'].get(aid);self._owned(prior,rid,actor,True)
+                        if prior['status'] not in ('accepted','confirmation_required'):
+                            raise ValueError('only active assessments may be resolved')
                         prior['status']='resolved'
                 if action=='revise':
                     prior=next_state['assessments'].get(payload.get('assessment_id'))
                     self._owned(prior,rid,actor,admin)
+                    if prior['status'] not in ('accepted','confirmation_required'):
+                        raise ValueError('only active assessments may be revised')
                     prior['status']='superseded'
                 assessment=dict(assessment_id=event_id+':assessment',target_memory_id=rid,target_memory_version=target.content_hash,
                     evidence_id=payload['evidence_id'],assessor_id=actor,session_id=session,
@@ -142,7 +146,9 @@ class EpistemicLedger:
                         assessment['requires_confirmation']=True
             elif action=='withdraw':
                 if set(payload)-(allowed_common|{'assessment_id'}):raise ValueError('unsupported withdrawal fields')
-                a=next_state['assessments'].get(payload.get('assessment_id'));self._owned(a,rid,actor,admin);a['status']='withdrawn'
+                a=next_state['assessments'].get(payload.get('assessment_id'));self._owned(a,rid,actor,admin)
+                if a['status'] not in ('accepted','confirmation_required'):raise ValueError('only active assessments may be withdrawn')
+                a['status']='withdrawn'
             elif action=='invalidate_evidence':
                 if set(payload)-(allowed_common|{'evidence_id'}):raise ValueError('unsupported evidence invalidation fields')
                 if not admin:raise PermissionError('epistemic decision authority required')
