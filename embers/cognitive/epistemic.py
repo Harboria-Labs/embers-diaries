@@ -201,7 +201,13 @@ class EpistemicLedger:
                        and child['status'] not in ('withdrawn','superseded','resolved')
                        for child in next_state['assessments'].values()):
                     raise ValueError('withdraw active confirmation child before withdrawing its parent')
+                parent_id=a.get('confirmation_of')
                 a['status']='withdrawn'
+                if parent_id:
+                    parent=next_state['assessments'].get(parent_id)
+                    if (parent is not None and parent.get('requires_confirmation') is True
+                            and parent['status']=='accepted'):
+                        parent['status']='confirmation_required'
             elif action=='invalidate_evidence':
                 if set(payload)-(allowed_common|{'evidence_id'}):raise ValueError('unsupported evidence invalidation fields')
                 if not admin:raise PermissionError('epistemic decision authority required')
