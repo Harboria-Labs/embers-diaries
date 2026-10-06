@@ -814,6 +814,10 @@ async def attach_evidence(
     from . import _get_db
     db = _get_db()
     agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    target = db._reader.get(memory_id, include_deprecated=True, include_superseded=True)
+    if target is None:
+        raise HTTPException(404, f"Memory {memory_id} not found.")
+    require_namespace(db, target.namespace, agent.agent_id, "write")
     source = body.get("source")
     if not source:
         raise HTTPException(400, "source required")
@@ -851,7 +855,11 @@ async def evidence_for(
     """Evidence supporting a memory. Empty means it rests on a bare assertion."""
     from . import _get_db
     db = _get_db()
-    require_agent(db, x_ember_agent_id, x_ember_token)
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    target = db._reader.get(memory_id, include_deprecated=True, include_superseded=True)
+    if target is None:
+        raise HTTPException(404, f"Memory {memory_id} not found.")
+    require_namespace(db, target.namespace, agent.agent_id, "read")
     records = db.evidence_for(memory_id)
     return {"memory_id": memory_id, "evidence": [{
         "id": r.id,
