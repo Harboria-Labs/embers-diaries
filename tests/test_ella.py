@@ -779,7 +779,7 @@ def test_epistemic_decision_authority_is_separate_from_usefulness_admins(rig):
 
 
 def test_new_db_evidence_submissions_get_explicit_unknown_origin_but_legacy_hashes_survive(rig):
-    db,_,rid,_=rig
+    db,_,rid,l=rig
     fresh=Evidence(source="fresh-direct")
     fresh_id=db.attach_evidence(rid,fresh)
     stored=db.get_evidence(fresh_id)
@@ -787,31 +787,21 @@ def test_new_db_evidence_submissions_get_explicit_unknown_origin_but_legacy_hash
     assert stored.origin_confidence=="UNKNOWN"
     assert stored.hash_version>=2
 
-    # A caller may pre-seal an old-shape V1 object, but because it has not yet
-    # been persisted Ember treats it as a NEW submission and upgrades it to an
-    # explicit unknown origin before the first write.
+    # A pre-sealed V1 object is immutable legacy evidence: preserve its exact
+    # signed identity instead of silently rehashing it.
     legacy=Evidence(reference="legacy-v1-artifact")
-    old_hash=legacy.seal()
+    legacy_hash=legacy.seal()
     assert legacy.hash_version==1 and legacy.origin is None
     legacy_id=db.attach_evidence(rid,legacy)
     restored=db.get_evidence(legacy_id)
-    assert restored.origin=="unknown" and restored.origin_confidence=="UNKNOWN"
-    assert restored.hash_version>=2 and restored.content_hash!=old_hash
+    assert restored.content_hash==legacy_hash
+    assert restored.hash_version==1 and restored.origin is None
 
-    # A genuinely pre-existing V1 record remains readable without mutation.
-    stored_legacy=Evidence(reference="pre-existing-v1")
-    stored_legacy.seal()
-    from embers.core.record import EmberRecord, EdgeRef
-    from embers.core.types import RecordType, EdgeType
-    legacy_rec=EmberRecord(id=stored_legacy.evidence_id,namespace="ella",record_type=RecordType.EVIDENCE,
-        data=stored_legacy.to_dict(),connections=[EdgeRef(edge_id=f"supports:{stored_legacy.evidence_id}:{rid}",
-        target_id=rid,edge_type=EdgeType.SUPPORTS,label="supports")],retrieval_candidate=False)
-    db._writer.write(legacy_rec)
-    db._graph_index.add_edge(stored_legacy.evidence_id,rid,EdgeType.SUPPORTS.value,
-        edge_id=f"supports:{stored_legacy.evidence_id}:{rid}",label="supports")
-    assert db.attach_evidence(rid,stored_legacy)==stored_legacy.evidence_id
-    restored_legacy=db.get_evidence(stored_legacy.evidence_id)
-    assert restored_legacy.hash_version==1 and restored_legacy.origin is None
+    # ELLA nevertheless interprets that absent historical origin as explicit
+    # UNKNOWN provenance for diagnostics/dependence policy.
+    report(rig,legacy_id,strength='WEAK',actor='legacy-assessor')
+    projected=l.read(rid,'admin')
+    assert projected['unresolved_independence_count']>=1
 
     from embers.core.proposal import MemoryProposal
     proposal_evidence=Evidence(source="proposal-fresh")
@@ -820,7 +810,6 @@ def test_new_db_evidence_submissions_get_explicit_unknown_origin_but_legacy_hash
     proposal=db.get_proposal(pid)
     assert proposal.evidence[0].origin=="unknown"
     assert proposal.evidence[0].origin_confidence=="UNKNOWN"
-
 
 def test_public_rest_and_mcp_reads_expose_ella_not_legacy_truth(tmp_path,monkeypatch):
     import json as _json
