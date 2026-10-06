@@ -96,6 +96,8 @@ def test_same_request_identity_is_one_hard_epistemic_unit(rig):
     assert result['raw_evidence_count']==2
     assert result['accepted_unit_count']==1
     assert result['hard_collapsed_count']==1
+    assert result['lineage_coverage']==1
+    assert result['unresolved_independence_count']==0
     assert result['score']==pytest.approx(call('ella_policy_default',None)['strengths']['MEDIUM'])
 
 
