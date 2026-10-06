@@ -184,13 +184,13 @@ class MemoryStatus(str, Enum):
 class PromotionMethod(str, Enum):
     """HOW a memory came to be durable (spec §12 + the configurable engine).
 
-    Recorded on the promoted memory so a later reader can weigh it by the
-    process that admitted it, not just its confidence number:
+    This is admission provenance only, not ELLA truth weight. A later reader can
+    audit the process that admitted the memory, but ELLA MUST NOT numerically
+    strengthen or weaken evidence because of this value:
 
-      AUTOMATIC  policy gates passed (evidence valid, confidence high enough,
-                 agent trusted, no known conflict) — no human in the loop
-      CONSENSUS  enough independent agents corroborated it (multi-agent evidence)
-      HUMAN      a human explicitly approved it
+      AUTOMATIC  policy gates passed — no human in the loop
+      CONSENSUS  the configured distinct-agent admission criterion passed
+      HUMAN      a human explicitly approved admission
       DIRECT     written straight to memory without the proposal pipeline
                  (an ordinary db.write, tagged so it is distinguishable)"""
     AUTOMATIC = "automatic"
@@ -215,9 +215,9 @@ class PromotionMode(str, Enum):
       HYBRID     route by risk: high-risk proposals (low confidence / conflict /
                  untrusted agent) go to the human gate, the rest auto-promote
 
-    A mode governs only the DECISION. It never changes the append-only,
-    hash-versioned nature of what promotion writes, and it never asserts a
-    memory is true — a promoted memory still carries its own [[MemoryStatus]]."""
+    A mode governs only the ADMISSION DECISION. It never changes the append-only,
+    hash-versioned nature of what promotion writes and never asserts truth.
+    Canonical epistemic state is maintained separately by ELLA."""
     AUTOMATIC = "automatic"
     CONSENSUS = "consensus"
     HUMAN     = "human"
