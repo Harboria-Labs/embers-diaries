@@ -20,7 +20,7 @@ from ..core.domain import epistemically_neutral_data, public_epistemic_summary
 from ..core.failure import Failure
 from ..core.proposal import MemoryProposal
 from ..core.types import (
-    MemoryStatus, PromotionMethod, ProposalStatus, SourceType,
+    MemoryStatus, PromotionMethod, ProposalStatus, RecordType, SourceType,
 )
 from ..db import EmberDB
 from ..identity.registry import AgentRegistry
