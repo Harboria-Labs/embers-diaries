@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from embers import EmberDB
+from embers import EmberDB, AccessLevel
 from embers.mcp.server import EmberMCP, TOOLS
 
 
@@ -152,6 +152,72 @@ def _call(mcp, tool, args):
     return res["result"]
 
 
+
+def test_evidence_surfaces_enforce_namespace_acl_and_preserve_request_identity(tmp_path: Path):
+    db = EmberDB.connect(str(tmp_path / "s"))
+    mcp = EmberMCP(db=db)
+    owner_id, owner_token = _agent(mcp)
+    other_id, other_token = _agent(mcp)
+    db.create_namespace("evidence-secret", access_level=AccessLevel.PRIVATE, owner=owner_id)
+
+    written = _call(mcp, "ember_write", {
+        "content": "private evidence target", "namespace": "evidence-secret",
+        "agent_id": owner_id, "token": owner_token,
+    })
+    assert written["isError"] is False
+    rid = json.loads(written["content"][0]["text"])["id"]
+
+    denied = _call(mcp, "ember_attach_evidence", {
+        "memory_id": rid, "source": "tool", "request_id": "req-private",
+        "agent_id": other_id, "token": other_token,
+    })
+    assert denied["isError"] is True
+
+    attached = _call(mcp, "ember_attach_evidence", {
+        "memory_id": rid, "source": "tool", "request_id": "req-private",
+        "agent_id": owner_id, "token": owner_token,
+    })
+    assert attached["isError"] is False
+
+    denied_read = _call(mcp, "ember_evidence_for", {
+        "memory_id": rid, "agent_id": other_id, "token": other_token,
+    })
+    assert denied_read["isError"] is True
+
+    visible = _call(mcp, "ember_evidence_for", {
+        "memory_id": rid, "agent_id": owner_id, "token": owner_token,
+    })
+    assert visible["isError"] is False
+    rows = json.loads(visible["content"][0]["text"])
+    assert rows[0]["request_id"] == "req-private"
+
+
+
+def test_mcp_proposal_evidence_preserves_request_identity(tmp_path: Path):
+    db = EmberDB.connect(str(tmp_path / "s"))
+    mcp = EmberMCP(db=db)
+    agent_id, token = _agent(mcp)
+    proposed = _call(mcp, "ember_propose_memory", {
+        "namespace": "request-provenance",
+        "discovery": {"content": "claim with tool evidence"},
+        "reason": "preserve source request identity",
+        "confidence": 0.8,
+        "evidence": [{
+            "source": "tool://inventory",
+            "reference": "inventory-row",
+            "request_id": "tool-request-77",
+            "origin": "inventory-service",
+            "origin_confidence": "AGENT_DECLARED",
+        }],
+        "agent_id": agent_id, "token": token,
+    })
+    assert proposed["isError"] is False
+    pid=json.loads(proposed["content"][0]["text"])["proposal_id"]
+    proposal=db.get_proposal(pid)
+    assert proposal.evidence[0].request_id=="tool-request-77"
+    assert proposal.evidence[0].hash_version==3
+
+
 class TestProposalPromotionOverMCP:
     """The gap this closes: ember_propose_memory correctly sealed real Evidence,
     but NOTHING on the MCP surface could turn a proposal into durable memory.
@@ -218,7 +284,8 @@ class TestProposalPromotionOverMCP:
         })["content"][0]["text"])
         assert out["promoted"] is True
         assert out["method"] == "automatic", out
-        assert out["status"] in {"verified", "provisional"}
+        assert out["status"] is None, "promotion decision must not assign epistemic truth"
+        assert db.memory_status(out["memory_id"]).value == "provisional"
 
     def test_dry_run_route_writes_nothing(self, tmp_path: Path):
         db = EmberDB.connect(str(tmp_path / "s"))

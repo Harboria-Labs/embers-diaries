@@ -136,10 +136,10 @@ class TestPromotion:
         memory_id, _ = db.promote(pid, validated_by="validator")
         mem = db.get(memory_id)
         assert mem is not None
-        # The discovery is preserved verbatim; promotion additionally stamps the
-        # memory's epistemic status (§12) under reserved keys.
+        # Promotion is admission, not verification. The durable memory enters
+        # provisional state until ELLA evidence establishes a terminal verdict.
         assert mem.data["content"] == "X holds under load"
-        assert mem.data["_status"] == "verified"
+        assert mem.data["_status"] == "provisional"
         assert mem.data["_promotion_method"] == "human"
         # provenance carried over from the proposal
         assert mem.creation_reason == "two independent runs agreed"

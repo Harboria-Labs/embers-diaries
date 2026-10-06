@@ -19,6 +19,7 @@ from ..core.record import EmberRecord
 from ..core.errors import StorageLimitError
 from ..core.annotation import Annotation
 from ..core.types import RecordType, DeprecationReason
+from ..core.domain import epistemically_neutral_data, public_epistemic_summary
 from ..identity.registry import AgentRegistry
 from ..integration import MemoryProtocol
 from .session_gate import install as install_session_gate, resolve_agent
@@ -339,9 +340,10 @@ async def get_timeline(namespace: str, limit: int = Query(default=50, le=500)):
 
 
 def _serialize_record(record: EmberRecord) -> dict:
-    return {
+    result = {
         "id": record.id, "namespace": record.namespace,
-        "record_type": record.record_type.value, "data": record.data, "tags": record.tags,
+        "record_type": record.record_type.value,
+        "data": epistemically_neutral_data(record.data), "tags": record.tags,
         "confidence": record.confidence, "decay_rate": record.decay_rate,
         "written_by": record.written_by, "agent_id": record.agent_id,
         "session_id": record.session_id, "created_at": record.created_at.isoformat(),
@@ -349,3 +351,6 @@ def _serialize_record(record: EmberRecord) -> dict:
         "supersedes": record.supersedes, "superseded_by": record.superseded_by,
         "annotations_count": len(record.annotations),
     }
+    if record.record_type in (RecordType.DOCUMENT, RecordType.NODE):
+        result["epistemic"] = public_epistemic_summary(record)
+    return result

@@ -49,3 +49,20 @@ async def pair_relationship(body:dict,x_ember_agent_id:str|None=Header(None),x_e
     from ..integration.pairing import link
     db,actor=auth(x_ember_agent_id,x_ember_token)
     return execute(link,db,actor,**body)
+
+@router.get('/v1/epistemic/state/{namespace:path}')
+async def epistemic_state(namespace:str,memory_id:str,x_ember_agent_id:str|None=Header(None),x_ember_token:str|None=Header(None)):
+    from ..cognitive.epistemic import EpistemicLedger
+    db,actor=auth(x_ember_agent_id,x_ember_token)
+    return execute(EpistemicLedger(db,namespace).read,memory_id,actor)
+
+@router.post('/v1/epistemic/feedback/{namespace:path}')
+async def epistemic_feedback(namespace:str,body:dict,x_ember_agent_id:str|None=Header(None),x_ember_token:str|None=Header(None)):
+    from ..cognitive.epistemic import EpistemicLedger
+    from .session_gate import current_session_id
+    db,actor=auth(x_ember_agent_id,x_ember_token)
+    if set(body)-{'action','payload','request_id','expected_revision'}:raise HTTPException(400,'unsupported command fields')
+    payload={**body.get('payload',{})}
+    if current_session_id():payload['session_id']=current_session_id()
+    return execute(EpistemicLedger(db,namespace).apply,body.get('action'),payload,actor=actor,
+                   request_id=body.get('request_id'),expected_revision=body.get('expected_revision'))

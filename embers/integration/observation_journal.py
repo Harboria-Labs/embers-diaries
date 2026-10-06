@@ -68,6 +68,14 @@ def sync(db,namespace=None):
             if rid.startswith('usefulness-'):
                 rec=db._store.read(rid)
                 if rec is not None:namespaces.add(rec.namespace)
+    from ..cognitive.epistemic import EpistemicLedger
+    ella_namespaces={db._store.read(rid).namespace for rid in db._store.all_ids() if rid.startswith('epistemic-')}
+    for ns in sorted(ella_namespaces):
+        if namespace is not None and ns!=namespace:continue
+        _,events=EpistemicLedger(db,ns).load()
+        existing={e['id'] for e in read(db,ns)}
+        for event in events:
+            if event['id'] not in existing:append(db,event,'ella:'+event['id'],source_revision=event['revision'])
     for ns in namespaces:
         source=service(db,ns);source._load()
         existing={e['id'] for e in read(db,ns)}

@@ -192,7 +192,17 @@ TOOLS = [
                 "confidence": {"type": "number"},
                 "namespace": {"type": "string"},
                 "session_id": {"type": "string"},
-                "evidence": {"type": "array"},
+                "evidence": {"type": "array","items":{"type":"object","additionalProperties":False,"properties":{
+                    "source":{"type":"string"},
+                    "source_type":{"type":"string"},
+                    "reference":{"type":"string"},
+                    "description":{"type":"string"},
+                    "origin":{"type":"string","description":"Underlying source/origin identity. If omitted, Ember records origin=unknown."},
+                    "origin_confidence":{"type":"string","enum":["UNKNOWN","AGENT_DECLARED"],"description":"Identity confidence only; never evidence strength. SYSTEM_CONFIRMED is reserved for system-captured provenance."},
+                    "event_id":{"type":"string","description":"Optional observation/event identity used for dependency detection."},
+                    "request_id":{"type":"string","description":"Optional idempotent source/tool request identity; equal request IDs from the same source are one hard-dependency signal."},
+                    "derived_from":{"type":"array","items":{"type":"string"},"uniqueItems":True,"description":"Evidence identities this item derives from."}
+                },"required":["source"]}},
                 "agent_id": {"type": "string"},
                 "token": {"type": "string"},
             },
@@ -234,14 +244,12 @@ TOOLS = [
         "description": ("Explicitly promote a pending proposal into durable memory "
                         "(an authenticated caller's own decision, recorded as "
                         "promotion_method=human). Promotion means it met the "
-                        "criteria to become durable memory, NOT that it is true — "
-                        "the memory carries its own status."),
+                        "criteria to become durable memory, NOT that it is true. "
+                        "Epistemic state is maintained separately by ELLA."),
         "inputSchema": {
             "type": "object",
             "properties": {
                 "proposal_id": {"type": "string"},
-                "status": {"type": "string",
-                            "description": "verified / provisional / disputed"},
                 "agent_id": {"type": "string"},
                 "token": {"type": "string"},
             },
@@ -282,9 +290,10 @@ TOOLS = [
     },
     {
         "name": "ember_attach_evidence",
-        "description": ("Attach independent evidence to an EXISTING durable "
-                        "memory. Append-only — the memory is not modified, so its "
-                        "hash is untouched and its confirmation trail only grows."),
+        "description": ("Attach an evidence record to an EXISTING durable memory. "
+                        "Attachment does NOT assert statistical independence or truth strength; "
+                        "ELLA resolves dependency and claim-specific assessment separately. "
+                        "Append-only — the memory hash is untouched."),
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -293,6 +302,11 @@ TOOLS = [
                 "source_type": {"type": "string"},
                 "reference": {"type": "string"},
                 "description": {"type": "string"},
+                "origin": {"type": "string","description": "Underlying source/origin identity. If omitted, Ember records origin=unknown."},
+                "origin_confidence": {"type": "string","enum": ["UNKNOWN","AGENT_DECLARED"],"description": "Identity confidence only; never evidence strength. SYSTEM_CONFIRMED is reserved for system-captured provenance."},
+                "event_id": {"type": "string","description": "Optional observation/event identity used for dependency detection."},
+                "request_id": {"type": "string","description": "Optional idempotent source/tool request identity; equal request IDs from the same source are one hard-dependency signal."},
+                "derived_from": {"type": "array","items": {"type": "string"},"uniqueItems": True},
                 "session_id": {"type": "string"},
                 "agent_id": {"type": "string"},
                 "token": {"type": "string"},
@@ -571,3 +585,8 @@ TOOLS.append({"name":"ember_pair_relationship",
  "primary_context":{"type":["string","null"]},
  "agent_id":{"type":"string"},"token":{"type":"string"},"session_id":{"type":"string"}},
  "required":["source","target","relation","primary_context"]}})
+
+for _name,_props,_required in [
+    ('ember_epistemic_state',{'memory_id':{'type':'string'}},['memory_id']),
+    ('ember_epistemic_feedback',{'action':{'type':'string','enum':['report','revise','confirm','withdraw','resolve','invalidate_evidence','correct_evidence','merge','split','carry_forward','configure']},'payload':{'type':'object'},'request_id':{'type':'string'},'expected_revision':{'type':'integer','minimum':0}},['action','payload','request_id','expected_revision'])]:
+    TOOLS.append({'name':_name,'description':'ELLA V1 exact-version evidence assessment; usefulness and retrieval remain separate. Feedback requires exact target content hash, evidence record ID, SUPPORTS/OPPOSES, WEAK/MEDIUM/STRONG and a concise assessment_note. Numeric likelihoods are forbidden.', 'inputSchema':{'type':'object','properties':{'namespace':{'type':'string'},'agent_id':{'type':'string'},'token':{'type':'string'},'session_id':{'type':'string'},**_props},'required':['namespace',*_required]}})

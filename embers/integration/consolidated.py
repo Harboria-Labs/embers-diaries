@@ -2,7 +2,7 @@
 from copy import deepcopy
 import json
 import os
-from ..core.domain import call, MODEL_VERSION, explicit_truth
+from ..core.domain import call, MODEL_VERSION, explicit_truth, epistemically_neutral_data
 from ..cognitive.usefulness import derive, digest, KIND
 from .usefulness_service import service
 
@@ -32,6 +32,13 @@ def configure(db, namespace, actor, body):
         raise ValueError('config, policy, request_id, expected_revision and reason required')
     return service(db,namespace).apply('research_config',{'config':body['config'],'policy':body['policy'],'reason':body['reason']},
         actor=actor,request_id=body['request_id'],expected_revision=body['expected_revision'])
+
+
+def _recall_data(data):
+    """Recall-facing data without legacy fields that used to claim truth."""
+    if not isinstance(data,dict):
+        return data
+    return {k:v for k,v in data.items() if k not in ('_status','verify_status')}
 
 
 def _render(rows, format):
@@ -75,30 +82,39 @@ def recall(db, namespace, actor, *, query_id, direct_scores, elapsed, context=No
         import tiktoken
         encoding=tiktoken.get_encoding(os.environ.get('EMBER_TOKEN_ENCODING','cl100k_base'))
         counter=lambda text:len(encoding.encode(text,disallowed_special=()))
-        selected=[]
+        selected=[];epistemic={}
         for rid in plan['order']:
             rec=records[rid]
-            truth=explicit_truth(rec,any(c.status.value=='open' for c in db.conflicts_for(rid)))
-            row={'id':rid,'data':rec.data,'truth_status':truth['status'],'truth_projection':truth,'written_by':rec.written_by,'content_hash':rec.content_hash,
+            open_conflict=any(c.status.value in ('open','investigating') for c in db.conflicts_for(rid))
+            # Keep the capacity-counted memory block epistemically neutral.
+            # Canonical ELLA state travels in the separate response metadata map,
+            # so evidence growth or verdict changes cannot alter admission size.
+            row={'id':rid,'data':_recall_data(rec.data),'truth_status':'see_epistemic_metadata',
+                 'truth_projection':{'source':'epistemic_metadata','projection_version':'ella-v1'},
+                 'written_by':rec.written_by,'content_hash':rec.content_hash,
                  'dynamics':next(r for r in candidates if r['id']==rid)}
             if call('admit',dict(admission,item_tokens=counter(_render([row],format)),total_tokens=counter(_render(selected+[row],format)),selected_count=len(selected)))['admit']:
                 selected.append(row)
+                epistemic[rid]=explicit_truth(rec,open_conflict)
         direct_ids=[r['id'] for r in selected]
         from .pairing import select
         paired, pair_route=select(db,namespace,direct_ids,context,state,query_id)
         pair_expansion=None
         if paired is not None:
-            truth=explicit_truth(paired,any(c.status.value=='open' for c in db.conflicts_for(paired.id)))
-            row={'id':paired.id,'data':paired.data,'truth_status':truth['status'],'truth_projection':truth,
+            open_conflict=any(c.status.value in ('open','investigating') for c in db.conflicts_for(paired.id))
+            row={'id':paired.id,'data':_recall_data(paired.data),'truth_status':'see_epistemic_metadata',
+                 'truth_projection':{'source':'epistemic_metadata','projection_version':'ella-v1'},
                  'written_by':paired.written_by,'content_hash':paired.content_hash,'retrieval':pair_route}
             if call('admit',dict(admission,item_tokens=counter(_render([row],format)),total_tokens=counter(_render(selected+[row],format)),selected_count=len(selected)))['admit']:
                 selected.append(row)
+                epistemic[paired.id]=explicit_truth(paired,open_conflict)
                 pair_expansion=pair_route
         rendered=_render(selected,format)
         call('admit',dict(config=cfg,final_tokens=counter(rendered)))
         response=dict(context=rendered,format=format,token_count=counter(rendered),selected_ids=[r['id'] for r in selected],candidate_ids=list(records),
             query_id=query_id,primary_context=context,model_version=MODEL_VERSION,configuration_revision=state.get('configuration_revision',0),
-            dynamics=batch['rows'],latent_inspected=plan['latent_inspected'],pair_expansion=pair_expansion,direct_ids=direct_ids,primary_memory_id=direct_ids[0] if direct_ids else None,tokenizer='tiktoken:'+encoding.name)
+            dynamics=batch['rows'],latent_inspected=plan['latent_inspected'],pair_expansion=pair_expansion,direct_ids=direct_ids,primary_memory_id=direct_ids[0] if direct_ids else None,tokenizer='tiktoken:'+encoding.name,
+            epistemic=epistemic)
         old[key]={'sequence':scoped['sequence']+1,'memories':batch['state']}
         event={'kind':KIND,'id':ledger.prefix+f'{len(ledger._events)+1:012d}','revision':len(ledger._events)+1,
             'namespace':namespace,'actor':actor,'request_id':query_id,'action':'activation','fingerprint':fingerprint,'created_at':float(ledger.clock()),
@@ -107,6 +123,7 @@ def recall(db, namespace, actor, *, query_id, direct_scores, elapsed, context=No
             'observation':{'operation':'ember_research_recall','context':context,'session_id':session_id,'query':None,
                 'direct_ids':direct_ids,'pair_expansion':pair_expansion,'candidate_ids':list(records),'returned_ids':response['selected_ids'],'dynamics':batch['rows'],
                 'observed_heat':{r['id']:r['activation'] for r in batch['rows']},'heat_source':MODEL_VERSION,
-                'budget':{'token_budget':cfg['token_budget'],'token_count':response['token_count'],'tokenizer':response['tokenizer']},'latency_ms':None}}
+                'budget':{'token_budget':cfg['token_budget'],'token_count':response['token_count'],'tokenizer':response['tokenizer']},'latency_ms':None,
+                'epistemic':epistemic}}
         ledger._append(event)
         return response

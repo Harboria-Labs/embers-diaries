@@ -12,8 +12,8 @@ The buffer between an agent's raw discovery and durable memory:
 
 `propose` / `promote` / `reject` (Features #4/#5) are the *mechanism*. This
 engine is the *policy* in front of them: given a pending proposal, it DECIDES
-whether — and by which method — the proposal should become a durable memory, and
-with what epistemic status. It never writes on its own; it calls back into the
+whether — and by which method — the proposal should become a durable memory.
+It does not decide epistemic truth. It never writes on its own; it calls back into the
 existing `EmberDB.promote()` so all the append-only / hashing / evidence-edge
 guarantees still hold.
 
@@ -22,12 +22,10 @@ THE ONE SEMANTIC THAT MUST NOT BE LOST (the user's words):
     "Promotion doesn't mean 'this is definitely true.' It means: 'This proposal
      met the criteria for entering durable memory.'"
 
-So a promotion decision is two independent things:
-  1. WHETHER to admit the proposal (the gates for the chosen mode), and
-  2. with what STATUS it is admitted — VERIFIED vs PROVISIONAL — which reflects
-     how strongly it is believed, decoupled from the mere fact of admission.
-A proposal can be admitted (met the criteria) yet stored PROVISIONAL (not yet
-strongly confirmed). That is the whole point of the checkpoint.
+Promotion is therefore an admission decision only. Every promoted memory enters
+the ELLA era with a PROVISIONAL canonical epistemic state unless and until accepted
+claim-specific evidence assessments move it. Proposal confidence remains an
+admission/risk signal and never becomes an ELLA likelihood contribution.
 """
 
 from __future__ import annotations
@@ -59,9 +57,8 @@ class PromotionPolicy:
     every field maps to one of the user's automatic-mode criteria.
 
         min_confidence      confidence a proposal needs to be admitted at all
-        verified_confidence at/above this it is admitted VERIFIED; between
-                            min_confidence and here it is admitted PROVISIONAL
-                            (this band is what encodes "promotion ≠ true")
+        verified_confidence deprecated compatibility setting; retained so old
+                            configuration still parses, but ignored for truth
         require_evidence    an ungrounded proposal (no Evidence) cannot
                             auto-promote — a bare assertion is not enough
         minimum_evidence_items number of evidence items needed when evidence
@@ -73,7 +70,7 @@ class PromotionPolicy:
                             is routed to the human gate instead of auto-promoted
     """
     min_confidence: float = 0.7
-    verified_confidence: float = 0.85
+    verified_confidence: float = 0.85  # Deprecated compatibility input; ignored for admission/truth.
     require_evidence: bool = True
     minimum_evidence_items: int = 1
     consensus_threshold: int = 2
@@ -100,7 +97,7 @@ class PromotionDecision:
     outcome: PromotionOutcome
     mode: PromotionMode
     method: PromotionMethod | None = None   # how it would be promoted (if PROMOTE)
-    status: MemoryStatus | None = None      # status it would be admitted with
+    status: MemoryStatus | None = None      # deprecated response slot; ELLA owns truth
     reasons: list = field(default_factory=list)  # human-readable gate results
 
     @property
@@ -178,7 +175,7 @@ class PromotionEngine:
                ) -> PromotionResult:
         """Route the proposal and act on the decision.
 
-        On PROMOTE, calls `db.promote()` with the decided method + status and
+        On PROMOTE, calls `db.promote()` with the decided admission method and
         returns the new memory id. On HOLD, writes nothing and leaves the
         proposal PENDING (it can be submitted again later once, e.g., more
         evidence has accumulated)."""
@@ -187,18 +184,10 @@ class PromotionEngine:
             return PromotionResult(decision, memory_id=None)
         memory_id, _ = self._db.promote(
             proposal_id, validated_by=validated_by,
-            status=decision.status, promotion_method=decision.method)
+            promotion_method=decision.method)
         return PromotionResult(decision, memory_id=memory_id)
 
     # ── Mode policies ──────────────────────────────────────────────────────────
-
-    def _status_for(self, confidence: float) -> MemoryStatus:
-        """Map confidence onto the admitted status. Above verified_confidence a
-        memory is VERIFIED; in the [min, verified) band it is admitted but only
-        PROVISIONAL — 'met the criteria to enter memory' ≠ 'known true'."""
-        if confidence >= self.policy.verified_confidence:
-            return MemoryStatus.VERIFIED
-        return MemoryStatus.PROVISIONAL
 
     def _automatic_gates(self, proposal) -> list[tuple[bool, str]]:
         """The AUTOMATIC-mode criteria, each as (passed, explanation). Shared by
@@ -233,20 +222,19 @@ class PromotionEngine:
             return PromotionDecision(
                 proposal.proposal_id, PromotionOutcome.PROMOTE, self.mode,
                 method=PromotionMethod.AUTOMATIC,
-                status=self._status_for(proposal.confidence),
+                
                 reasons=reasons)
         return PromotionDecision(
             proposal.proposal_id, PromotionOutcome.HOLD, self.mode,
             reasons=reasons)
 
     def _route_consensus(self, proposal) -> PromotionDecision:
-        """Promote once enough DISTINCT agents have corroborated the discovery.
+        """Admit once enough DISTINCT agents satisfy the consensus admission gate.
 
-        Corroboration is counted from distinct evidence authors — this is the
-        multi-agent accumulation `attach_evidence` enables: Agent A proposes,
-        Agents B and C independently attach supporting evidence, and at the
-        threshold the proposal auto-promotes. Evidence with no agent_id counts
-        as a single anonymous corroborator."""
+        This is governance for durable-memory admission only. It is not ELLA
+        independence, does not create likelihood mass, and never makes a claim
+        VERIFIED. Evidence with no agent_id counts as one anonymous admission
+        contributor for backwards-compatible consensus policy."""
         agents = {ev.agent_id for ev in proposal.evidence}
         n = len(agents)
         threshold = self.policy.consensus_threshold
@@ -273,7 +261,7 @@ class PromotionEngine:
             return PromotionDecision(
                 proposal.proposal_id, PromotionOutcome.PROMOTE, self.mode,
                 method=PromotionMethod.CONSENSUS,
-                status=self._status_for(proposal.confidence),
+                
                 reasons=reasons)
         return PromotionDecision(
             proposal.proposal_id, PromotionOutcome.HOLD, self.mode,

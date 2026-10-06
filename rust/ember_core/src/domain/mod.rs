@@ -1,4 +1,5 @@
 //! Versioned deterministic Ember domain. No clocks, filesystem, credentials or UI.
+pub mod ella;
 pub mod dynamics;
 pub mod fur;
 pub mod orientation;
@@ -69,6 +70,13 @@ pub fn call(op: &str, v: Value) -> Result<Value> {
             }
             Ok(json!({"retry":null}))
         }
+        "ella_crossing" => Ok(json!({"confirmation_required": v["before"]["base_epistemic_verdict"]=="PROVISIONAL" && ["VERIFIED","DISFAVORED"].contains(&v["after"]["base_epistemic_verdict"].as_str().unwrap_or(""))})),
+        "ella_policy_default" => Ok(ella::defaults()),
+        "ella_policy" => ella::policy(v),
+        "ella_assessment" => ella::assessment(v),
+        "ella_state" => ella::state(v),
+        "ella_reduce" => ella::reduce(v),
+        "ella_project" => ella::project(&v),
         "pair_select" => pairing::select(&v),
         "context" => context(&v),
         "context_write" => {
@@ -97,64 +105,19 @@ pub fn call(op: &str, v: Value) -> Result<Value> {
         "admit" => dynamics::admit(&v),
         "orientation" => orientation::orient(v),
         "truth" => {
-            let d = &v["data"];
-            let mut status = "unverified".to_string();
-            let mut source = "unset";
-            for key in ["_status", "verify_status"] {
-                if let Some(s) = d[key].as_str() {
-                    if [
-                        "verified",
-                        "hypothesis",
-                        "unverified",
-                        "contested",
-                        "deprecated",
-                        "incorrect",
-                        "provisional",
-                        "disputed",
-                            "superseded",
-                    ]
-                    .contains(&s)
-                    {
-                        status = s.into();
-                        source = key;
-                        break;
-                    }
-                }
+            let supplied=v["projection"].is_object();
+            let mut projection=if supplied{v["projection"].clone()}else{ella::project(&json!({"policy":ella::defaults(),"evidence":[],"assessments":[],"revision":0}))?};
+            // Legacy callers may only know a boolean "some active conflict".
+            // Never overwrite the more precise OPEN/INVESTIGATING overlay
+            // already supplied by the canonical ELLA projection.
+            if v["open_conflict"]==true && (!supplied || projection["conflict_overlay"].as_str().unwrap_or("none")=="none") {
+                projection["public_epistemic_state"]=json!("DISPUTED");projection["conflict_overlay"]=json!("open");
             }
-            if let Some(a) = v["annotations"].as_array() {
-                for a in a {
-                    if a["annotation_type"] == "validation" && a["context"] == "verification" {
-                        if let Some(tags) = a["tags"].as_array() {
-                            let allowed: Vec<_> = tags
-                                .iter()
-                                .filter_map(Value::as_str)
-                                .filter(|s| {
-                                    [
-                                        "verified",
-                                        "hypothesis",
-                                        "unverified",
-                                        "contested",
-                                        "deprecated",
-                                        "incorrect",
-                                    ]
-                                    .contains(s)
-                                })
-                                .collect();
-                            if allowed.len() == 1 {
-                                status = allowed[0].into();
-                                source = "verification_annotation"
-                            }
-                        }
-                    }
-                }
-            }
-            if v["open_conflict"] == true {
-                status = "contested".into();
-                source = "open_conflict"
-            }
-            Ok(
-                json!({"status":status,"source":source,"projection_version":"explicit-epistemic-v1"}),
-            )
+            projection["status"]=json!(projection["public_epistemic_state"].as_str().unwrap().to_lowercase());
+            projection["source"]=json!("epistemic_ledger");
+            projection["projection_version"]=json!("ella-v1");
+            projection["legacy_status"]=v["data"].get("_status").or_else(||v["data"].get("verify_status")).cloned().unwrap_or(Value::Null);
+            Ok(projection)
         }
         _ => Err("unknown domain operation".into()),
     }

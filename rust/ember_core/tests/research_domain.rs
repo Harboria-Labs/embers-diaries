@@ -308,6 +308,196 @@ fn context_truth_invariants() {
             json!({"data":{"confidence":x,"U":x},"annotations":[],"open_conflict":false}),
         )
         .unwrap();
-        assert_eq!(t["status"], "unverified");
+        assert_eq!(t["status"], "provisional");
+        assert_eq!(t["source"], "epistemic_ledger");
+        assert_eq!(t["score"], 0.0);
     }
+}
+
+
+fn ella_evidence(id:&str,reference:&str)->Value {
+    json!({"id":id,"evidence_id":id,"content_hash":format!("hash-{id}"),
+        "reference":reference,"source_type":"reported","origin":Value::Null,
+        "session_id":Value::Null,"event_id":Value::Null,"derived_from":[]})
+}
+fn ella_assessment(id:&str,eid:&str,polarity:&str,strength:&str)->Value {
+    json!({"assessment_id":id,"target_memory_id":"m","target_memory_version":"v",
+        "evidence_id":eid,"assessor_id":format!("assessor-{id}"),
+        "assessment_note":"bounded semantic judgment","polarity":polarity,
+        "strength":strength,"status":"accepted"})
+}
+fn ella_project(evidence:Value,assessments:Value,conflict:&str)->Value {
+    ella::project(&json!({"policy":ella::defaults(),"evidence":evidence,
+        "assessments":assessments,"hard_groups":[],"target_memory_id":"m",
+        "target_memory_version":"v","revision":1,"conflict_overlay":conflict})).unwrap()
+}
+
+#[test]
+fn canonical_truth_preserves_precise_conflict_overlay() {
+    let projection=json!({"base_epistemic_verdict":"VERIFIED",
+        "public_epistemic_state":"DISPUTED","score":3.2,
+        "conflict_overlay":"investigating"});
+    let out=call("truth",json!({"data":{"verify_status":"verified"},
+        "projection":projection,"open_conflict":true})).unwrap();
+    assert_eq!(out["status"],"disputed");
+    assert_eq!(out["conflict_overlay"],"investigating");
+    assert_eq!(out["legacy_status"],"verified");
+}
+
+#[test]
+fn ella_dependency_min_strength_and_conflict_firewall() {
+    let e1=ella_evidence("e1","same-artifact");
+    let e2=ella_evidence("e2","same-artifact");
+    let a1=ella_assessment("a1","e1","SUPPORTS","STRONG");
+    let a2=ella_assessment("a2","e2","SUPPORTS","MEDIUM");
+    let base=ella_project(json!([e1,e2]),json!([a1,a2]),"none");
+    assert_eq!(base["raw_evidence_count"],2);
+    assert_eq!(base["accepted_unit_count"],1);
+    assert_eq!(base["hard_collapsed_count"],1);
+    assert!((f(&base,"score")-3.0_f64.ln()).abs()<1e-15);
+    let open=ella_project(
+        json!([ella_evidence("e1","same-artifact"),ella_evidence("e2","same-artifact")]),
+        json!([ella_assessment("a2","e2","SUPPORTS","MEDIUM"),ella_assessment("a1","e1","SUPPORTS","STRONG")]),
+        "open");
+    assert_eq!(f(&open,"score"),f(&base,"score"));
+    assert_eq!(open["base_epistemic_verdict"],base["base_epistemic_verdict"]);
+    assert_eq!(open["public_epistemic_state"],"DISPUTED");
+    assert_eq!(open["units"],base["units"]);
+}
+
+#[test]
+fn ella_mixed_polarity_unit_is_unresolved_and_no_evidence_is_distinct() {
+    let mixed=ella_project(
+        json!([ella_evidence("e1","same"),ella_evidence("e2","same")]),
+        json!([ella_assessment("a1","e1","SUPPORTS","STRONG"),
+               ella_assessment("a2","e2","OPPOSES","STRONG")]),"none");
+    assert_eq!(mixed["accepted_unit_count"],0);
+    assert_eq!(mixed["score"],0.0);
+    assert_eq!(mixed["evidence_dispute"],true);
+    assert_eq!(mixed["assessment_started"],true);
+    let empty=ella_project(json!([]),json!([]),"none");
+    assert_eq!(empty["score"],0.0);
+    assert_eq!(empty["assessment_started"],false);
+    assert_eq!(empty["evidence_dispute"],false);
+}
+
+#[test]
+fn ella_same_request_identity_is_hard_dependency() {
+    let e1=json!({"id":"e1","evidence_id":"e1","content_hash":"h1","reference":"",
+        "source":"tool://inventory","source_type":"reported","origin":Value::Null,"session_id":Value::Null,
+        "event_id":Value::Null,"request_id":"req-42","derived_from":[]});
+    let e2=json!({"id":"e2","evidence_id":"e2","content_hash":"h2","reference":"",
+        "source":"tool://inventory","source_type":"reported","origin":Value::Null,"session_id":Value::Null,
+        "event_id":Value::Null,"request_id":"req-42","derived_from":[]});
+    let out=ella_project(json!([e1,e2]),json!([
+        ella_assessment("a1","e1","SUPPORTS","MEDIUM"),
+        ella_assessment("a2","e2","SUPPORTS","MEDIUM")
+    ]),"none");
+    assert_eq!(out["raw_evidence_count"],2);
+    assert_eq!(out["accepted_unit_count"],1);
+    assert_eq!(out["hard_collapsed_count"],1);
+}
+
+#[test]
+fn ella_same_request_text_different_sources_stays_separate() {
+    let e1=json!({"id":"e1","evidence_id":"e1","content_hash":"h1","reference":"",
+        "source":"tool://one","source_type":"reported","origin":Value::Null,"session_id":Value::Null,
+        "event_id":Value::Null,"request_id":"42","derived_from":[]});
+    let e2=json!({"id":"e2","evidence_id":"e2","content_hash":"h2","reference":"",
+        "source":"tool://two","source_type":"reported","origin":Value::Null,"session_id":Value::Null,
+        "event_id":Value::Null,"request_id":"42","derived_from":[]});
+    let out=ella_project(json!([e1,e2]),json!([
+        ella_assessment("a1","e1","SUPPORTS","WEAK"),
+        ella_assessment("a2","e2","SUPPORTS","WEAK")
+    ]),"none");
+    assert_eq!(out["accepted_unit_count"],2);
+    assert_eq!(out["hard_collapsed_count"],0);
+}
+
+#[test]
+fn ella_opposing_threshold_confirmation_is_evidence_dispute() {
+    let evidence=ella_evidence("e","artifact");
+    let mut parent=ella_assessment("p","e","SUPPORTS","STRONG");
+    parent["status"]=json!("confirmation_required");
+    parent["requires_confirmation"]=json!(true);
+    let mut child=ella_assessment("c","e","OPPOSES","STRONG");
+    child["status"]=json!("confirmation_required");
+    child["confirmation_of"]=json!("p");
+    let out=ella_project(json!([evidence]),json!([parent,child]),"none");
+    assert_eq!(out["score"],0.0);
+    assert_eq!(out["base_epistemic_verdict"],"PROVISIONAL");
+    assert_eq!(out["public_epistemic_state"],"DISPUTED");
+    assert_eq!(out["evidence_dispute"],true);
+    assert_eq!(out["confirmation_disagreement"],true);
+}
+
+#[test]
+fn ella_rejects_arbitrary_numeric_strength_and_source_type_has_no_weight() {
+    let mut bad=ella_assessment("a","e","SUPPORTS","WEAK");
+    bad["strength"]=json!(1000.0);
+    assert!(ella::assessment(bad).is_err());
+
+    let weak=ella_project(json!([
+        {"id":"e1","evidence_id":"e1","content_hash":"h1","reference":"one",
+         "source_type":"experimentally_verified","origin":Value::Null,"session_id":Value::Null,
+         "event_id":Value::Null,"derived_from":[]},
+        {"id":"e2","evidence_id":"e2","content_hash":"h2","reference":"two",
+         "source_type":"reported","origin":"person","session_id":Value::Null,
+         "event_id":Value::Null,"derived_from":[]}
+    ]),json!([
+        ella_assessment("a1","e1","SUPPORTS","WEAK"),
+        ella_assessment("a2","e2","SUPPORTS","WEAK")
+    ]),"none");
+    assert!((f(&weak,"score")-2.0*1.5_f64.ln()).abs()<1e-15);
+}
+
+
+#[test]
+fn ella_unknown_origin_is_not_soft_dependency_or_lineage_coverage() {
+    let mut p=ella::defaults();
+    p["soft_same_origin"]=json!(true);
+    let out=ella::project(&json!({"policy":p,"evidence":[
+        {"id":"e1","evidence_id":"e1","content_hash":"h1","reference":"",
+         "origin":"unknown","session_id":Value::Null,"event_id":Value::Null,"derived_from":[]},
+        {"id":"e2","evidence_id":"e2","content_hash":"h2","reference":"",
+         "origin":"unknown","session_id":Value::Null,"event_id":Value::Null,"derived_from":[]}
+    ],"assessments":[
+        ella_assessment("a1","e1","SUPPORTS","WEAK"),
+        ella_assessment("a2","e2","SUPPORTS","WEAK")
+    ],"hard_groups":[],"target_memory_id":"m","target_memory_version":"v",
+      "revision":1,"conflict_overlay":"none"})).unwrap();
+    assert_eq!(out["accepted_unit_count"],2);
+    assert_eq!(out["soft_cluster_count"],0);
+    assert_eq!(out["lineage_coverage"],0.0);
+    assert_eq!(out["unresolved_independence_count"],2);
+}
+
+
+#[test]
+fn ella_native_state_reducer_validates_persisted_lifecycle() {
+    let state=json!({"assessments":{},"evidence_overrides":{},"hard_groups":{},
+        "policy":ella::defaults(),"carried":{}});
+    assert_eq!(ella::state(state.clone()).unwrap(),state);
+    let assessment=json!({"assessment_id":"evt:assessment","target_memory_id":"m",
+        "target_memory_version":"v","evidence_id":"e","assessor_id":"assessor",
+        "assessment_note":"bounded semantic judgment","polarity":"SUPPORTS",
+        "strength":"WEAK","request_id":"req","revision":1,"created_at":1.0,
+        "status":"accepted"});
+    let mut next=state.clone();
+    next["assessments"]["evt:assessment"]=assessment;
+    let payload=json!({"target_memory_id":"m","target_memory_version":"v",
+        "evidence_id":"e","polarity":"SUPPORTS","strength":"WEAK",
+        "assessment_note":"bounded semantic judgment"});
+    let event=json!({"id":"evt","actor":"assessor","request_id":"req","action":"report",
+        "payload":payload,"state":next});
+    let reduced=ella::reduce(json!({"state":state,"event":event})).unwrap();
+    assert_eq!(reduced["assessments"]["evt:assessment"]["status"],"accepted");
+
+    // A structurally valid state that changes the semantic strength without a
+    // matching command is rejected: replay is a native transition check, not
+    // merely deserialization of a Python-produced snapshot.
+    let mut tampered=event.clone();
+    tampered["state"]["assessments"]["evt:assessment"]["strength"]=json!("STRONG");
+    assert!(ella::reduce(json!({"state":json!({"assessments":{},"evidence_overrides":{},"hard_groups":{},
+        "policy":ella::defaults(),"carried":{}}),"event":tampered})).is_err());
 }

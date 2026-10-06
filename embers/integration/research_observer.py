@@ -135,10 +135,11 @@ def _project(db,e):
         if rec is not None and rec.namespace==e['namespace'] and rec.record_type in db._DURABLE_MEMORY_TYPES:
             d=rec.data if isinstance(rec.data,dict) else {}
             from .write_observation import provenance
+            from ..core.domain import explicit_truth
             origin=provenance(db,rec)
-            if rid in obs.get('memory_ids',[]):origin.update(creation_event=e['id'],originating_agent=e['actor'])
+            if obs.get('operation','').startswith('memory_written') and rid in obs.get('memory_ids',[]):origin.update(creation_event=e['id'],originating_agent=e['actor'])
             memories.append({'provenance':origin,'id':rid,'namespace':rec.namespace,'preview':str(d.get('content',d.get('summary','')))[:500],
-                             'subject':d.get('subject'),'primary_context':d.get('primary_context'),'verify_status':d.get('verify_status')})
+                             'subject':d.get('subject'),'primary_context':d.get('primary_context'),'verify_status':explicit_truth(rec)['status'],'epistemic':explicit_truth(rec)})
     visible={m['id'] for m in memories}
     relationships=[]
     for m in memories:
@@ -149,7 +150,7 @@ def _project(db,e):
             if edge['target'] in visible and len(relationships)<100:
                 relationships.append({'from':m['id'],'to':edge['target'],'type':str(edge.get('edge_type'))[:128],'kind':'stored_relation'})
     stage=lambda yes:'OBSERVED' if yes else 'NOT OBSERVED'
-    out={**meta,'event_id':e['id'],'revision':e['revision'],'timestamp':e['created_at'],
+    out={**meta,'epistemic':obs.get('epistemic'),'event_id':e['id'],'revision':e['revision'],'timestamp':e['created_at'],
          'source_journal_revision':e.get('source_journal_revision',e['revision']),'observed_agent_id':e['actor'],'request_id':obs.get('origin_request_id') if obs.get('memory_ids') else e['request_id'],'action':e['action'],
          'affected_experience_ids':[x['id'] for x in e.get('experiences',[])][:100],
          'experiences':[{'id':x['id'],'target':x['target'],'resolution_status':x.get('resolution_status'),

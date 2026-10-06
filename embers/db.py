@@ -113,6 +113,11 @@ class EmberDB:
         # to the unindexed store.all_ids() scan.
         self._master_index = MasterIndex(self._path)
         self._reader = ReadEngine(self._store, self._writer, self._master_index)
+        def epistemic_projection(record):
+            if record.record_type not in self._DURABLE_MEMORY_TYPES:return None
+            from .cognitive.epistemic import EpistemicLedger
+            with self._writer.lock:return EpistemicLedger(self,record.namespace).project(record.id)
+        self._reader._epistemic_provider = epistemic_projection
         self._graph_index = GraphIndex(self._path)
         self._timeline_index = TimelineIndex(self._path)
         self._vector_index = VectorIndex(self._path)
@@ -1327,6 +1332,21 @@ class EmberDB:
     # reject() supersedes it with a REJECTED copy. Nothing is ever deleted, so a
     # rejected proposal stays permanently distinguishable from a committed one.
 
+    def _normalize_new_evidence_origin(self, ev: Evidence) -> None:
+        """Give new unsealed evidence an explicit origin identity.
+
+        A pre-sealed hash-version-1 Evidence object is a legacy compatibility
+        artifact. Its signed payload cannot be extended with origin without
+        changing its content hash, so it remains byte-for-byte intact. ELLA
+        projects a missing legacy origin as UNKNOWN; current REST/MCP/new
+        unsealed DB submissions persist origin="unknown" explicitly.
+        """
+        if ev.origin is not None or ev.content_hash is not None:
+            return
+        ev.origin = "unknown"
+        ev.origin_confidence = "UNKNOWN"
+        if ev.hash_version < 2:
+            ev.hash_version = 2
     def propose(self, proposal: MemoryProposal) -> str:
         """Record a memory proposal (a discovery awaiting validation, §4).
 
@@ -1334,6 +1354,8 @@ class EmberDB:
         durable memory. Its evidence is sealed too, so each piece keeps the
         identity/hash it will carry if the proposal is promoted. Returns the
         proposal record id (== proposal.proposal_id)."""
+        for ev in proposal.evidence:
+            self._normalize_new_evidence_origin(ev)
         proposal.seal_evidence()
         proposal.status = ProposalStatus.PENDING
         record = EmberRecord(
@@ -1401,24 +1423,21 @@ class EmberDB:
         touching it. The proposal record is then superseded by a PROMOTED copy
         that records which memory it became.
 
-        EPISTEMIC STATE (spec §12). A promoted memory does NOT assert "this is
-        true" — only "this met the criteria to enter durable memory". So it
-        carries two explicit fields, stored under reserved `_status` /
-        `_promotion_method` keys INSIDE the memory's data (hence inside the
-        content hash and versioned — a status change is a new version):
-          • status           VERIFIED (default) / PROVISIONAL / DISPUTED
-          • promotion_method HOW it was admitted — HUMAN by default, because a
-                             bare promote() call is an explicit caller decision;
-                             the Promotion Engine passes AUTOMATIC / CONSENSUS.
-        Backwards-compat: the keys are added only when set, and read back with a
-        VERIFIED / HUMAN default, so pre-existing promoted memories hash and read
-        exactly as before (§15).
+        ELLA BOUNDARY. Promotion is admission only. New durable memories carry a
+        legacy-compatible reserved `_status=provisional` marker plus their
+        `_promotion_method`, both versioned inside the record hash. The marker is
+        not canonical truth and cannot make the memory VERIFIED. Canonical
+        epistemic state is projected separately by ELLA from accepted evidence
+        assessments. The optional `status` argument remains only to reject old
+        callers that try to set truth during promotion.
 
         Returns (memory_id, proposal_id). Raises if the proposal does not exist
         or is not currently pending.
         """
         from .core.types import MemoryStatus, PromotionMethod
-        status = status or MemoryStatus.VERIFIED
+        if status is not None:
+            raise ValueError('Promotion is admission only; use ember_epistemic_feedback for truth evidence')
+        status = MemoryStatus.PROVISIONAL
         promotion_method = promotion_method or PromotionMethod.HUMAN
 
         proposal = self.get_proposal(proposal_id)
@@ -1509,11 +1528,11 @@ class EmberDB:
         the decision without writing anything."""
         return self._promotion.route(proposal_id)
 
-    # ── Epistemic status of a durable memory (§12) ─────────────────────────────
+    # ── Legacy status compatibility for durable memory (§12) ─────────────────
 
     @staticmethod
     def _with_status(discovery, status, promotion_method) -> dict:
-        """Fold the memory's epistemic status + promotion method into its data.
+        """Fold the legacy admission marker + promotion method into stored data.
 
         The discovery is normally a dict; we add reserved `_status` /
         `_promotion_method` keys alongside it. A non-dict discovery (str, list,
@@ -1531,21 +1550,24 @@ class EmberDB:
         return {"value": discovery, **meta}
 
     def memory_status(self, memory_id: str):
-        """Explicit status. Unknown/unverified memories are provisional, never verified by absence."""
+        """Compatibility enum projected from canonical ELLA public state; use the dedicated epistemic state API for full diagnostics."""
         from .core.domain import explicit_truth
         from .core.types import MemoryStatus
         rec = self._reader.get_current(memory_id) or self._reader.get(memory_id, True, True)
         if rec is None: raise KeyError(memory_id)
-        value = explicit_truth(rec, any(c.status.value == 'open' for c in self.conflicts_for(rec.id)))['status']
+        value = explicit_truth(rec, any(c.status.value in ('open','investigating') for c in self.conflicts_for(rec.id)))['status']
         if value == 'superseded': return MemoryStatus.SUPERSEDED
-        return MemoryStatus.VERIFIED if value == 'verified' else MemoryStatus.DISPUTED if value in ('disputed','contested','incorrect') else MemoryStatus.PROVISIONAL
+        if value == 'verified': return MemoryStatus.VERIFIED
+        if value == 'disfavored': return MemoryStatus.DISFAVORED
+        if value in ('disputed','contested','incorrect'): return MemoryStatus.DISPUTED
+        return MemoryStatus.PROVISIONAL
 
     def legacy_memory_status(self, memory_id: str) -> "MemoryStatus":
-        """The current epistemic status of a durable memory.
+        """Read the historical `_status` compatibility marker only.
 
-        Reads the CURRENT version (status changes are new versions). Defaults to
-        VERIFIED when the key is absent, so a memory written before this feature
-        — or by a plain db.write() — reads as VERIFIED without any migration."""
+        This is NOT ELLA truth. It intentionally preserves the old default of
+        VERIFIED when the marker is absent so legacy callers/data remain
+        readable without silently rewriting historical records."""
         from .core.types import MemoryStatus
         rec = self._reader.get_current(memory_id) or self._reader.get(
             memory_id, include_deprecated=True, include_superseded=True)
@@ -1571,13 +1593,12 @@ class EmberDB:
     def set_status(self, memory_id: str, status: "MemoryStatus",
                    changed_by: str = "system",
                    reason: str | None = None) -> tuple[str, str]:
-        """Change a memory's epistemic status — as a NEW version (append-only).
+        """Write a legacy `_status` marker as a new memory version.
 
-        A status transition (e.g. VERIFIED → DISPUTED when conflicting evidence
-        appears) never overwrites: it supersedes the memory with a new version
-        carrying the new `_status`, so the history verified→disputed is fully
-        preserved and auditable. The promotion_method is carried forward
-        unchanged. Returns (new_id, old_id)."""
+        Kept for backwards compatibility only. This does not change canonical
+        ELLA state or create epistemic evidence. Because it creates a new exact
+        memory version, that version begins with its own ELLA projection unless
+        evidence is explicitly carried forward and reassessed."""
         from .core.types import MemoryStatus, PromotionMethod
         rec = self._reader.get_current(memory_id)
         if rec is None:
@@ -1637,8 +1658,10 @@ class EmberDB:
     def attach_evidence(self, memory_id: str, ev: Evidence) -> str:
         """Attach a new piece of evidence to an EXISTING durable memory.
 
-        This is the multi-agent confirmation path: any agent can add independent
-        evidence to a memory over time WITHOUT modifying (superseding) it —
+        This is the multi-agent evidence path: any agent can add an evidence
+        record over time WITHOUT modifying (superseding) the memory. Attachment
+        does not claim epistemic independence; ELLA resolves detectable
+        dependence and claim-specific assessment separately —
         append a new EVIDENCE record with a SUPPORTS edge. Append-only, so the
         memory's hash is untouched and its confirmation trail only grows.
         Returns the evidence record id.
@@ -1663,6 +1686,7 @@ class EmberDB:
                 f"memory (record_type NODE or DOCUMENT). If this is a pending "
                 f"PROPOSAL, pass evidence inline to propose() instead: "
                 f"evidence attached here would not affect its promotion gate.")
+        self._normalize_new_evidence_origin(ev)
         return self._write_evidence_record(ev, memory_id)
 
     def evidence_for(self, memory_id: str) -> list[EmberRecord]:

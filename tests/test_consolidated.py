@@ -7,7 +7,7 @@ from embers.db import EmberDB
 from embers.integration import MemoryProtocol
 from embers.integration import consolidated
 from embers.integration.usefulness_service import service,enable,snapshot
-from embers.core.domain import call,explicit_truth,MODEL_VERSION
+from embers.core.domain import call,explicit_truth,historical_inline_truth,MODEL_VERSION
 from embers.cognitive.usefulness import UsefulnessPolicy
 
 @pytest.fixture
@@ -86,9 +86,13 @@ def test_exact_context_and_no_python_math(rig):
     assert result['dynamics'][0]['U']==.5 and result['dynamics'][0]['context']=='Exact'
     source=__import__('pathlib').Path('embers/cognitive/usefulness.py').read_text()
     assert "call('fur_apply'" in source and 'fraction =' not in source
-    assert explicit_truth(db._reader.get(ids[0]))['status']=='hypothesis'
+    rec=db._reader.get(ids[0])
+    assert explicit_truth(rec)['status']=='provisional'
+    assert historical_inline_truth(rec)['status']=='hypothesis'
     raw=MemoryProtocol(db,default_namespace='research').remember('raw')
-    assert explicit_truth(db._reader.get(raw))['status']=='hypothesis'
+    raw_rec=db._reader.get(raw)
+    assert explicit_truth(raw_rec)['status']=='provisional'
+    assert historical_inline_truth(raw_rec)['status']=='hypothesis'
 
 
 def test_observer_committed_dynamics_and_readonly(rig):
@@ -140,8 +144,12 @@ def test_historical_python_golden_reducer_parity():
 def test_truth_explicit_status_and_native_final_budget(rig):
     db,ids,_=rig
     projection=call('truth',dict(data={'_status':'disputed','verify_status':'verified','confidence':1},annotations=[],open_conflict=False))
-    assert projection['status']=='disputed' and projection['source']=='_status'
-    assert call('truth',dict(data={'_status':'superseded'},annotations=[],open_conflict=False))['status']=='superseded'
+    assert projection['status']=='provisional'
+    assert projection['source']=='epistemic_ledger'
+    assert projection['legacy_status']=='disputed'
+    superseded=call('truth',dict(data={'_status':'superseded'},annotations=[],open_conflict=False))
+    assert superseded['status']=='provisional'
+    assert superseded['legacy_status']=='superseded'
     cfg=call('config_default',None)
     with pytest.raises(ValueError,match='wrapper'):call('admit',dict(config=cfg,final_tokens=cfg['token_budget']+1))
 
