@@ -190,9 +190,11 @@ def test_research_recall_capacity_ignores_ella_projection_growth(rig):
     assert after['selected_ids']==before['selected_ids']
     assert rid in after['epistemic']
     assert len(json.dumps(after['epistemic'][rid],sort_keys=True)) > len(json.dumps(before['epistemic'][rid],sort_keys=True))
-    # Inline rendered context remains the bounded historical compatibility shape.
+    # The capacity-counted memory block carries only a constant pointer to the
+    # separate canonical ELLA metadata; it never re-exposes legacy truth authority.
     rendered=json.loads(after['context'])
-    assert rendered[0]['truth_projection']['projection_version']=='explicit-epistemic-v1'
+    assert rendered[0]['truth_status']=='see_epistemic_metadata'
+    assert rendered[0]['truth_projection']=={'source':'epistemic_metadata','projection_version':'ella-v1'}
     assert 'support_mass' not in rendered[0]['truth_projection']
 
 
