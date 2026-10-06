@@ -365,6 +365,13 @@ def test_mcp_origin_semantics_and_reserved_system_confirmation(tmp_path):
     stored=db.get_evidence(unknown_id)
     assert stored.origin=='unknown' and stored.origin_confidence=='UNKNOWN'
 
+    explicit_unknown=call_tool('ember_attach_evidence',{'memory_id':rid,'source':'report-explicit',
+        'origin':'unknown'})
+    assert not explicit_unknown['isError']
+    explicit_unknown_id=_json.loads(explicit_unknown['content'][0]['text'])['evidence_id']
+    explicit_stored=db.get_evidence(explicit_unknown_id)
+    assert explicit_stored.origin=='unknown' and explicit_stored.origin_confidence=='UNKNOWN'
+
     declared=call_tool('ember_attach_evidence',{'memory_id':rid,'source':'report-2',
         'origin':'person:alice','origin_confidence':'AGENT_DECLARED','event_id':'observation-2'})
     assert not declared['isError']
