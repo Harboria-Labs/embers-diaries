@@ -253,6 +253,6 @@ pub fn project(v:&Value)->Result<Value>{
  let score=plus-minus;let base=if score>=pol["T_verify"].as_f64().unwrap(){"VERIFIED"}else if score<=pol["T_disfavor"].as_f64().unwrap(){"DISFAVORED"}else{"PROVISIONAL"};
  let dispute=(plus>=pol["dispute_mass"].as_f64().unwrap()&&minus>=pol["dispute_mass"].as_f64().unwrap())||unresolved>0;
  let conflict=v["conflict_overlay"].as_str().unwrap_or("none");let public=if dispute||["open","investigating"].contains(&conflict){"DISPUTED"}else{base};
- let covered=ev.iter().filter(|e|e["origin"].as_str().is_some_and(|s|!s.is_empty()&&s!="unknown")||e["reference"].as_str().is_some_and(|s|!s.is_empty())||e["event_id"].as_str().is_some_and(|s|!s.is_empty())).count();
+ let covered=ev.iter().filter(|e|e["origin"].as_str().is_some_and(|s|!s.is_empty()&&s!="unknown")||e["reference"].as_str().is_some_and(|s|!s.is_empty())||e["event_id"].as_str().is_some_and(|s|!s.is_empty())||e["request_id"].as_str().is_some_and(|s|!s.is_empty())).count();
  Ok(json!({"base_epistemic_verdict":base,"public_epistemic_state":public,"score":score,"support_mass":plus,"opposition_mass":minus,"raw_evidence_count":ev.len(),"accepted_unit_count":accepted,"hard_collapsed_count":ev.len()-hard_count,"soft_cluster_count":soft_links,"unresolved_independence_count":ev.len()-covered,"dangling_dependency_count":dangling,"lineage_coverage":if ev.is_empty(){0.0}else{covered as f64/ev.len() as f64},"assessment_started":started,"epistemic_revision":v["revision"],"evidence_dispute":dispute,"conflict_overlay":conflict,"units":contributions}))
 }
