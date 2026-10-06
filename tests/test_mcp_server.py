@@ -192,6 +192,32 @@ def test_evidence_surfaces_enforce_namespace_acl_and_preserve_request_identity(t
     assert rows[0]["request_id"] == "req-private"
 
 
+
+def test_mcp_proposal_evidence_preserves_request_identity(tmp_path: Path):
+    db = EmberDB.connect(str(tmp_path / "s"))
+    mcp = EmberMCP(db=db)
+    agent_id, token = _agent(mcp)
+    proposed = _call(mcp, "ember_propose_memory", {
+        "namespace": "request-provenance",
+        "discovery": {"content": "claim with tool evidence"},
+        "reason": "preserve source request identity",
+        "confidence": 0.8,
+        "evidence": [{
+            "source": "tool://inventory",
+            "reference": "inventory-row",
+            "request_id": "tool-request-77",
+            "origin": "inventory-service",
+            "origin_confidence": "AGENT_DECLARED",
+        }],
+        "agent_id": agent_id, "token": token,
+    })
+    assert proposed["isError"] is False
+    pid=json.loads(proposed["content"][0]["text"])["proposal_id"]
+    proposal=db.get_proposal(pid)
+    assert proposal.evidence[0].request_id=="tool-request-77"
+    assert proposal.evidence[0].hash_version==3
+
+
 class TestProposalPromotionOverMCP:
     """The gap this closes: ember_propose_memory correctly sealed real Evidence,
     but NOTHING on the MCP surface could turn a proposal into durable memory.
