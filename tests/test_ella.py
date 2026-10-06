@@ -173,6 +173,14 @@ def test_projection_order_is_deterministic(rig):
     assert json.dumps(first['units'],sort_keys=True)==json.dumps(second['units'],sort_keys=True)
 
 
+def test_legacy_verify_status_does_not_create_parallel_lifecycle_truth(rig):
+    db,proto,rid,_=rig
+    rec=db._reader.get(rid,track_access=False)
+    rec.data['verify_status']='verified'
+    report=proto.get_lifecycle(rid)
+    assert report.state.value!='verified'
+
+
 def test_legacy_message_context_does_not_present_old_verification_as_truth(rig):
     db,_,rid,_=rig
     rec=db._reader.get(rid,track_access=False)
