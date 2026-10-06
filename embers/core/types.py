@@ -160,21 +160,21 @@ class ProposalStatus(str, Enum):
 
 
 class MemoryStatus(str, Enum):
-    """The epistemic state a DURABLE memory carries after promotion (spec §12).
+    """Legacy durable-memory status retained for storage/API compatibility.
 
-    Crucial semantic (the whole point of the Promotion Engine): promotion does
-    NOT assert a memory is definitely true. It asserts the proposal met the
-    criteria to enter durable memory. The memory therefore still carries an
-    explicit status, decoupled from the fact that it was stored at all:
+    ELLA is the canonical epistemic authority. These values may still appear in
+    historical records and lifecycle-compatible APIs, but they MUST NOT set,
+    override, or weight the ELLA score/verdict.
 
-      VERIFIED     grounded and confident enough to rely on
-      PROVISIONAL  admitted to memory but not yet strongly confirmed
-      DISPUTED     conflicting evidence exists; mapped, not resolved (§7)
-      SUPERSEDED   a newer version has replaced it (mirrors the version chain)
+      PROVISIONAL  normal admission status for newly promoted durable memory
+      VERIFIED     legacy historical label only; not canonical verification
+      DISPUTED     legacy historical label only; canonical dispute is an ELLA/
+                   Conflict Engine projection
+      SUPERSEDED   lifecycle label: a newer version replaced this record
 
-    Status is an immutable per-version fact (folded into the content hash), so a
-    status change is a new version — the history verified→disputed is preserved,
-    never overwritten."""
+    Promotion is admission only. New promotion writes PROVISIONAL; authoritative
+    VERIFIED / DISFAVORED / DISPUTED projections come from ELLA plus the conflict
+    overlay, not from this enum."""
     VERIFIED    = "verified"
     PROVISIONAL = "provisional"
     DISPUTED    = "disputed"
