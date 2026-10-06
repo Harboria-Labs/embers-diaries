@@ -173,6 +173,17 @@ def test_projection_order_is_deterministic(rig):
     assert json.dumps(first['units'],sort_keys=True)==json.dumps(second['units'],sort_keys=True)
 
 
+def test_legacy_message_context_does_not_present_old_verification_as_truth(rig):
+    db,_,rid,_=rig
+    rec=db._reader.get(rid,track_access=False)
+    rec.data['verify_status']='verified'
+    from embers.integration.context import ContextBuilder
+    messages=ContextBuilder(max_tokens=1000).build_message_context([rec])
+    assert messages
+    assert 'see_epistemic_state' in messages[0]['content']
+    assert '| verified]' not in messages[0]['content']
+
+
 def test_high_confidence_promotion_stays_provisional(rig):
     db,_,_,_=rig
     from embers.core.proposal import MemoryProposal
