@@ -16,6 +16,7 @@ from typing import Any
 from ..core.evidence import Evidence
 from ..config import EmberConfig, load_config
 from ..core.errors import ConcurrentModificationError
+from ..core.domain import epistemically_neutral_data, public_epistemic_summary
 from ..core.failure import Failure
 from ..core.proposal import MemoryProposal
 from ..core.types import (
@@ -48,6 +49,31 @@ def _text(obj: Any) -> dict:
 
 def _err(msg: str) -> dict:
     return {"content": [{"type": "text", "text": msg}], "isError": True}
+
+def _public_record_payload(record, *, full=False, annotations=False):
+    out = record.to_dict() if full else {
+        "id": record.id,
+        "namespace": record.namespace,
+        "data": epistemically_neutral_data(record.data),
+        "agent_id": record.agent_id,
+        "session_id": record.session_id,
+        "content_hash": record.content_hash,
+        "tags": record.tags,
+    }
+    out["data"] = epistemically_neutral_data(record.data)
+    if record.record_type in (RecordType.DOCUMENT, RecordType.NODE):
+        out["epistemic"] = public_epistemic_summary(record)
+    if annotations:
+        rows=[]
+        for ann in record.annotations:
+            item=ann.to_dict()
+            if getattr(ann,"annotation_type",None)=="validation" and getattr(ann,"context",None)=="verification":
+                item["epistemic_authority"]=False
+                item["legacy_verification_audit"]=True
+            rows.append(item)
+        out["annotations"]=rows
+    return out
+
 
 
 class EmberMCP:
@@ -211,16 +237,7 @@ class EmberMCP:
                 return _err("not found")
             self.db.require_namespace_access(
                 rec.namespace, agent.agent_id, "read")
-            return _text({
-                "id": rec.id,
-                "namespace": rec.namespace,
-                "data": rec.data,
-                "agent_id": rec.agent_id,
-                "session_id": rec.session_id,
-                "content_hash": rec.content_hash,
-                "tags": rec.tags,
-                "annotations": [a.to_dict() for a in rec.annotations],
-            })
+            return _text(_public_record_payload(rec, annotations=True))
 
         if name == "ember_search":
             agent = self._auth(args)
@@ -237,7 +254,12 @@ class EmberMCP:
                     if self.db.check_namespace_access(
                         record.namespace, agent.agent_id, "read")
                 ]
-            return _text([{"id": r.id, "score": s, "data": r.data} for r, s in results])
+            return _text([{
+                "id": r.id, "score": s,
+                "data": epistemically_neutral_data(r.data),
+                **({"epistemic": public_epistemic_summary(r)}
+                   if r.record_type in (RecordType.DOCUMENT, RecordType.NODE) else {}),
+            } for r, s in results])
 
         if name == "ember_query":
             agent = self._auth(args)
@@ -261,7 +283,7 @@ class EmberMCP:
             )
             return _text({
                 "count": len(records),
-                "records": [record.to_dict() for record in records],
+                "records": [_public_record_payload(record, full=True) for record in records],
             })
 
         if name in ('ember_research_recall','ember_research_settings','ember_research_configure'):
@@ -358,7 +380,12 @@ class EmberMCP:
                 self.db.require_namespace_access(
                     root.namespace, agent.agent_id, "read")
             hist = self.db.get_history(args["record_id"])
-            return _text([{"id": r.id, "data": r.data} for r in hist])
+            return _text([{
+                "id": r.id,
+                "data": epistemically_neutral_data(r.data),
+                **({"epistemic": public_epistemic_summary(r)}
+                   if r.record_type in (RecordType.DOCUMENT, RecordType.NODE) else {}),
+            } for r in hist])
 
         if name == "ember_get_graph":
             agent = self._auth(args)
@@ -375,7 +402,12 @@ class EmberMCP:
                 if self.db.check_namespace_access(
                     record.namespace, agent.agent_id, "read")
             ]
-            return _text([{"id": r.id, "data": r.data} for r in neighbors])
+            return _text([{
+                "id": r.id,
+                "data": epistemically_neutral_data(r.data),
+                **({"epistemic": public_epistemic_summary(r)}
+                   if r.record_type in (RecordType.DOCUMENT, RecordType.NODE) else {}),
+            } for r in neighbors])
 
         if name == "ember_get_session":
             self._auth(args)
