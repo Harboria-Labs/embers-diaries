@@ -251,8 +251,15 @@ pub fn project(v:&Value)->Result<Value>{
   if polarities.len()!=1{unresolved+=1;contributions.push(json!({"unit_id":id,"status":"unresolved","assessment_ids":assessment_ids,"evidence_ids":evidence_ids}));continue}
   let magnitude=assessments.iter().map(|a|pol["strengths"][a["strength"].as_str().unwrap()].as_f64().unwrap()).fold(f64::INFINITY,f64::min);let polarity=polarities.first().unwrap();if *polarity=="SUPPORTS"{plus+=magnitude}else{minus+=magnitude}accepted+=1;contributions.push(json!({"unit_id":id,"polarity":polarity,"magnitude":magnitude,"status":"accepted","assessment_ids":assessment_ids,"evidence_ids":evidence_ids}));}
  let score=plus-minus;let base=if score>=pol["T_verify"].as_f64().unwrap(){"VERIFIED"}else if score<=pol["T_disfavor"].as_f64().unwrap(){"DISFAVORED"}else{"PROVISIONAL"};
- let dispute=(plus>=pol["dispute_mass"].as_f64().unwrap()&&minus>=pol["dispute_mass"].as_f64().unwrap())||unresolved>0;
+ let confirmation_disagreement=aa.iter().any(|a|{
+  if a["status"]!="confirmation_required"{return false}
+  let Some(parent_id)=a["confirmation_of"].as_str() else{return false};
+  aa.iter().any(|p|p["assessment_id"]==parent_id && p["status"]=="confirmation_required" &&
+      p["target_memory_id"]==a["target_memory_id"] && p["target_memory_version"]==a["target_memory_version"] &&
+      p["evidence_id"]==a["evidence_id"] && p["polarity"]!=a["polarity"])
+ });
+ let dispute=(plus>=pol["dispute_mass"].as_f64().unwrap()&&minus>=pol["dispute_mass"].as_f64().unwrap())||unresolved>0||confirmation_disagreement;
  let conflict=v["conflict_overlay"].as_str().unwrap_or("none");let public=if dispute||["open","investigating"].contains(&conflict){"DISPUTED"}else{base};
  let covered=ev.iter().filter(|e|e["origin"].as_str().is_some_and(|s|!s.is_empty()&&s!="unknown")||e["reference"].as_str().is_some_and(|s|!s.is_empty())||e["event_id"].as_str().is_some_and(|s|!s.is_empty())||e["request_id"].as_str().is_some_and(|s|!s.is_empty())).count();
- Ok(json!({"base_epistemic_verdict":base,"public_epistemic_state":public,"score":score,"support_mass":plus,"opposition_mass":minus,"raw_evidence_count":ev.len(),"accepted_unit_count":accepted,"hard_collapsed_count":ev.len()-hard_count,"soft_cluster_count":soft_links,"unresolved_independence_count":ev.len()-covered,"dangling_dependency_count":dangling,"lineage_coverage":if ev.is_empty(){0.0}else{covered as f64/ev.len() as f64},"assessment_started":started,"epistemic_revision":v["revision"],"evidence_dispute":dispute,"conflict_overlay":conflict,"units":contributions}))
+ Ok(json!({"base_epistemic_verdict":base,"public_epistemic_state":public,"score":score,"support_mass":plus,"opposition_mass":minus,"raw_evidence_count":ev.len(),"accepted_unit_count":accepted,"hard_collapsed_count":ev.len()-hard_count,"soft_cluster_count":soft_links,"unresolved_independence_count":ev.len()-covered,"dangling_dependency_count":dangling,"lineage_coverage":if ev.is_empty(){0.0}else{covered as f64/ev.len() as f64},"assessment_started":started,"epistemic_revision":v["revision"],"evidence_dispute":dispute,"confirmation_disagreement":confirmation_disagreement,"conflict_overlay":conflict,"units":contributions}))
 }
