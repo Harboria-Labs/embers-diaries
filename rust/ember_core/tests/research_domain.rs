@@ -375,7 +375,7 @@ fn ella_same_request_identity_is_hard_dependency() {
         "source":"tool://inventory","source_type":"reported","origin":Value::Null,"session_id":Value::Null,
         "event_id":Value::Null,"request_id":"req-42","derived_from":[]});
     let e2=json!({"id":"e2","evidence_id":"e2","content_hash":"h2","reference":"",
-        "source_type":"reported","origin":Value::Null,"session_id":Value::Null,
+        "source":"tool://inventory","source_type":"reported","origin":Value::Null,"session_id":Value::Null,
         "event_id":Value::Null,"request_id":"req-42","derived_from":[]});
     let out=ella_project(json!([e1,e2]),json!([
         ella_assessment("a1","e1","SUPPORTS","MEDIUM"),
@@ -384,6 +384,22 @@ fn ella_same_request_identity_is_hard_dependency() {
     assert_eq!(out["raw_evidence_count"],2);
     assert_eq!(out["accepted_unit_count"],1);
     assert_eq!(out["hard_collapsed_count"],1);
+}
+
+#[test]
+fn ella_same_request_text_different_sources_stays_separate() {
+    let e1=json!({"id":"e1","evidence_id":"e1","content_hash":"h1","reference":"",
+        "source":"tool://one","source_type":"reported","origin":Value::Null,"session_id":Value::Null,
+        "event_id":Value::Null,"request_id":"42","derived_from":[]});
+    let e2=json!({"id":"e2","evidence_id":"e2","content_hash":"h2","reference":"",
+        "source":"tool://two","source_type":"reported","origin":Value::Null,"session_id":Value::Null,
+        "event_id":Value::Null,"request_id":"42","derived_from":[]});
+    let out=ella_project(json!([e1,e2]),json!([
+        ella_assessment("a1","e1","SUPPORTS","WEAK"),
+        ella_assessment("a2","e2","SUPPORTS","WEAK")
+    ]),"none");
+    assert_eq!(out["accepted_unit_count"],2);
+    assert_eq!(out["hard_collapsed_count"],0);
 }
 
 #[test]
