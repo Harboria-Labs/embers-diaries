@@ -128,12 +128,12 @@ class VerifyStatus(str, Enum):
 class SourceType(str, Enum):
     """How a piece of evidence came to be known (spec §5).
 
-    This is the distinction future agents need in order to weigh a memory:
-    was the underlying claim *directly observed*, merely *inferred*, *reported
-    by another agent* (hearsay — trust it as far as you trust that agent),
-    *experimentally verified*, *imported* from an external corpus, or
-    *manually entered* by a human? It separates the strong chain
-    CLAIM → EVIDENCE → SOURCE from the weak chain CLAIM → agent assertion."""
+    This is provenance, not epistemic strength. It tells future agents whether
+    the artifact was directly observed, inferred, reported, experimentally
+    produced, imported, or manually entered. ELLA MUST NOT map these labels to
+    WEAK/MEDIUM/STRONG or multiply likelihood weight by source/agent trust.
+    It separates CLAIM → EVIDENCE → SOURCE from a bare agent assertion without
+    deciding how strongly that evidence bears on a particular claim."""
     DIRECTLY_OBSERVED       = "directly_observed"
     INFERRED                = "inferred"
     REPORTED                = "reported"          # by another agent
@@ -208,8 +208,9 @@ class PromotionMode(str, Enum):
 
       AUTOMATIC  promote as soon as policy gates pass (evidence valid, confidence
                  high enough, agent trusted, no conflicting memory) — no human
-      CONSENSUS  promote once enough independent agents have corroborated the
-                 discovery (distinct evidence authors ≥ threshold)
+      CONSENSUS  promote once enough distinct agents meet the configured
+                 admission criterion (distinct evidence authors ≥ threshold).
+                 This is not an ELLA independence or truth claim.
       HUMAN      never auto-promote; a human must explicitly approve
       HYBRID     route by risk: high-risk proposals (low confidence / conflict /
                  untrusted agent) go to the human gate, the rest auto-promote
