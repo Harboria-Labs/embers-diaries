@@ -498,6 +498,7 @@ class EmberMCP:
                 origin=origin or "unknown",
                 origin_confidence=origin_confidence,
                 event_id=args.get("event_id"),
+                request_id=args.get("request_id"),
                 derived_from=list(args.get("derived_from") or []),
             )
             ev.seal()
@@ -515,6 +516,7 @@ class EmberMCP:
                 "origin": (r.data or {}).get("origin"),
                 "origin_confidence": (r.data or {}).get("origin_confidence", "UNKNOWN"),
                 "event_id": (r.data or {}).get("event_id"),
+                "request_id": (r.data or {}).get("request_id"),
                 "derived_from": (r.data or {}).get("derived_from", []),
                 "agent_id": r.agent_id,
                 "content_hash": r.content_hash,
