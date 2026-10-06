@@ -1332,14 +1332,28 @@ class EmberDB:
     # reject() supersedes it with a REJECTED copy. Nothing is ever deleted, so a
     # rejected proposal stays permanently distinguishable from a committed one.
 
-    @staticmethod\n    def _normalize_new_evidence_origin(ev: Evidence) -> None:\n        """Give every new evidence submission an explicit origin identity.\n\n        "unknown" is an explicit provenance value, not missing data. Already-\n        sealed legacy V1 evidence is preserved byte-for-byte for compatibility.\n        """\n        if ev.content_hash is None and ev.origin is None:\n            ev.origin = "unknown"\n            ev.origin_confidence = "UNKNOWN"\n            if ev.hash_version < 2:\n                ev.hash_version = 2\n\n    def propose(self, proposal: MemoryProposal) -> str:
+    @staticmethod
+    def _normalize_new_evidence_origin(ev: Evidence) -> None:
+        """Give every new evidence submission an explicit origin identity.
+
+        "unknown" is an explicit provenance value, not missing data. Already-
+        sealed legacy V1 evidence is preserved byte-for-byte for compatibility.
+        """
+        if ev.content_hash is None and ev.origin is None:
+            ev.origin = "unknown"
+            ev.origin_confidence = "UNKNOWN"
+            if ev.hash_version < 2:
+                ev.hash_version = 2
+    def propose(self, proposal: MemoryProposal) -> str:
         """Record a memory proposal (a discovery awaiting validation, §4).
 
         The proposal is sealed and stored as a PROPOSAL record — NOT yet a
         durable memory. Its evidence is sealed too, so each piece keeps the
         identity/hash it will carry if the proposal is promoted. Returns the
         proposal record id (== proposal.proposal_id)."""
-        for ev in proposal.evidence:\n            self._normalize_new_evidence_origin(ev)\n        proposal.seal_evidence()
+        for ev in proposal.evidence:
+            self._normalize_new_evidence_origin(ev)
+        proposal.seal_evidence()
         proposal.status = ProposalStatus.PENDING
         record = EmberRecord(
             id=proposal.proposal_id,
@@ -1669,7 +1683,8 @@ class EmberDB:
                 f"memory (record_type NODE or DOCUMENT). If this is a pending "
                 f"PROPOSAL, pass evidence inline to propose() instead: "
                 f"evidence attached here would not affect its promotion gate.")
-        self._normalize_new_evidence_origin(ev)\n        return self._write_evidence_record(ev, memory_id)
+        self._normalize_new_evidence_origin(ev)
+        return self._write_evidence_record(ev, memory_id)
 
     def evidence_for(self, memory_id: str) -> list[EmberRecord]:
         """Every EVIDENCE record supporting a memory (incoming SUPPORTS edges).
