@@ -220,6 +220,26 @@ def test_legacy_message_context_does_not_present_old_verification_as_truth(rig):
     assert '| verified]' not in messages[0]['content']
 
 
+def test_legacy_truth_markers_are_not_injected_by_text_or_structured_recall(rig):
+    db,proto,rid,_=rig
+    rec=db._reader.get(rid,track_access=False)
+    rec.data['verify_status']='verified'
+    rec.data['_status']='verified'
+    proto.verify(rid,status='verified',note='legacy audit only')
+    rec=db._reader.get(rid,track_access=False)
+    from embers.integration.context import ContextBuilder
+    builder=ContextBuilder(max_tokens=1000)
+    text_context=builder.build_text_context([rec])
+    assert 'verify_status:' not in text_context
+    assert '_status:' not in text_context
+    assert 'Verification status updated to: verified' not in text_context
+    assert 'epistemic: see_epistemic_state' in text_context
+    structured=builder.build_structured_context([rec])[0]
+    assert 'verify_status' not in structured['data']
+    assert '_status' not in structured['data']
+    assert structured['epistemic_state']=='see_epistemic_state'
+
+
 def test_high_confidence_promotion_stays_provisional(rig):
     db,_,_,_=rig
     from embers.core.proposal import MemoryProposal
