@@ -35,3 +35,10 @@ def historical_inline_truth(record, open_conflict=False):
     if open_conflict:
         status='contested';source='open_conflict'
     return {'status':status,'source':source,'projection_version':'explicit-epistemic-v1'}
+
+
+def epistemically_neutral_data(data):
+    """Remove legacy truth markers from model-facing memory content.\n\n    Stored records remain untouched for compatibility/audit. Canonical truth is\n    exposed only through ELLA projection surfaces.\n    """
+    if not isinstance(data, dict):
+        return data
+    return {k:v for k,v in data.items() if k not in ("_status","verify_status")}
