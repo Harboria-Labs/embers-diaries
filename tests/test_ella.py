@@ -533,6 +533,41 @@ def test_explicit_resolution_replaces_mixed_assessment_without_multiplying_mass(
     assert resolved['score']==pytest.approx(call('ella_policy_default',None)['strengths']['MEDIUM'])
 
 
+def test_resolution_cannot_erase_independent_opposing_units(rig):
+    db,_,rid,l=rig
+    support=ev(rig,'independent-support')
+    oppose=ev(rig,'independent-oppose')
+    report(rig,support,polarity='SUPPORTS',strength='MEDIUM',actor='one')
+    report(rig,oppose,polarity='OPPOSES',strength='MEDIUM',actor='two')
+    state,events=l.load()
+    chosen=sorted(state['assessments'])
+    with pytest.raises(ValueError,match='one complete unresolved epistemic unit'):
+        l.apply('resolve',dict(target_memory_id=rid,
+            target_memory_version=db._store.read(rid).content_hash,
+            evidence_id=support,assessment_ids=chosen,polarity='SUPPORTS',
+            strength='MEDIUM',assessment_note='must not erase an independent opposing unit'),
+            actor='admin',request_id='bad-cross-unit-resolution',expected_revision=len(events))
+
+
+def test_resolution_can_cover_hard_dependent_mixed_unit(rig):
+    db,_,rid,l=rig
+    first=ev(rig,'same-resolution-artifact')
+    second=ev(rig,'same-resolution-artifact')
+    report(rig,first,polarity='SUPPORTS',strength='STRONG',actor='one')
+    mixed=report(rig,second,polarity='OPPOSES',strength='STRONG',actor='two')
+    assert mixed['accepted_unit_count']==0
+    unresolved=next(u for u in mixed['units'] if u['status']=='unresolved')
+    assert set(unresolved['evidence_ids'])=={first,second}
+    state,events=l.load()
+    resolved=l.apply('resolve',dict(target_memory_id=rid,
+        target_memory_version=db._store.read(rid).content_hash,
+        evidence_id=first,assessment_ids=unresolved['assessment_ids'],
+        polarity='SUPPORTS',strength='MEDIUM',
+        assessment_note='resolve one detected dependent epistemic unit'),
+        actor='admin',request_id='resolve-dependent-unit',expected_revision=len(events))
+    assert resolved['accepted_unit_count']==1
+
+
 def test_revision_cannot_move_assessment_to_different_evidence(rig):
     db,_,rid,l=rig
     first=ev(rig,'revision-first')
