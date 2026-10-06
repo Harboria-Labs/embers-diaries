@@ -168,9 +168,9 @@ class EpistemicLedger:
                 eid=payload.get('evidence_id')
                 if eid not in available_evidence:raise ValueError('available evidence required')
                 changes=payload.get('lineage')
-                if not isinstance(changes,dict) or set(changes)-{'reference','event_id','origin','derived_from','origin_confidence'}:
+                if not isinstance(changes,dict) or set(changes)-{'reference','event_id','request_id','origin','derived_from','origin_confidence'}:
                     raise ValueError('explicit lineage correction required')
-                for field in ('reference','event_id','origin'):
+                for field in ('reference','event_id','request_id','origin'):
                     if field in changes and changes[field] is not None:identifier(changes[field],field)
                 if 'derived_from' in changes:
                     if not isinstance(changes['derived_from'],list):raise ValueError('dependency list required')
