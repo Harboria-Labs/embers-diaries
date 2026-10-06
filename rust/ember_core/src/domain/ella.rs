@@ -102,6 +102,10 @@ fn validate_transition(before:&Value,after:&Value,event:&Value)->Result<()>{
    if !["accepted","confirmation_required"].contains(&old["status"].as_str().unwrap_or(""))||new["status"]!="superseded"{
     return Err("invalid ELLA revision lifecycle".into())
    }
+   if !old["confirmation_of"].is_null() || before["assessments"].as_object().unwrap().values().any(|a|
+      a["confirmation_of"]==prior && !["withdrawn","superseded","resolved"].contains(&a["status"].as_str().unwrap_or(""))){
+    return Err("confirmation-linked assessments require withdrawal/resolution, not revision".into())
+   }
    if a["target_memory_id"]!=*target||a["target_memory_version"]!=*version||a["evidence_id"]!=payload["evidence_id"]||
       a["polarity"]!=payload["polarity"]||a["strength"]!=payload["strength"]{
     return Err("ELLA revised assessment does not match command".into())
@@ -163,6 +167,10 @@ fn validate_transition(before:&Value,after:&Value,event:&Value)->Result<()>{
    let old=&before["assessments"][&id];let new=&after["assessments"][&id];
    if !["accepted","confirmation_required"].contains(&old["status"].as_str().unwrap_or(""))||new["status"]!="withdrawn"{
     return Err("invalid ELLA withdrawal lifecycle".into())
+   }
+   if before["assessments"].as_object().unwrap().values().any(|a|
+      a["confirmation_of"]==id && !["withdrawn","superseded","resolved"].contains(&a["status"].as_str().unwrap_or(""))){
+    return Err("active confirmation child must be withdrawn/resolved first".into())
    }
    let mut allowed=BTreeSet::new();allowed.insert(id);unchanged_assessments_except(before,after,&allowed)?;
   },
