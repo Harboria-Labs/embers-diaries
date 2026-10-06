@@ -411,6 +411,7 @@ class EmberMCP:
                     origin=origin or "unknown",
                     origin_confidence=origin_confidence,
                     event_id=item.get("event_id"),
+                    request_id=item.get("request_id"),
                     derived_from=list(item.get("derived_from") or []),
                 )
                 ev.seal()
