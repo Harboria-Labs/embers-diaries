@@ -13,6 +13,10 @@ from .usefulness import canonical, digest, identifier
 
 KIND='ember.epistemic.v1'
 
+def enable_epistemic(db, admins):
+    """Configure ELLA decision authority independently of usefulness/FUR."""
+    db._epistemic_admins=frozenset(admins)
+
 class EpistemicLedger:
     def __init__(self, db, namespace):
         self.db,self.namespace=db,namespace
@@ -100,7 +104,7 @@ class EpistemicLedger:
             if expected_revision!=len(events):raise ValueError('stale epistemic revision')
             rid=payload.get('target_memory_id');target=self.target(rid)
             if payload.get('target_memory_version')!=target.content_hash:raise ValueError('exact target content hash required')
-            admin=actor in getattr(self.db,'_usefulness_admins',())
+            admin=actor in getattr(self.db,'_epistemic_admins',())
             available_evidence={r.id for r in self.db.evidence_for(rid)}|set(state.get('carried',{}).get(rid,[]))
             next_state=deepcopy(state);revision=len(events)+1;event_id=self.prefix+f'{revision:012d}'
             reason=payload.get('assessment_note') or payload.get('reason')
