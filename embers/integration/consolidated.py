@@ -2,7 +2,7 @@
 from copy import deepcopy
 import json
 import os
-from ..core.domain import call, MODEL_VERSION, explicit_truth
+from ..core.domain import call, MODEL_VERSION, explicit_truth, epistemically_neutral_data
 from ..cognitive.usefulness import derive, digest, KIND
 from .usefulness_service import service
 
