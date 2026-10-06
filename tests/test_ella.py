@@ -287,6 +287,8 @@ def test_research_recall_capacity_ignores_ella_projection_growth(rig):
     assert rendered[0]['truth_status']=='see_epistemic_metadata'
     assert rendered[0]['truth_projection']=={'source':'epistemic_metadata','projection_version':'ella-v1'}
     assert 'support_mass' not in rendered[0]['truth_projection']
+    assert '_status' not in rendered[0]['data']
+    assert 'verify_status' not in rendered[0]['data']
 
 
 def test_conflict_overlay_never_mutates_score(rig):
