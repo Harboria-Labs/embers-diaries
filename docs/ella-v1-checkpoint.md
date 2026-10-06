@@ -96,9 +96,10 @@ the original threshold-crossing assessment to pending confirmation.
 
 The final semantic audit additionally closed three integration gaps:
 
-- every new evidence submission now records an explicit origin identity
-  (`unknown` is legal); sealed origin-less V1 evidence is accepted only when
-  that exact legacy record already exists in the store
+- current-format/new unsealed evidence submissions record an explicit origin
+  identity (`unknown` is legal); pre-sealed hash-version-1 evidence remains
+  byte-for-byte compatible and is projected by ELLA as UNKNOWN provenance
+  without changing its historical content hash
 - model-facing and public REST/MCP memory reads no longer expose legacy
   `_status` / `verify_status` markers as competing truth; they expose bounded
   canonical ELLA metadata instead, while legacy verification annotations remain
