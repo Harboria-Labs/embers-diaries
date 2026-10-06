@@ -95,12 +95,16 @@ class ContextBuilder:
         lines = []
         lines.append(f"### Memory [{record.id[:8]}]")
 
-        # Data
+        # Data. Legacy truth markers remain persisted/auditable but are not
+        # injected as current truth; ELLA is the canonical epistemic authority.
         if isinstance(record.data, dict):
             for k, v in record.data.items():
+                if k in ("_status", "verify_status"):
+                    continue
                 lines.append(f"  {k}: {v}")
         elif record.data is not None:
             lines.append(f"  {record.data}")
+        lines.append("  epistemic: see_epistemic_state")
 
         # Metadata
         meta_parts = []
@@ -118,9 +122,12 @@ class ContextBuilder:
         if include_history_hint and record.supersedes:
             lines.append(f"  [updated from: {record.supersedes[:8]}]")
 
-        # Annotations
+        # Verification annotations are historical audit records, not truth.
         if include_annotations and record.annotations:
-            for ann in record.annotations[-3:]:  # Last 3 annotations
+            visible = [ann for ann in record.annotations
+                       if not (getattr(ann, "annotation_type", None) == "validation"
+                               and getattr(ann, "context", None) == "verification")]
+            for ann in visible[-3:]:
                 lines.append(f"  📝 {ann.content} ({ann.written_by})")
 
         lines.append("")
@@ -171,9 +178,11 @@ class ContextBuilder:
                                 effective_confidence: float) -> str:
         """Format a record as a chat message content string."""
         if isinstance(record.data, dict):
-            content = record.data.get("content",
-                       record.data.get("text",
-                       record.data.get("summary", str(record.data))))
+            sanitized = {k:v for k,v in record.data.items()
+                         if k not in ("_status", "verify_status")}
+            content = sanitized.get("content",
+                       sanitized.get("text",
+                       sanitized.get("summary", str(sanitized))))
         elif isinstance(record.data, str):
             content = record.data
         else:
@@ -201,7 +210,10 @@ class ContextBuilder:
             result.append({
                 "id": record.id,
                 "namespace": record.namespace,
-                "data": record.data,
+                "data": ({k:v for k,v in record.data.items()
+                          if k not in ("_status", "verify_status")}
+                         if isinstance(record.data, dict) else record.data),
+                "epistemic_state": "see_epistemic_state",
                 "confidence": round(eff_conf, 3),
                 "tags": record.tags,
                 "created_at": record.created_at.isoformat(),
