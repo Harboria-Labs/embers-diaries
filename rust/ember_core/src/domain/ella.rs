@@ -232,9 +232,16 @@ pub fn project(v:&Value)->Result<Value>{
  for a in aa {assessment(a.clone())?;if a["target_memory_id"]!=v["target_memory_id"]||a["target_memory_version"]!=v["target_memory_version"]{continue}started=true;if a["status"]!="accepted"{continue}if a["requires_confirmation"]==true && !aa.iter().any(|b| b["confirmation_of"]==a["assessment_id"] && b["status"]=="accepted" && b["assessor_id"]!=a["assessor_id"] && b["polarity"]==a["polarity"]) {continue}
  if let Some(parent)=a["confirmation_of"].as_str(){if !aa.iter().any(|b|b["assessment_id"]==parent && b["status"]=="accepted"){continue}}
  let eid=a["evidence_id"].as_str().unwrap();if let Some(e)=evidence.get(eid){if e["invalidated"]!=true {units.entry(root(&parents,eid)).or_default().push(a);}}}
+ let mut unit_evidence=BTreeMap::<String,Vec<String>>::new();
+ for id in evidence.keys(){unit_evidence.entry(root(&parents,id)).or_default().push(id.clone());}
+ for ids in unit_evidence.values_mut(){ids.sort();}
  let mut plus=0.0;let mut minus=0.0;let mut accepted=0;let mut unresolved=0;let mut contributions=vec![];
- for (id,assessments) in units{let polarities=assessments.iter().map(|a|a["polarity"].as_str().unwrap()).collect::<BTreeSet<_>>();if polarities.len()!=1{unresolved+=1;contributions.push(json!({"unit_id":id,"status":"unresolved"}));continue}
- let magnitude=assessments.iter().map(|a|pol["strengths"][a["strength"].as_str().unwrap()].as_f64().unwrap()).fold(f64::INFINITY,f64::min);let polarity=polarities.first().unwrap();if *polarity=="SUPPORTS"{plus+=magnitude}else{minus+=magnitude}accepted+=1;let mut assessment_ids=assessments.iter().map(|a|a["assessment_id"].as_str().unwrap().to_string()).collect::<Vec<_>>();assessment_ids.sort();contributions.push(json!({"unit_id":id,"polarity":polarity,"magnitude":magnitude,"status":"accepted","assessment_ids":assessment_ids}));}
+ for (id,assessments) in units{
+  let mut assessment_ids=assessments.iter().map(|a|a["assessment_id"].as_str().unwrap().to_string()).collect::<Vec<_>>();assessment_ids.sort();
+  let evidence_ids=unit_evidence.get(&id).cloned().unwrap_or_default();
+  let polarities=assessments.iter().map(|a|a["polarity"].as_str().unwrap()).collect::<BTreeSet<_>>();
+  if polarities.len()!=1{unresolved+=1;contributions.push(json!({"unit_id":id,"status":"unresolved","assessment_ids":assessment_ids,"evidence_ids":evidence_ids}));continue}
+  let magnitude=assessments.iter().map(|a|pol["strengths"][a["strength"].as_str().unwrap()].as_f64().unwrap()).fold(f64::INFINITY,f64::min);let polarity=polarities.first().unwrap();if *polarity=="SUPPORTS"{plus+=magnitude}else{minus+=magnitude}accepted+=1;contributions.push(json!({"unit_id":id,"polarity":polarity,"magnitude":magnitude,"status":"accepted","assessment_ids":assessment_ids,"evidence_ids":evidence_ids}));}
  let score=plus-minus;let base=if score>=pol["T_verify"].as_f64().unwrap(){"VERIFIED"}else if score<=pol["T_disfavor"].as_f64().unwrap(){"DISFAVORED"}else{"PROVISIONAL"};
  let dispute=(plus>=pol["dispute_mass"].as_f64().unwrap()&&minus>=pol["dispute_mass"].as_f64().unwrap())||unresolved>0;
  let conflict=v["conflict_overlay"].as_str().unwrap_or("none");let public=if dispute||["open","investigating"].contains(&conflict){"DISPUTED"}else{base};
