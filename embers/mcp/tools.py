@@ -200,6 +200,7 @@ TOOLS = [
                     "origin":{"type":"string","description":"Underlying source/origin identity. If omitted, Ember records origin=unknown."},
                     "origin_confidence":{"type":"string","enum":["UNKNOWN","AGENT_DECLARED"],"description":"Identity confidence only; never evidence strength. SYSTEM_CONFIRMED is reserved for system-captured provenance."},
                     "event_id":{"type":"string","description":"Optional observation/event identity used for dependency detection."},
+                    "request_id":{"type":"string","description":"Optional idempotent source/tool request identity; equal request IDs are one hard-dependency signal."},
                     "derived_from":{"type":"array","items":{"type":"string"},"uniqueItems":True,"description":"Evidence identities this item derives from."}
                 },"required":["source"]}},
                 "agent_id": {"type": "string"},
@@ -304,6 +305,7 @@ TOOLS = [
                 "origin": {"type": "string","description": "Underlying source/origin identity. If omitted, Ember records origin=unknown."},
                 "origin_confidence": {"type": "string","enum": ["UNKNOWN","AGENT_DECLARED"],"description": "Identity confidence only; never evidence strength. SYSTEM_CONFIRMED is reserved for system-captured provenance."},
                 "event_id": {"type": "string","description": "Optional observation/event identity used for dependency detection."},
+                "request_id": {"type": "string","description": "Optional idempotent source/tool request identity; equal request IDs are one hard-dependency signal."},
                 "derived_from": {"type": "array","items": {"type": "string"},"uniqueItems": True},
                 "session_id": {"type": "string"},
                 "agent_id": {"type": "string"},
