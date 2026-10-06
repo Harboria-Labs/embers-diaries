@@ -617,3 +617,26 @@ def test_revision_cannot_move_assessment_to_different_evidence(rig):
             evidence_id=second,assessment_id=aid,polarity='SUPPORTS',strength='MEDIUM',
             assessment_note='must not move an assessment to another evidence record'),
             actor='admin',request_id='cross-evidence-revision',expected_revision=len(events))
+
+
+def test_memory_status_preserves_disfavored_ella_verdict(rig):
+    db,_,rid,l=rig
+    from embers.core.types import MemoryStatus
+    first=ev(rig,'oppose-one')
+    second=ev(rig,'oppose-two')
+    report(rig,first,polarity='OPPOSES',strength='STRONG',actor='one')
+    pending=report(rig,second,polarity='OPPOSES',strength='STRONG',actor='two')
+    state,events=l.load()
+    evidence_id=state['assessments'][pending['confirmation_assessment_ids'][0]]['evidence_id']
+    done=l.apply('confirm',dict(
+        target_memory_id=rid,
+        target_memory_version=db._store.read(rid).content_hash,
+        evidence_id=evidence_id,
+        polarity='OPPOSES',
+        strength='STRONG',
+        assessment_note='independent lower-threshold confirmation',
+        confirmation_of=pending['confirmation_assessment_ids'][0]),
+        actor='three',request_id='confirm-disfavored-status',
+        expected_revision=len(events))
+    assert done['base_epistemic_verdict']=='DISFAVORED'
+    assert db.memory_status(rid) is MemoryStatus.DISFAVORED
