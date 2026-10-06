@@ -59,7 +59,11 @@ class EpistemicLedger:
         for record in sorted(records.values(),key=lambda item:item.id):
             ev=self.db.get_evidence(record.id)
             if ev is None or not ev.verify_integrity():raise ValueError('evidence integrity failure')
-            evidence.append({**ev.to_dict(),'id':record.id,**state['evidence_overrides'].get(record.id,{})})
+            projected=ev.to_dict()
+            if projected.get('origin') is None:
+                projected['origin']='unknown'
+                projected['origin_confidence']='UNKNOWN'
+            evidence.append({**projected,'id':record.id,**state['evidence_overrides'].get(record.id,{})})
         conflicts=self.db.conflicts_for(rid)
         active=[c.status.value for c in conflicts if c.status.value in ('open','investigating')]
         result=call('ella_project',dict(policy=state['policy'],evidence=evidence,
