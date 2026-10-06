@@ -42,3 +42,14 @@ def epistemically_neutral_data(data):
     if not isinstance(data, dict):
         return data
     return {k:v for k,v in data.items() if k not in ("_status","verify_status")}
+
+
+def public_epistemic_summary(record):
+    """Bounded public ELLA projection for ordinary API/MCP record reads."""
+    projection=explicit_truth(record)
+    keys=("base_epistemic_verdict","public_epistemic_state","score","support_mass",
+          "opposition_mass","raw_evidence_count","accepted_unit_count",
+          "hard_collapsed_count","soft_cluster_count","unresolved_independence_count",
+          "dangling_dependency_count","lineage_coverage","assessment_started",
+          "epistemic_revision","evidence_dispute","conflict_overlay")
+    return {k:projection.get(k) for k in keys}
