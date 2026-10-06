@@ -484,6 +484,10 @@ class EmberMCP:
 
         if name == "ember_attach_evidence":
             agent = self._auth(args)
+            target = self.db._reader.get(args["memory_id"], include_deprecated=True, include_superseded=True)
+            if target is None:
+                raise KeyError(f'Memory {args["memory_id"]} not found.')
+            self.db.require_namespace_access(target.namespace, agent.agent_id, "write")
             origin=args.get("origin")
             origin_confidence=args.get("origin_confidence", "AGENT_DECLARED" if origin else "UNKNOWN")
             if origin_confidence == "SYSTEM_CONFIRMED":
@@ -506,7 +510,11 @@ class EmberMCP:
             return _text({"evidence_id": eid, "memory_id": args["memory_id"]})
 
         if name == "ember_evidence_for":
-            self._auth(args)
+            agent = self._auth(args)
+            target = self.db._reader.get(args["memory_id"], include_deprecated=True, include_superseded=True)
+            if target is None:
+                raise KeyError(f'Memory {args["memory_id"]} not found.')
+            self.db.require_namespace_access(target.namespace, agent.agent_id, "read")
             records = self.db.evidence_for(args["memory_id"])
             return _text([{
                 "id": r.id,
