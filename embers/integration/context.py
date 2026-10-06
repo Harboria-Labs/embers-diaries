@@ -17,6 +17,7 @@ from typing import Any
 from ..core.record import EmberRecord
 from ..core.annotation import Annotation
 from ..cognitive.decay import DecayEngine
+from ..core.domain import epistemically_neutral_data
 
 
 class ContextBuilder:
@@ -97,13 +98,14 @@ class ContextBuilder:
 
         # Data. Legacy truth markers remain persisted/auditable but are not
         # injected as current truth; ELLA is the canonical epistemic authority.
-        if isinstance(record.data, dict):
-            for k, v in record.data.items():
+        visible_data = epistemically_neutral_data(record.data)
+        if isinstance(visible_data, dict):
+            for k, v in visible_data.items():
                 if k in ("_status", "verify_status"):
                     continue
                 lines.append(f"  {k}: {v}")
-        elif record.data is not None:
-            lines.append(f"  {record.data}")
+        elif visible_data is not None:
+            lines.append(f"  {visible_data}")
         lines.append("  epistemic: see_epistemic_state")
 
         # Metadata
