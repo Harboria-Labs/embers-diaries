@@ -68,11 +68,11 @@ surface. Token budgets and Pairing capacity checks were not increased or weakene
 
 ## Validation
 
-A clean candidate run before the final DISFAVORED compatibility fix passed:
+The latest functional candidate run passed:
 
 - 90 focused feedback/replay regression tests
-- 749 full Python tests
-- 12 native Rust research-domain tests
+- 761 full Python tests
+- 16 native Rust research-domain tests
 - Rust type/build check
 - isolated real-server ELLA acceptance
 
@@ -89,9 +89,13 @@ The live acceptance covered:
 - read-only observation
 - restart persistence
 
-The final DISFAVORED compatibility regression is awaiting the branch CI run at
-the time of this checkpoint update. Deployment remains blocked until that run
-passes and the final diff is reviewed.
+The takeover audit also fixed two confirmation-lifecycle edge cases found after
+the first green run: a disagreement can no longer be orphaned by revising or
+withdrawing its active parent, and withdrawing an accepted confirmation restores
+the original threshold-crossing assessment to pending confirmation.
+
+The functional branch passed again after those fixes. The remaining deployment
+block is human review/approval of this candidate; nothing has been deployed.
 
 ## Known limitations retained intentionally
 
