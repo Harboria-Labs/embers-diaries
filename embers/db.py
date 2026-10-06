@@ -1335,22 +1335,25 @@ class EmberDB:
     def _normalize_new_evidence_origin(self, ev: Evidence) -> None:
         """Give every NEW evidence submission an explicit origin identity.
 
-        New unsealed evidence with no known origin is sealed as origin="unknown".
-        A sealed origin-less V1 object may only be reused when that exact evidence
-        record already exists in the store; callers cannot manufacture new
-        "legacy" evidence to bypass the V1 origin requirement.
+        Existing stored V1 evidence remains byte-for-byte compatible. An
+        origin-less V1 object that has not yet been stored is a new submission,
+        even if a caller pre-sealed it; migrate it to V2 with origin="unknown"
+        and reseal before persistence.
         """
         if ev.origin is not None:
             return
-        if ev.content_hash is None:
-            ev.origin = "unknown"
-            ev.origin_confidence = "UNKNOWN"
-            if ev.hash_version < 2:
-                ev.hash_version = 2
+        if ev.content_hash is not None and ev.hash_version == 1 and self._reader.exists(ev.evidence_id):
             return
-        if ev.hash_version == 1 and self._reader.exists(ev.evidence_id):
-            return
-        raise ValueError('new evidence requires origin identity; use origin="unknown" when unknown')
+        ev.origin = "unknown"
+        ev.origin_confidence = "UNKNOWN"
+        if ev.hash_version < 2:
+            ev.hash_version = 2
+        # A pre-sealed V1 object must be resealed because origin is part of the
+        # V2 identity payload. The evidence_id is preserved; only its content
+        # hash is upgraded before first persistence.
+        if ev.content_hash is not None:
+            ev.content_hash = None
+            ev.seal()
     def propose(self, proposal: MemoryProposal) -> str:
         """Record a memory proposal (a discovery awaiting validation, §4).
 
