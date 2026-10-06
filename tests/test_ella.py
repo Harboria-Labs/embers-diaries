@@ -747,3 +747,30 @@ def test_withdrawing_accepted_confirmation_restores_pending_crossing(rig):
     assert restored['base_epistemic_verdict']=='PROVISIONAL'
     assert restored['confirmation_required']
     assert restored['confirmation_assessment_ids']==[parent]
+
+
+def test_epistemic_decision_authority_is_separate_from_usefulness_admins(rig):
+    db,_,rid,l=rig
+    from embers.cognitive.epistemic import enable_epistemic
+    eid=ev(rig,'authority-separation')
+    report(rig,eid,strength='WEAK',actor='ordinary')
+    state,events=l.load()
+    aid=next(a['assessment_id'] for a in state['assessments'].values()
+             if a['evidence_id']==eid)
+
+    enable_epistemic(db,{'epistemic-admin'})
+    db._usefulness_admins=frozenset({'fur-admin'})
+
+    with pytest.raises(PermissionError):
+        l.apply('withdraw',dict(target_memory_id=rid,
+            target_memory_version=db._store.read(rid).content_hash,
+            assessment_id=aid,reason='FUR admin has no ELLA authority'),
+            actor='fur-admin',request_id='fur-admin-epistemic-denied',
+            expected_revision=len(events))
+
+    result=l.apply('withdraw',dict(target_memory_id=rid,
+        target_memory_version=db._store.read(rid).content_hash,
+        assessment_id=aid,reason='ELLA admin decision'),
+        actor='epistemic-admin',request_id='epistemic-admin-allowed',
+        expected_revision=len(events))
+    assert result['accepted_unit_count']==0
