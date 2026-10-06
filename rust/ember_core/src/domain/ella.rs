@@ -172,7 +172,15 @@ fn validate_transition(before:&Value,after:&Value,event:&Value)->Result<()>{
       a["confirmation_of"]==id && !["withdrawn","superseded","resolved"].contains(&a["status"].as_str().unwrap_or(""))){
     return Err("active confirmation child must be withdrawn/resolved first".into())
    }
-   let mut allowed=BTreeSet::new();allowed.insert(id);unchanged_assessments_except(before,after,&allowed)?;
+   let mut allowed=BTreeSet::new();allowed.insert(id.clone());
+   if let Some(parent)=old["confirmation_of"].as_str(){
+    let old_parent=&before["assessments"][parent];let new_parent=&after["assessments"][parent];
+    if old_parent["requires_confirmation"]==true && old_parent["status"]=="accepted"{
+      if new_parent["status"]!="confirmation_required"{return Err("withdrawing confirmation must restore parent pending state".into())}
+      allowed.insert(parent.to_string());
+    }else if new_parent!=old_parent{return Err("withdraw changed unrelated confirmation parent".into())}
+   }
+   unchanged_assessments_except(before,after,&allowed)?;
   },
   "invalidate_evidence"=>{
    unchanged_components(before,after,"evidence_overrides")?;
