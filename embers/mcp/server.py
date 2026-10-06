@@ -63,7 +63,7 @@ def _public_record_payload(record, *, full=False, annotations=False):
     out["data"] = epistemically_neutral_data(record.data)
     if record.record_type in (RecordType.DOCUMENT, RecordType.NODE):
         out["epistemic"] = public_epistemic_summary(record)
-    if annotations:
+    if full or annotations:
         rows=[]
         for ann in record.annotations:
             item=ann.to_dict()
