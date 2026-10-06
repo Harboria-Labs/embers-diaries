@@ -36,6 +36,11 @@ def test_legacy_hash_and_lineage_hash():
     assert 'hash_version' not in raw and Evidence.from_dict(raw).verify_integrity()
     new=Evidence(origin='origin',origin_confidence='AGENT_DECLARED',derived_from=['prior']);new.seal()
     assert new.hash_version==2 and Evidence.from_dict(new.to_dict()).verify_integrity()
+    # Existing V2 hash semantics stay stable after request provenance was added.
+    v2_payload=new.to_dict();assert 'request_id' not in v2_payload
+    assert Evidence.from_dict(v2_payload).compute_content_hash()==new.content_hash
+    req=Evidence(origin='origin',origin_confidence='AGENT_DECLARED',request_id='request-1');req.seal()
+    assert req.hash_version==3 and Evidence.from_dict(req.to_dict()).verify_integrity()
     new.origin='changed';assert not new.verify_integrity()
     with pytest.raises(ValueError):Evidence.from_dict(dict(raw,origin='unsigned addition'))
 
