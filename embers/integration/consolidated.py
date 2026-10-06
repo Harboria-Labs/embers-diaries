@@ -2,7 +2,7 @@
 from copy import deepcopy
 import json
 import os
-from ..core.domain import call, MODEL_VERSION, explicit_truth, historical_inline_truth
+from ..core.domain import call, MODEL_VERSION, explicit_truth
 from ..cognitive.usefulness import derive, digest, KIND
 from .usefulness_service import service
 
@@ -79,8 +79,12 @@ def recall(db, namespace, actor, *, query_id, direct_scores, elapsed, context=No
         for rid in plan['order']:
             rec=records[rid]
             open_conflict=any(c.status.value in ('open','investigating') for c in db.conflicts_for(rid))
-            inline_truth=historical_inline_truth(rec,open_conflict)
-            row={'id':rid,'data':rec.data,'truth_status':inline_truth['status'],'truth_projection':inline_truth,'written_by':rec.written_by,'content_hash':rec.content_hash,
+            # Keep the capacity-counted memory block epistemically neutral.
+            # Canonical ELLA state travels in the separate response metadata map,
+            # so evidence growth or verdict changes cannot alter admission size.
+            row={'id':rid,'data':rec.data,'truth_status':'see_epistemic_metadata',
+                 'truth_projection':{'source':'epistemic_metadata','projection_version':'ella-v1'},
+                 'written_by':rec.written_by,'content_hash':rec.content_hash,
                  'dynamics':next(r for r in candidates if r['id']==rid)}
             if call('admit',dict(admission,item_tokens=counter(_render([row],format)),total_tokens=counter(_render(selected+[row],format)),selected_count=len(selected)))['admit']:
                 selected.append(row)
@@ -91,8 +95,8 @@ def recall(db, namespace, actor, *, query_id, direct_scores, elapsed, context=No
         pair_expansion=None
         if paired is not None:
             open_conflict=any(c.status.value in ('open','investigating') for c in db.conflicts_for(paired.id))
-            inline_truth=historical_inline_truth(paired,open_conflict)
-            row={'id':paired.id,'data':paired.data,'truth_status':inline_truth['status'],'truth_projection':inline_truth,
+            row={'id':paired.id,'data':paired.data,'truth_status':'see_epistemic_metadata',
+                 'truth_projection':{'source':'epistemic_metadata','projection_version':'ella-v1'},
                  'written_by':paired.written_by,'content_hash':paired.content_hash,'retrieval':pair_route}
             if call('admit',dict(admission,item_tokens=counter(_render([row],format)),total_tokens=counter(_render(selected+[row],format)),selected_count=len(selected)))['admit']:
                 selected.append(row)
