@@ -804,3 +804,51 @@ def test_new_db_evidence_submissions_get_explicit_unknown_origin_but_legacy_hash
     proposal=db.get_proposal(pid)
     assert proposal.evidence[0].origin=="unknown"
     assert proposal.evidence[0].origin_confidence=="UNKNOWN"
+
+
+def test_public_rest_and_mcp_reads_expose_ella_not_legacy_truth(tmp_path,monkeypatch):
+    import json as _json
+    from fastapi.testclient import TestClient
+    from embers import api
+    from embers.identity.registry import AgentRegistry
+    from embers.mcp.server import EmberMCP
+
+    db=EmberDB.connect(str(tmp_path/'public-ella'))
+    agent,token=AgentRegistry(db).register('public-ella-reader')
+    proto=MemoryProtocol(db,default_namespace='public-ella')
+    rid=proto.remember({'content':'public ELLA surface claim','verify_status':'verified'},
+        written_by=agent.agent_id,agent_id=agent.agent_id)
+    proto.verify(rid,status='verified',note='legacy audit marker only')
+
+    monkeypatch.setattr(api,'_get_db',lambda:db)
+    client=TestClient(api.app)
+    headers={'X-Ember-Agent-Id':agent.agent_id,'X-Ember-Token':token}
+    rest=client.get(f'/v1/memory/read/{rid}',headers=headers)
+    assert rest.status_code==200,rest.text
+    rest_payload=rest.json()
+    assert 'verify_status' not in rest_payload['data'] and '_status' not in rest_payload['data']
+    assert rest_payload['epistemic']['base_epistemic_verdict']=='PROVISIONAL'
+    assert rest_payload['epistemic']['public_epistemic_state']=='PROVISIONAL'
+    assert rest_payload['epistemic']['conflict_overlay']=='none'
+
+    mcp=EmberMCP(db=db)
+    auth={'agent_id':agent.agent_id,'token':token}
+    def mcp_json(name,args):
+        result=mcp.call_tool(name,{**args,**auth})
+        assert not result['isError'],result
+        return _json.loads(result['content'][0]['text'])
+
+    read=mcp_json('ember_read',{'record_id':rid})
+    assert 'verify_status' not in read['data'] and '_status' not in read['data']
+    assert read['epistemic']['base_epistemic_verdict']=='PROVISIONAL'
+    legacy=[a for a in read['annotations'] if a.get('context')=='verification']
+    assert legacy and legacy[0]['epistemic_authority'] is False
+    assert legacy[0]['legacy_verification_audit'] is True
+
+    searched=mcp_json('ember_search',{'query':'public ELLA surface claim','namespace':'public-ella'})
+    row=next(x for x in searched if x['id']==rid)
+    assert 'verify_status' not in row['data'] and row['epistemic']['public_epistemic_state']=='PROVISIONAL'
+
+    queried=mcp_json('ember_query',{'namespace':'public-ella'})
+    row=next(x for x in queried['records'] if x['id']==rid)
+    assert 'verify_status' not in row['data'] and row['epistemic']['conflict_overlay']=='none'
