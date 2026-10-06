@@ -11,7 +11,7 @@ from .decay import DecayEngine
 
 class LifecycleState(str, Enum):
     ACTIVE = "active"
-    VERIFIED = "verified"
+    VERIFIED = "verified"  # legacy compatibility value; classifier no longer derives truth here
     REINFORCED = "reinforced"
     WEAKENING = "weakening"
     STALE = "stale"
@@ -58,9 +58,10 @@ class LifecycleEngine:
             state = LifecycleState.WEAKENING
         elif record.access_count >= self.reinforced_access_threshold:
             state = LifecycleState.REINFORCED
-        elif (record.data or {}).get("verify_status") == "verified":
-            state = LifecycleState.VERIFIED
         else:
+            # Epistemic truth is owned by ELLA. Historical verify_status values
+            # and verification annotations must not create a parallel truth
+            # authority inside lifecycle classification.
             state = LifecycleState.ACTIVE
         return LifecycleReport(
             state=state,
