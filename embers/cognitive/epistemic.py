@@ -62,8 +62,21 @@ class EpistemicLedger:
             assessments=[state['assessments'][key] for key in sorted(state['assessments'])],hard_groups=[sorted(state['hard_groups'][key]) for key in sorted(state['hard_groups'])],
             target_memory_id=rid,target_memory_version=target.content_hash,revision=revision,
             conflict_overlay='open' if 'open' in active else 'investigating' if active else 'none'))
-        pending=sorted((a for a in state['assessments'].values() if a['target_memory_id']==rid and a['target_memory_version']==target.content_hash and a['status']=='confirmation_required'),key=lambda a:a['assessment_id'])
+        active=[a for a in state['assessments'].values()
+                if a['target_memory_id']==rid and a['target_memory_version']==target.content_hash
+                and a['status']=='confirmation_required']
+        by_id={a['assessment_id']:a for a in active}
+        disagreement_groups=[]
+        for child in active:
+            parent=by_id.get(child.get('confirmation_of'))
+            if parent is not None and parent['evidence_id']==child['evidence_id'] and parent['polarity']!=child['polarity']:
+                disagreement_groups.append(sorted([parent['assessment_id'],child['assessment_id']]))
+        disagreement_groups=sorted({tuple(group) for group in disagreement_groups})
+        disputed_ids={aid for group in disagreement_groups for aid in group}
+        pending=sorted((a for a in active if a.get('confirmation_of') is None and a['assessment_id'] not in disputed_ids),
+                       key=lambda a:a['assessment_id'])
         result.update(confirmation_required=bool(pending),confirmation_assessment_ids=[a['assessment_id'] for a in pending],
+            resolution_required=bool(disagreement_groups),resolution_assessment_groups=[list(group) for group in disagreement_groups],
             target_memory_id=rid,target_memory_version=target.content_hash,
             lifecycle=dict(deprecated=self.db._writer.is_deprecated(rid),superseded_by=self.db._writer.get_superseded_by(rid)))
         return result
@@ -134,10 +147,12 @@ class EpistemicLedger:
                             raise ValueError('assessment resolution must cover one complete unresolved epistemic unit')
                     else:
                         # Threshold-confirmation disagreement is pending rather
-                        # than score-bearing; both assessments must concern the
-                        # same exact evidence record before explicit resolution.
-                        if len({a['evidence_id'] for a in priors})!=1:
-                            raise ValueError('pending resolution must concern one evidence record')
+                        # than score-bearing. Resolution must cover the complete
+                        # opposed confirmation pair; no third-vote shortcut.
+                        current=self.project(rid,state,len(events))
+                        chosen_ids=set(chosen)
+                        if not any(chosen_ids==set(group) for group in current.get('resolution_assessment_groups',[])):
+                            raise ValueError('pending resolution must cover one complete confirmation disagreement')
                     for prior in priors:prior['status']='resolved'
                 if action=='revise':
                     prior=next_state['assessments'].get(payload.get('assessment_id'))
