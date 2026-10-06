@@ -134,12 +134,20 @@ fn validate_transition(before:&Value,after:&Value,event:&Value)->Result<()>{
    let a=expected_new_assessment(before,after,event)?;
    let ids=payload["assessment_ids"].as_array().ok_or("assessment_ids required")?;
    let mut allowed=BTreeSet::new();
+   let mut resolved_evidence=BTreeSet::new();
    for id in ids{
     let id=text(id,"assessment_id")?.to_string();allowed.insert(id.clone());
     let old=&before["assessments"][&id];let new=&after["assessments"][&id];
     if !["accepted","confirmation_required"].contains(&old["status"].as_str().unwrap_or(""))||new["status"]!="resolved"{
      return Err("invalid ELLA resolution lifecycle".into())
     }
+    if old["target_memory_id"]!=*target||old["target_memory_version"]!=*version{
+     return Err("ELLA resolution crossed claim version".into())
+    }
+    resolved_evidence.insert(text(&old["evidence_id"],"evidence_id")?.to_string());
+   }
+   if !resolved_evidence.contains(text(&payload["evidence_id"],"evidence_id")?){
+    return Err("ELLA resolution evidence is outside selected assessments".into())
    }
    unchanged_assessments_except(before,after,&allowed)?;
    if a["target_memory_id"]!=*target||a["target_memory_version"]!=*version||a["evidence_id"]!=payload["evidence_id"]||
