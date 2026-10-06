@@ -83,6 +83,17 @@ def test_same_reference_many_assessors_one_unit(rig):
     assert result['score']==pytest.approx(call('ella_policy_default',None)['strengths']['STRONG'])
 
 
+def test_same_request_identity_is_one_hard_epistemic_unit(rig):
+    a=ev(rig,source='tool-A',request_id='tool-request-42')
+    b=ev(rig,source='tool-B',request_id='tool-request-42')
+    report(rig,a,strength='MEDIUM',actor='assessor-a')
+    result=report(rig,b,strength='MEDIUM',actor='assessor-b')
+    assert result['raw_evidence_count']==2
+    assert result['accepted_unit_count']==1
+    assert result['hard_collapsed_count']==1
+    assert result['score']==pytest.approx(call('ella_policy_default',None)['strengths']['MEDIUM'])
+
+
 def test_full_recompute_merge_split_withdraw_correct(rig):
     db,p,rid,l=rig;a=ev(rig,'one');b=ev(rig,'two')
     report(rig,a,strength='MEDIUM');result=report(rig,b,strength='MEDIUM');assert result['accepted_unit_count']==2
