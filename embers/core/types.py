@@ -118,7 +118,10 @@ class AccessLevel(str, Enum):
 
 
 class VerifyStatus(str, Enum):
-    """Knowledge entry verification states."""
+    """Legacy verification labels retained for stored-data compatibility.
+
+    They are not canonical ELLA verdicts. MemoryProtocol.verify() records these
+    as audit annotations only; ELLA owns authoritative epistemic state."""
     VERIFIED   = "verified"
     HYPOTHESIS = "hypothesis"
     CONTESTED  = "contested"
