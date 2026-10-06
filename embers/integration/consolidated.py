@@ -34,6 +34,13 @@ def configure(db, namespace, actor, body):
         actor=actor,request_id=body['request_id'],expected_revision=body['expected_revision'])
 
 
+def _recall_data(data):
+    """Recall-facing data without legacy fields that used to claim truth."""
+    if not isinstance(data,dict):
+        return data
+    return {k:v for k,v in data.items() if k not in ('_status','verify_status')}
+
+
 def _render(rows, format):
     if format=='structured':return json.dumps(rows,ensure_ascii=False,separators=(',',':'),sort_keys=True,allow_nan=False)
     text='\n\n'.join(f"[{r['id']}; truth={r['truth_status']}; source={r['written_by']}]\n{json.dumps(r['data'],ensure_ascii=False,sort_keys=True)}" for r in rows)
@@ -82,7 +89,7 @@ def recall(db, namespace, actor, *, query_id, direct_scores, elapsed, context=No
             # Keep the capacity-counted memory block epistemically neutral.
             # Canonical ELLA state travels in the separate response metadata map,
             # so evidence growth or verdict changes cannot alter admission size.
-            row={'id':rid,'data':rec.data,'truth_status':'see_epistemic_metadata',
+            row={'id':rid,'data':_recall_data(rec.data),'truth_status':'see_epistemic_metadata',
                  'truth_projection':{'source':'epistemic_metadata','projection_version':'ella-v1'},
                  'written_by':rec.written_by,'content_hash':rec.content_hash,
                  'dynamics':next(r for r in candidates if r['id']==rid)}
@@ -95,7 +102,7 @@ def recall(db, namespace, actor, *, query_id, direct_scores, elapsed, context=No
         pair_expansion=None
         if paired is not None:
             open_conflict=any(c.status.value in ('open','investigating') for c in db.conflicts_for(paired.id))
-            row={'id':paired.id,'data':paired.data,'truth_status':'see_epistemic_metadata',
+            row={'id':paired.id,'data':_recall_data(paired.data),'truth_status':'see_epistemic_metadata',
                  'truth_projection':{'source':'epistemic_metadata','projection_version':'ella-v1'},
                  'written_by':paired.written_by,'content_hash':paired.content_hash,'retrieval':pair_route}
             if call('admit',dict(admission,item_tokens=counter(_render([row],format)),total_tokens=counter(_render(selected+[row],format)),selected_count=len(selected)))['admit']:
