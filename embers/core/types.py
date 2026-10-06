@@ -170,16 +170,20 @@ class MemoryStatus(str, Enum):
     override, or weight the ELLA score/verdict.
 
       PROVISIONAL  normal admission status for newly promoted durable memory
-      VERIFIED     legacy historical label only; not canonical verification
-      DISPUTED     legacy historical label only; canonical dispute is an ELLA/
-                   Conflict Engine projection
+      VERIFIED     canonical ELLA verification when returned by memory_status()
+      DISFAVORED   canonical ELLA lower verdict when returned by memory_status()
+      DISPUTED     canonical public dispute projection when returned by memory_status()
       SUPERSEDED   lifecycle label: a newer version replaced this record
+
+    Historical `_status` values using the same strings remain compatibility
+    markers only; the enum value does not make such a stored marker authoritative.
 
     Promotion is admission only. New promotion writes PROVISIONAL; authoritative
     VERIFIED / DISFAVORED / DISPUTED projections come from ELLA plus the conflict
     overlay, not from this enum."""
     VERIFIED    = "verified"
     PROVISIONAL = "provisional"
+    DISFAVORED  = "disfavored"
     DISPUTED    = "disputed"
     SUPERSEDED  = "superseded"
 
