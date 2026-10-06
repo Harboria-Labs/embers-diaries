@@ -415,6 +415,23 @@ fn ella_same_request_text_different_sources_stays_separate() {
 }
 
 #[test]
+fn ella_opposing_threshold_confirmation_is_evidence_dispute() {
+    let evidence=ella_evidence("e","artifact");
+    let mut parent=ella_assessment("p","e","SUPPORTS","STRONG");
+    parent["status"]=json!("confirmation_required");
+    parent["requires_confirmation"]=json!(true);
+    let mut child=ella_assessment("c","e","OPPOSES","STRONG");
+    child["status"]=json!("confirmation_required");
+    child["confirmation_of"]=json!("p");
+    let out=ella_project(json!([evidence]),json!([parent,child]),"none");
+    assert_eq!(out["score"],0.0);
+    assert_eq!(out["base_epistemic_verdict"],"PROVISIONAL");
+    assert_eq!(out["public_epistemic_state"],"DISPUTED");
+    assert_eq!(out["evidence_dispute"],true);
+    assert_eq!(out["confirmation_disagreement"],true);
+}
+
+#[test]
 fn ella_rejects_arbitrary_numeric_strength_and_source_type_has_no_weight() {
     let mut bad=ella_assessment("a","e","SUPPORTS","WEAK");
     bad["strength"]=json!(1000.0);
