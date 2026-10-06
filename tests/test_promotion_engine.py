@@ -65,7 +65,7 @@ class TestAutomaticMode:
         result = db.submit(pid)
         assert result.promoted
         assert result.decision.method == PromotionMethod.AUTOMATIC
-        assert db.memory_status(result.memory_id) == MemoryStatus.VERIFIED
+        assert db.memory_status(result.memory_id) == MemoryStatus.PROVISIONAL
         # Proposal is now marked PROMOTED (append-only status transition).
         assert db.get_proposal(pid).status == ProposalStatus.PROMOTED
 
@@ -125,33 +125,35 @@ class TestStatusSemantics:
         mid = db.submit(pid).memory_id
         assert db.promotion_method(mid) == PromotionMethod.AUTOMATIC
 
-    def test_set_status_is_versioned_history_preserved(self, tmp_path):
+    def test_legacy_set_status_does_not_override_ella(self, tmp_path):
         db = _db(tmp_path)
         mid = db.submit(db.propose(_proposal(confidence=0.9))).memory_id
-        assert db.memory_status(mid) == MemoryStatus.VERIFIED
+        assert db.memory_status(mid) == MemoryStatus.PROVISIONAL
         new_id, old_id = db.set_status(mid, MemoryStatus.DISPUTED,
-                                       reason="conflicting evidence appeared")
+                                       reason="legacy compatibility marker")
         assert old_id == mid
-        # Current status is disputed…
-        assert db.memory_status(mid) == MemoryStatus.DISPUTED
-        # …but the prior VERIFIED version is preserved in history.
+        # Canonical epistemic state is ELLA-owned, so the legacy status writer
+        # cannot manufacture a DISPUTED truth verdict.
+        assert db.memory_status(mid) == MemoryStatus.PROVISIONAL
+        assert db.legacy_memory_status(mid) == MemoryStatus.DISPUTED
         history = db.get_history(mid)
         statuses = [
             (r.data.get("_status") if isinstance(r.data, dict) else None)
             for r in history
         ]
-        assert MemoryStatus.VERIFIED.value in statuses
+        assert MemoryStatus.PROVISIONAL.value in statuses
         assert MemoryStatus.DISPUTED.value in statuses
 
-    def test_plain_memory_reads_as_verified(self, tmp_path):
+    def test_plain_memory_is_not_verified_by_absence(self, tmp_path):
         """A memory written directly (no promotion) has no _status key and must
-        read back as VERIFIED with an unchanged hash (§15 backwards-compat)."""
+        remain PROVISIONAL with an unchanged hash; the explicit legacy reader preserves historical behavior."""
         db = _db(tmp_path)
         mid = db.write(EmberRecord(namespace="p", data={"claim": "direct"}))
         rec = db.get(mid)
         assert "_status" not in (rec.data or {})
         assert rec.verify_integrity()
-        assert db.memory_status(mid) == MemoryStatus.VERIFIED
+        assert db.memory_status(mid) == MemoryStatus.PROVISIONAL
+        assert db.legacy_memory_status(mid) == MemoryStatus.VERIFIED
         assert db.promotion_method(mid) is None
 
 
@@ -192,7 +194,7 @@ class TestHumanMode:
         pid = db.propose(_proposal(confidence=0.99))
         mid, _ = db.promote(pid, validated_by="sammie")
         assert db.promotion_method(mid) == PromotionMethod.HUMAN
-        assert db.memory_status(mid) == MemoryStatus.VERIFIED
+        assert db.memory_status(mid) == MemoryStatus.PROVISIONAL
 
 
 # ── Hybrid mode ─────────────────────────────────────────────────────────────

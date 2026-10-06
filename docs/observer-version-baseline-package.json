@@ -1,0 +1,16 @@
+{
+  "wheel": "embers_diaries-0.2.0-cp312-cp312-manylinux_2_34_x86_64.whl",
+  "files": {
+    "embers/api/observer.html": {
+      "wheel_sha256": "e4f84643a5ce5a58779f5233a793a25161df1b2da17322b0b56f650a4dc9293a",
+      "baseline_sha256": "e4f84643a5ce5a58779f5233a793a25161df1b2da17322b0b56f650a4dc9293a",
+      "identical": true
+    },
+    "embers/api/observer_transport.js": {
+      "wheel_sha256": "6b6d262295d56d9f71546a6b79f6eeb0f0caded00fc242c5b9cd28cf1e4274e9",
+      "baseline_sha256": "6b6d262295d56d9f71546a6b79f6eeb0f0caded00fc242c5b9cd28cf1e4274e9",
+      "identical": true
+    }
+  },
+  "wheel_sha256": "d547cdf7afe75c525b57ef18c599163edb3e12543cf67a63b3811eb7dbdb4779"
+}

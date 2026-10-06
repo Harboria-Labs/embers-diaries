@@ -118,8 +118,21 @@ async def memory_write(
     protocol = _proto(db)
     namespace = body.get("namespace") or protocol.namespace
     require_namespace(db, namespace, agent.agent_id, "write")
+    if body.get("subject") is not None:
+        content = dict(content) if isinstance(content, dict) else {"content": content}
+        content["subject"] = body["subject"]
+    from ..core.primary_context import validate_context
+    try:
+        validate_context(body.get("primary_context"))
+        if isinstance(content, dict):
+            validate_context(content.get("primary_context"))
+            if body.get("primary_context") is not None and "primary_context" in content and content["primary_context"] != body["primary_context"]:
+                raise ValueError("conflicting primary contexts")
+    except ValueError as error:
+        raise HTTPException(400, str(error)) from error
     rid = protocol.remember(
         content,
+        primary_context=body.get("primary_context"),
         tags=body.get("tags"),
         confidence=body.get("confidence", 1.0),
         namespace=body.get("namespace"),
@@ -151,14 +164,29 @@ async def memory_recall(
     protocol = _proto(db)
     namespace = body.get("namespace") or protocol.namespace
     require_namespace(db, namespace, agent.agent_id)
+    from ..core.primary_context import validate_context
+    try:
+        validate_context(body.get("primary_context"))
+        if type(body.get("inspect_context", False)) is not bool:
+            raise ValueError("inspect_context must be boolean")
+    except ValueError as error:
+        raise HTTPException(400, str(error)) from error
+    import time
+    started = time.monotonic()
     result = protocol.recall(
         query,
+        primary_context=body.get("primary_context"),
+        inspect_context=body.get("inspect_context", False),
         top_k=body.get("top_k", 10),
         namespace=body.get("namespace"),
         room=body.get("room"),
         format=body.get("format", "structured"),
     )
-    return {"query": query, "memories": result}
+    from ..integration.usefulness_service import record_request
+    from .session_gate import current_session_id
+    record_request(db, namespace, agent.agent_id, "ember_recall",
+                   {**body, "session_id": current_session_id() or body.get("session_id")}, result, started)
+    return result if isinstance(result, dict) and "context_policy" in result else {"query": query, "memories": result}
 
 
 @router.get("/memory/read/{record_id}")
@@ -607,6 +635,10 @@ async def propose_memory(
     agent = require_agent(db, x_ember_agent_id, x_ember_token)
     evidence = []
     for item in body.get("evidence", []):
+        origin=item.get("origin")
+        origin_confidence=item.get("origin_confidence", "UNKNOWN" if not origin or origin == "unknown" else "AGENT_DECLARED")
+        if origin_confidence == "SYSTEM_CONFIRMED":
+            raise HTTPException(400, "SYSTEM_CONFIRMED origin is reserved for system-captured provenance")
         ev = Evidence(
             source=item.get("source", ""),
             source_type=SourceType(item.get("source_type", "directly_observed")),
@@ -614,6 +646,11 @@ async def propose_memory(
             description=item.get("description", ""),
             agent_id=agent.agent_id,
             session_id=body.get("session_id"),
+            origin=origin or "unknown",
+            origin_confidence=origin_confidence,
+            event_id=item.get("event_id"),
+            request_id=item.get("request_id"),
+            derived_from=list(item.get("derived_from") or []),
         )
         ev.seal()
         evidence.append(ev)
@@ -693,17 +730,17 @@ async def promote_proposal(
     Promotion means the proposal met the criteria to become durable memory,
     NOT that it is true; the memory carries its own epistemic status."""
     from . import _get_db
-    from ..core.types import MemoryStatus, PromotionMethod
+    from ..core.types import PromotionMethod
     db = _get_db()
     agent = require_agent(db, x_ember_agent_id, x_ember_token)
     pid = body.get("proposal_id")
     if not pid:
         raise HTTPException(400, "proposal_id required")
-    status = body.get("status")
+    if "status" in body:
+        raise HTTPException(400, "promotion is admission only; submit epistemic evidence separately")
     try:
         memory_id, proposal_id = db.promote(
             pid, validated_by=agent.agent_id,
-            status=MemoryStatus(status) if status else None,
             promotion_method=PromotionMethod.HUMAN,
         )
     except KeyError as e:
@@ -770,14 +807,24 @@ async def attach_evidence(
     x_ember_agent_id: str | None = Header(default=None),
     x_ember_token: str | None = Header(default=None),
 ):
-    """Attach independent evidence to an existing memory (append-only, so the
-    memory's hash is untouched and its confirmation trail only grows)."""
+    """Attach evidence to an existing memory without asserting independence.
+
+    The memory hash is untouched; ELLA resolves detectable dependency and
+    claim-specific assessment separately."""
     from . import _get_db
     db = _get_db()
     agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    target = db._reader.get(memory_id, include_deprecated=True, include_superseded=True)
+    if target is None:
+        raise HTTPException(404, f"Memory {memory_id} not found.")
+    require_namespace(db, target.namespace, agent.agent_id, "write")
     source = body.get("source")
     if not source:
         raise HTTPException(400, "source required")
+    origin=body.get("origin")
+    origin_confidence=body.get("origin_confidence", "UNKNOWN" if not origin or origin == "unknown" else "AGENT_DECLARED")
+    if origin_confidence == "SYSTEM_CONFIRMED":
+        raise HTTPException(400, "SYSTEM_CONFIRMED origin is reserved for system-captured provenance")
     ev = Evidence(
         source=source,
         source_type=SourceType(body.get("source_type", "directly_observed")),
@@ -785,6 +832,11 @@ async def attach_evidence(
         description=body.get("description", ""),
         agent_id=agent.agent_id,
         session_id=body.get("session_id"),
+        origin=origin or "unknown",
+        origin_confidence=origin_confidence,
+        event_id=body.get("event_id"),
+        request_id=body.get("request_id"),
+        derived_from=list(body.get("derived_from") or []),
     )
     ev.seal()
     try:
@@ -803,13 +855,22 @@ async def evidence_for(
     """Evidence supporting a memory. Empty means it rests on a bare assertion."""
     from . import _get_db
     db = _get_db()
-    require_agent(db, x_ember_agent_id, x_ember_token)
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    target = db._reader.get(memory_id, include_deprecated=True, include_superseded=True)
+    if target is None:
+        raise HTTPException(404, f"Memory {memory_id} not found.")
+    require_namespace(db, target.namespace, agent.agent_id, "read")
     records = db.evidence_for(memory_id)
     return {"memory_id": memory_id, "evidence": [{
         "id": r.id,
         "source": (r.data or {}).get("source"),
         "source_type": (r.data or {}).get("source_type"),
         "description": (r.data or {}).get("description"),
+        "origin": (r.data or {}).get("origin"),
+        "origin_confidence": (r.data or {}).get("origin_confidence", "UNKNOWN"),
+        "event_id": (r.data or {}).get("event_id"),
+        "request_id": (r.data or {}).get("request_id"),
+        "derived_from": (r.data or {}).get("derived_from", []),
         "agent_id": r.agent_id,
         "content_hash": r.content_hash,
     } for r in records]}
@@ -853,3 +914,31 @@ async def list_failures(
     else:
         found = db.failures()
     return {"failures": [f.to_dict() for f in found]}
+
+
+@router.post("/memory/orient")
+async def memory_orient(
+    body: dict,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    from . import _get_db
+    db = _get_db()
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    protocol = _proto(db)
+    namespace = body.get("namespace") or protocol.namespace
+    require_namespace(db, namespace, agent.agent_id)
+    if set(body) - {"clues", "namespace", "hints", "limits", "signals"}:
+        raise HTTPException(400, "unsupported orientation fields")
+    try:
+        import time
+        from ..integration.usefulness_service import record_request
+        from .session_gate import current_session_id
+        started = time.monotonic()
+        result = protocol.orient(body.get("clues"), namespace, hints=body.get("hints"),
+                               limits=body.get("limits"), signals=body.get("signals"))
+        record_request(db, namespace, agent.agent_id, "ember_orient",
+                       {**body, "session_id": current_session_id()}, result, started)
+        return result
+    except ValueError as error:
+        raise HTTPException(400, str(error)) from error

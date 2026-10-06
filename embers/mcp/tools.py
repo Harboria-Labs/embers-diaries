@@ -192,7 +192,17 @@ TOOLS = [
                 "confidence": {"type": "number"},
                 "namespace": {"type": "string"},
                 "session_id": {"type": "string"},
-                "evidence": {"type": "array"},
+                "evidence": {"type": "array","items":{"type":"object","additionalProperties":False,"properties":{
+                    "source":{"type":"string"},
+                    "source_type":{"type":"string"},
+                    "reference":{"type":"string"},
+                    "description":{"type":"string"},
+                    "origin":{"type":"string","description":"Underlying source/origin identity. If omitted, Ember records origin=unknown."},
+                    "origin_confidence":{"type":"string","enum":["UNKNOWN","AGENT_DECLARED"],"description":"Identity confidence only; never evidence strength. SYSTEM_CONFIRMED is reserved for system-captured provenance."},
+                    "event_id":{"type":"string","description":"Optional observation/event identity used for dependency detection."},
+                    "request_id":{"type":"string","description":"Optional idempotent source/tool request identity; equal request IDs from the same source are one hard-dependency signal."},
+                    "derived_from":{"type":"array","items":{"type":"string"},"uniqueItems":True,"description":"Evidence identities this item derives from."}
+                },"required":["source"]}},
                 "agent_id": {"type": "string"},
                 "token": {"type": "string"},
             },
@@ -234,14 +244,12 @@ TOOLS = [
         "description": ("Explicitly promote a pending proposal into durable memory "
                         "(an authenticated caller's own decision, recorded as "
                         "promotion_method=human). Promotion means it met the "
-                        "criteria to become durable memory, NOT that it is true — "
-                        "the memory carries its own status."),
+                        "criteria to become durable memory, NOT that it is true. "
+                        "Epistemic state is maintained separately by ELLA."),
         "inputSchema": {
             "type": "object",
             "properties": {
                 "proposal_id": {"type": "string"},
-                "status": {"type": "string",
-                            "description": "verified / provisional / disputed"},
                 "agent_id": {"type": "string"},
                 "token": {"type": "string"},
             },
@@ -282,9 +290,10 @@ TOOLS = [
     },
     {
         "name": "ember_attach_evidence",
-        "description": ("Attach independent evidence to an EXISTING durable "
-                        "memory. Append-only — the memory is not modified, so its "
-                        "hash is untouched and its confirmation trail only grows."),
+        "description": ("Attach an evidence record to an EXISTING durable memory. "
+                        "Attachment does NOT assert statistical independence or truth strength; "
+                        "ELLA resolves dependency and claim-specific assessment separately. "
+                        "Append-only — the memory hash is untouched."),
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -293,6 +302,11 @@ TOOLS = [
                 "source_type": {"type": "string"},
                 "reference": {"type": "string"},
                 "description": {"type": "string"},
+                "origin": {"type": "string","description": "Underlying source/origin identity. If omitted, Ember records origin=unknown."},
+                "origin_confidence": {"type": "string","enum": ["UNKNOWN","AGENT_DECLARED"],"description": "Identity confidence only; never evidence strength. SYSTEM_CONFIRMED is reserved for system-captured provenance."},
+                "event_id": {"type": "string","description": "Optional observation/event identity used for dependency detection."},
+                "request_id": {"type": "string","description": "Optional idempotent source/tool request identity; equal request IDs from the same source are one hard-dependency signal."},
+                "derived_from": {"type": "array","items": {"type": "string"},"uniqueItems": True},
                 "session_id": {"type": "string"},
                 "agent_id": {"type": "string"},
                 "token": {"type": "string"},
@@ -469,3 +483,110 @@ TOOLS = [
         },
     },
 ]
+
+# Contract 01 metadata is separate from query text and room filters.
+for _tool in TOOLS:
+    if _tool["name"] in ("ember_write", "ember_recall"):
+        _tool["inputSchema"]["properties"]["primary_context"] = {
+            "type": ["string", "null"],
+            "description": "Optional exact agent-supplied primary context. No inference, merging or context filtering."}
+    if _tool["name"] == "ember_recall":
+        _tool["inputSchema"]["properties"]["inspect_context"] = {
+            "type": "boolean", "description": "Return query/context, candidate/result IDs with their stored contexts, and memories. Use true to inspect unset context."}
+
+
+TOOLS.append({
+    "name": "ember_orient",
+    "description": "Read-only Contract 02: find likely existing subjects, contexts and bounded memory previews from rough clues. Returns lexical/relationship signals, applied limits and IDs. The agent chooses the working context; no context merging, rewriting or learning.",
+    "inputSchema": {"type": "object", "properties": {
+        "clues": {"type": "string", "description": "Rough keywords/fragments, up to 2048 UTF-8 bytes; not a primary context."},
+        "namespace": {"type": "string"},
+        "hints": {"type": "object", "additionalProperties": False, "properties": {
+            "subject": {"type": ["string", "null"]}, "primary_context": {"type": ["string", "null"]}}},
+        "limits": {"type": "object", "additionalProperties": False, "properties": {
+            "subjects": {"type": "integer", "minimum": 1, "maximum": 20},
+            "contexts": {"type": "integer", "minimum": 1, "maximum": 40},
+            "memories_per_context": {"type": "integer", "minimum": 1, "maximum": 10},
+            "records": {"type": "integer", "minimum": 1, "maximum": 100},
+            "candidates": {"type": "integer", "minimum": 1, "maximum": 500},
+            "relationships": {"type": "integer", "minimum": 1, "maximum": 100},
+            "preview_chars": {"type": "integer", "minimum": 1, "maximum": 1000},
+            "response_bytes": {"type": "integer", "minimum": 4096, "maximum": 131072}}},
+        "signals": {"type": "array", "uniqueItems": True, "items": {"type": "string", "enum": ["subject", "primary_context", "content", "tags", "relations"]}},
+        "agent_id": {"type": "string"}, "token": {"type": "string"}, "session_id": {"type": "string"}},
+        "required": ["clues"]}})
+
+
+TOOLS.extend([
+ {"name":"ember_usefulness_update", "description":"Evidence-derived usefulness. Submit reports or authorized resolve/merge/split/configure decisions. Never updates heat or truth. request_id is idempotent; decisions require current expected_revision.",
+  "inputSchema":{"type":"object","properties":{
+   "namespace":{"type":"string"},"action":{"type":"string","enum":["report","resolve","merge","split","configure"]},
+   "payload":{"type":"object","additionalProperties":False,
+    "description":"report: target/context/feedback_type, optional identity/session/query ID/note/experience ID. resolve: experience_id/status/feedback_type/reason. merge: experience_ids/reason. split: experience_id/partitions/reason. configure: policy/reason. Decisions require expected_revision from ember_usefulness_state.",
+    "properties":{
+     "target":{"type":"object","additionalProperties":False,"required":["kind","memory_ids"],"properties":{
+      "kind":{"type":"string","enum":["memory","pair","group"]},
+      "memory_ids":{"type":"array","items":{"type":"string"},"minItems":1,"maxItems":32,"uniqueItems":True},
+      "relation":{"type":"string","enum":["explains","requires","warns_about","alternative"]}}},
+     "context":{"type":["string","null"],"description":"Exact agent-supplied context; null is explicitly unset. No transfer to similar contexts."},
+     "feedback_type":{"type":["string","null"],"enum":["CONTRIBUTED","IRRELEVANT","MISLEADING","UNUSED","PAIR_HELPED","PAIR_IRRELEVANT","GROUP_SUCCESS","GROUP_FAILURE",None]},
+     "session_id":{"type":"string"},"query_request_id":{"type":"string"},"note":{"type":"string"},
+     "identity":{"type":"object","additionalProperties":False,"required":["value","source","provenance"],"properties":{
+      "value":{"type":"string"},"source":{"type":"string"},"provenance":{"type":"string"}}},
+     "identity_verified":{"type":"boolean","description":"Only the configured decision agent may attest identity. Ordinary IDs are unverified claims."},
+     "experience_id":{"type":"string"},"experience_ids":{"type":"array","items":{"type":"string"}},
+     "partitions":{"type":"array","items":{"type":"array","items":{"type":"string"}}},
+     "status":{"type":"string","enum":["accepted","unresolved"]},"reason":{"type":"string"},
+     "policy":{"type":"object","description":"Configurable kappa_u,u0,epsilon,u_max,kappa_w,w0; severity {contributed,irrelevant,misleading}; cluster {session_window,time_window} in seconds. Audited recomputation, no heat/truth coupling."}}},
+   "request_id":{"type":"string","description":"Unique submission identity; identical retries are idempotent."},"expected_revision":{"type":"integer"},
+   "agent_id":{"type":"string"},"token":{"type":"string"},"session_id":{"type":"string"}},
+   "required":["namespace","action","payload","request_id"]}},
+ {"name":"ember_usefulness_state", "description":"Read-only bounded U/W, evidence, group outcomes and chronological replay snapshot for an authorized namespace. Real-time HTTP observation is available via authenticated GET /v1/visualizer-stream/{namespace}, resuming with Last-Event-ID; this MCP tool remains the bounded recovery snapshot.",
+  "inputSchema":{"type":"object","properties":{
+   "request_id":{"type":"string"},"filter_session_id":{"type":"string"},
+   "namespace":{"type":"string"},"after":{"type":"integer","minimum":0},"limit":{"type":"integer","minimum":1,"maximum":200},
+   "agent_id":{"type":"string"},"token":{"type":"string"},"session_id":{"type":"string"}},"required":["namespace"]}}
+])
+
+
+TOOLS.append({"name":"ember_visualizer_access",
+ "description":"Create a temporary read-only visualizer code/link for the user without sharing agent credentials, or revoke a previously issued view. Grants authorize exactly one namespace, expire in 15 minutes by default, and cannot call mutation tools. Return code and viewer_url/viewer_path to the user. Supply server_url (the existing server origin) for a complete link, or configure EMBER_PUBLIC_URL.",
+ "inputSchema":{"type":"object","properties":{
+  "action":{"type":"string","enum":["create","revoke"],"default":"create"},
+  "namespace":{"type":"string"},"ttl_seconds":{"type":"integer","minimum":60,"maximum":3600,"default":900},
+  "server_url":{"type":"string"},"grant_id":{"type":"string"},
+  "agent_id":{"type":"string"},"token":{"type":"string"},"session_id":{"type":"string"}}}})
+
+
+TOOLS.append({"name":"ember_visualize",
+ "description":"Create a read-only Research Observer link following MY observable Ember activity across namespaces and sessions. No namespace required. Self-only delegation; cannot observe another agent. Does not invoke retrieval or learning. Return visualization_url/viewer_path and code to the intended human. Scope defaults to future activity in namespaces I can currently read, spanning sessions. Namespace View remains available separately through ember_visualizer_access.",
+ "inputSchema":{"type":"object","properties":{
+  "action":{"type":"string","enum":["create","revoke"],"default":"create"},
+  "observer_target":{"type":"string","description":"If supplied, must equal authenticated caller."},
+  "observer_id":{"type":"string"},"server_url":{"type":"string"},
+  "ttl_seconds":{"type":"integer","minimum":60,"maximum":86400,"default":3600},
+  "span_sessions":{"type":"boolean","default":True},"namespaces":{"type":"array","items":{"type":"string"},"maxItems":128},
+  "agent_id":{"type":"string"},"token":{"type":"string"},"session_id":{"type":"string"}}}})
+
+# Consolidated Rust-authoritative model, separate from explicit historical replay.
+for _name, _desc, _props, _required in [
+    ('ember_research_recall','Consolidated FUR U → query modulation → bounded activation. Explicit agent direct scores and model time. W is not used for expansion.',
+     {'query_id':{'type':'string'},'direct_scores':{'type':'object','additionalProperties':{'type':'number','minimum':0,'maximum':1}},'elapsed':{'type':'number','minimum':0},'context':{'type':['string','null']},'format':{'type':'string','enum':['structured','text','messages']}},['query_id','direct_scores','elapsed']),
+    ('ember_research_settings','Read versioned research settings and Rust-validated recovery guarantees.',{},[]),
+    ('ember_research_configure','Authorized research configuration change; Rust validates and reprojects FUR, preserving existing activation. expected_revision is the journal revision.',
+     {'config':{'type':'object'},'policy':{'type':'object'},'request_id':{'type':'string'},'expected_revision':{'type':'integer','minimum':0},'reason':{'type':'string'}},['config','policy','request_id','expected_revision','reason'])]:
+    TOOLS.append({'name':_name,'description':_desc,'inputSchema':{'type':'object','properties':{'namespace':{'type':'string'},'agent_id':{'type':'string'},'token':{'type':'string'},'session_id':{'type':'string'},**_props},'required':['namespace',*_required]}})
+
+TOOLS.append({"name":"ember_pair_relationship",
+ "description":"Store a directional typed relationship with explicit context for Pairing Matrix V1. Does not update W. Repeating the same relationship reuses its identity. Use ember_usefulness_update report with a pair target for explicit route feedback.",
+ "inputSchema":{"type":"object","properties":{
+ "source":{"type":"string"},"target":{"type":"string"},
+ "relation":{"type":"string","enum":["explains","requires","warns_about","alternative"]},
+ "primary_context":{"type":["string","null"]},
+ "agent_id":{"type":"string"},"token":{"type":"string"},"session_id":{"type":"string"}},
+ "required":["source","target","relation","primary_context"]}})
+
+for _name,_props,_required in [
+    ('ember_epistemic_state',{'memory_id':{'type':'string'}},['memory_id']),
+    ('ember_epistemic_feedback',{'action':{'type':'string','enum':['report','revise','confirm','withdraw','resolve','invalidate_evidence','correct_evidence','merge','split','carry_forward','configure']},'payload':{'type':'object'},'request_id':{'type':'string'},'expected_revision':{'type':'integer','minimum':0}},['action','payload','request_id','expected_revision'])]:
+    TOOLS.append({'name':_name,'description':'ELLA V1 exact-version evidence assessment; usefulness and retrieval remain separate. Feedback requires exact target content hash, evidence record ID, SUPPORTS/OPPOSES, WEAK/MEDIUM/STRONG and a concise assessment_note. Numeric likelihoods are forbidden.', 'inputSchema':{'type':'object','properties':{'namespace':{'type':'string'},'agent_id':{'type':'string'},'token':{'type':'string'},'session_id':{'type':'string'},**_props},'required':['namespace',*_required]}})
