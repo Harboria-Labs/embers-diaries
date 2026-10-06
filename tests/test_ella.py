@@ -71,7 +71,11 @@ def test_confirmation_lower_strength_prevents_crossing(rig,strength):
 def test_opposing_confirmation_stays_unresolved(rig):
     a=ev(rig,'one');b=ev(rig,'two');report(rig,a);pending=report(rig,b)
     result=apply(rig,'confirm',actor='second',evidence_id=b,polarity='OPPOSES',strength='STRONG',confirmation_of=pending['confirmation_assessment_ids'][0])
-    assert result['confirmation_required'] and result['base_epistemic_verdict']=='PROVISIONAL'
+    assert not result['confirmation_required']
+    assert result['resolution_required'] and result['confirmation_disagreement']
+    assert result['evidence_dispute'] and result['public_epistemic_state']=='DISPUTED'
+    assert result['base_epistemic_verdict']=='PROVISIONAL'
+    assert len(result['resolution_assessment_groups'])==1
     # A disagreement is not a new threshold-crossing proposal that a third
     # assessor may confirm. V1 requires explicit resolution; no voting chain.
     _,_,_,ledger=rig
@@ -80,6 +84,29 @@ def test_opposing_confirmation_stays_unresolved(rig):
     with pytest.raises(ValueError,match='explicit resolution'):
         apply(rig,'confirm',actor='third',evidence_id=b,polarity='OPPOSES',
               strength='STRONG',confirmation_of=disagreement['assessment_id'])
+
+
+def test_confirmation_disagreement_resolution_must_cover_full_pair(rig):
+    db,_,rid,l=rig
+    a=ev(rig,'one');b=ev(rig,'two');report(rig,a);pending=report(rig,b)
+    disputed=apply(rig,'confirm',actor='second',evidence_id=b,polarity='OPPOSES',
+                   strength='STRONG',confirmation_of=pending['confirmation_assessment_ids'][0])
+    group=disputed['resolution_assessment_groups'][0]
+    state,events=l.load()
+    with pytest.raises(ValueError,match='complete confirmation disagreement'):
+        l.apply('resolve',dict(target_memory_id=rid,
+            target_memory_version=db._store.read(rid).content_hash,evidence_id=b,
+            assessment_ids=[group[0]],polarity='SUPPORTS',strength='MEDIUM',
+            assessment_note='partial disagreement resolution must fail'),
+            actor='admin',request_id='partial-confirmation-resolution',expected_revision=len(events))
+    state,events=l.load()
+    resolved=l.apply('resolve',dict(target_memory_id=rid,
+        target_memory_version=db._store.read(rid).content_hash,evidence_id=b,
+        assessment_ids=group,polarity='SUPPORTS',strength='MEDIUM',
+        assessment_note='resolve complete threshold confirmation disagreement'),
+        actor='admin',request_id='full-confirmation-resolution',expected_revision=len(events))
+    assert not resolved['resolution_required']
+    assert not resolved['confirmation_disagreement']
 
 
 def test_same_reference_many_assessors_one_unit(rig):
