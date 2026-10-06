@@ -161,6 +161,12 @@ class EpistemicLedger:
                         raise ValueError('only active assessments may be revised')
                     if prior['target_memory_version']!=target.content_hash or prior['evidence_id']!=payload.get('evidence_id'):
                         raise ValueError('revision must preserve exact claim version and evidence record')
+                    linked=prior.get('confirmation_of') is not None or any(
+                        a.get('confirmation_of')==prior['assessment_id']
+                        and a['status'] not in ('withdrawn','superseded','resolved')
+                        for a in next_state['assessments'].values())
+                    if linked:
+                        raise ValueError('confirmation-linked assessments require withdrawal/resolution, not revision')
                     prior['status']='superseded'
                 assessment=dict(assessment_id=event_id+':assessment',target_memory_id=rid,target_memory_version=target.content_hash,
                     evidence_id=payload['evidence_id'],assessor_id=actor,session_id=session,
@@ -191,6 +197,10 @@ class EpistemicLedger:
                 if set(payload)-(allowed_common|{'assessment_id'}):raise ValueError('unsupported withdrawal fields')
                 a=next_state['assessments'].get(payload.get('assessment_id'));self._owned(a,rid,actor,admin)
                 if a['status'] not in ('accepted','confirmation_required'):raise ValueError('only active assessments may be withdrawn')
+                if any(child.get('confirmation_of')==a['assessment_id']
+                       and child['status'] not in ('withdrawn','superseded','resolved')
+                       for child in next_state['assessments'].values()):
+                    raise ValueError('withdraw active confirmation child before withdrawing its parent')
                 a['status']='withdrawn'
             elif action=='invalidate_evidence':
                 if set(payload)-(allowed_common|{'evidence_id'}):raise ValueError('unsupported evidence invalidation fields')
