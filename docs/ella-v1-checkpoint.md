@@ -71,7 +71,7 @@ surface. Token budgets and Pairing capacity checks were not increased or weakene
 The latest functional candidate run passed:
 
 - 90 focused feedback/replay regression tests
-- 761 full Python tests
+- 766 full Python tests
 - 16 native Rust research-domain tests
 - Rust type/build check
 - isolated real-server ELLA acceptance
@@ -94,8 +94,22 @@ the first green run: a disagreement can no longer be orphaned by revising or
 withdrawing its active parent, and withdrawing an accepted confirmation restores
 the original threshold-crossing assessment to pending confirmation.
 
-The functional branch passed again after those fixes. The remaining deployment
-block is human review/approval of this candidate; nothing has been deployed.
+The final semantic audit additionally closed three integration gaps:
+
+- every new evidence submission now records an explicit origin identity
+  (`unknown` is legal); sealed origin-less V1 evidence is accepted only when
+  that exact legacy record already exists in the store
+- model-facing and public REST/MCP memory reads no longer expose legacy
+  `_status` / `verify_status` markers as competing truth; they expose bounded
+  canonical ELLA metadata instead, while legacy verification annotations remain
+  clearly labelled non-authoritative audit history
+- ordinary memory visibility is fail-open with respect to optional ELLA summary
+  projection: a projection failure reports `epistemic_projection_unavailable`
+  but cannot hide the underlying memory; dedicated epistemic endpoints still
+  surface the projection error directly
+
+The functional branch passed again after these fixes. The remaining deployment
+block is explicit merge/live-environment approval; nothing has been deployed.
 
 ## Known limitations retained intentionally
 
