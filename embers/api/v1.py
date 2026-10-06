@@ -649,6 +649,7 @@ async def propose_memory(
             origin=origin or "unknown",
             origin_confidence=origin_confidence,
             event_id=item.get("event_id"),
+            request_id=item.get("request_id"),
             derived_from=list(item.get("derived_from") or []),
         )
         ev.seal()
@@ -830,6 +831,7 @@ async def attach_evidence(
         origin=origin or "unknown",
         origin_confidence=origin_confidence,
         event_id=body.get("event_id"),
+        request_id=body.get("request_id"),
         derived_from=list(body.get("derived_from") or []),
     )
     ev.seal()
@@ -859,6 +861,7 @@ async def evidence_for(
         "origin": (r.data or {}).get("origin"),
         "origin_confidence": (r.data or {}).get("origin_confidence", "UNKNOWN"),
         "event_id": (r.data or {}).get("event_id"),
+        "request_id": (r.data or {}).get("request_id"),
         "derived_from": (r.data or {}).get("derived_from", []),
         "agent_id": r.agent_id,
         "content_hash": r.content_hash,
