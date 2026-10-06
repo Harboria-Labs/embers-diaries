@@ -105,8 +105,14 @@ pub fn call(op: &str, v: Value) -> Result<Value> {
         "admit" => dynamics::admit(&v),
         "orientation" => orientation::orient(v),
         "truth" => {
-            let mut projection=if v["projection"].is_object(){v["projection"].clone()}else{ella::project(&json!({"policy":ella::defaults(),"evidence":[],"assessments":[],"revision":0}))?};
-            if v["open_conflict"]==true {projection["public_epistemic_state"]=json!("DISPUTED");projection["conflict_overlay"]=json!("open");}
+            let supplied=v["projection"].is_object();
+            let mut projection=if supplied{v["projection"].clone()}else{ella::project(&json!({"policy":ella::defaults(),"evidence":[],"assessments":[],"revision":0}))?};
+            // Legacy callers may only know a boolean "some active conflict".
+            // Never overwrite the more precise OPEN/INVESTIGATING overlay
+            // already supplied by the canonical ELLA projection.
+            if v["open_conflict"]==true && (!supplied || projection["conflict_overlay"].as_str().unwrap_or("none")=="none") {
+                projection["public_epistemic_state"]=json!("DISPUTED");projection["conflict_overlay"]=json!("open");
+            }
             projection["status"]=json!(projection["public_epistemic_state"].as_str().unwrap().to_lowercase());
             projection["source"]=json!("epistemic_ledger");
             projection["projection_version"]=json!("ella-v1");
