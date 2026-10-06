@@ -787,28 +787,31 @@ def test_new_db_evidence_submissions_get_explicit_unknown_origin_but_legacy_hash
     assert stored.origin_confidence=="UNKNOWN"
     assert stored.hash_version>=2
 
-    # A caller cannot manufacture a new sealed V1 object to bypass the origin
-    # requirement. Existing stored legacy records remain readable/reusable.
+    # A caller may pre-seal an old-shape V1 object, but because it has not yet
+    # been persisted Ember treats it as a NEW submission and upgrades it to an
+    # explicit unknown origin before the first write.
     legacy=Evidence(reference="legacy-v1-artifact")
-    legacy.seal()
+    old_hash=legacy.seal()
     assert legacy.hash_version==1 and legacy.origin is None
-    with pytest.raises(ValueError,match="requires origin identity"):
-        db.attach_evidence(rid,legacy)
+    legacy_id=db.attach_evidence(rid,legacy)
+    restored=db.get_evidence(legacy_id)
+    assert restored.origin=="unknown" and restored.origin_confidence=="UNKNOWN"
+    assert restored.hash_version>=2 and restored.content_hash!=old_hash
 
-    # Simulate a pre-ELLA legacy evidence record already present in storage,
-    # then prove re-attaching that exact identity remains compatible.
-    from embers.core.record import EmberRecord
+    # A genuinely pre-existing V1 record remains readable without mutation.
+    stored_legacy=Evidence(reference="pre-existing-v1")
+    stored_legacy.seal()
+    from embers.core.record import EmberRecord, EdgeRef
     from embers.core.types import RecordType, EdgeType
-    from embers.core.record import EdgeRef
-    legacy_rec=EmberRecord(id=legacy.evidence_id,namespace="ella",record_type=RecordType.EVIDENCE,
-        data=legacy.to_dict(),connections=[EdgeRef(edge_id=f"supports:{legacy.evidence_id}:{rid}",
+    legacy_rec=EmberRecord(id=stored_legacy.evidence_id,namespace="ella",record_type=RecordType.EVIDENCE,
+        data=stored_legacy.to_dict(),connections=[EdgeRef(edge_id=f"supports:{stored_legacy.evidence_id}:{rid}",
         target_id=rid,edge_type=EdgeType.SUPPORTS,label="supports")],retrieval_candidate=False)
     db._writer.write(legacy_rec)
-    db._graph_index.add_edge(legacy.evidence_id,rid,EdgeType.SUPPORTS.value,
-        edge_id=f"supports:{legacy.evidence_id}:{rid}",label="supports")
-    assert db.attach_evidence(rid,legacy)==legacy.evidence_id
-    restored=db.get_evidence(legacy.evidence_id)
-    assert restored.hash_version==1 and restored.origin is None
+    db._graph_index.add_edge(stored_legacy.evidence_id,rid,EdgeType.SUPPORTS.value,
+        edge_id=f"supports:{stored_legacy.evidence_id}:{rid}",label="supports")
+    assert db.attach_evidence(rid,stored_legacy)==stored_legacy.evidence_id
+    restored_legacy=db.get_evidence(stored_legacy.evidence_id)
+    assert restored_legacy.hash_version==1 and restored_legacy.origin is None
 
     from embers.core.proposal import MemoryProposal
     proposal_evidence=Evidence(source="proposal-fresh")
