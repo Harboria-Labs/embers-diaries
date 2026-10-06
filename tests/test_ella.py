@@ -787,14 +787,27 @@ def test_new_db_evidence_submissions_get_explicit_unknown_origin_but_legacy_hash
     assert stored.origin_confidence=="UNKNOWN"
     assert stored.hash_version>=2
 
-    # Historical V1 evidence that was already sealed remains attachable without
-    # rewriting its hash or inventing lineage retroactively.
+    # A caller cannot manufacture a new sealed V1 object to bypass the origin
+    # requirement. Existing stored legacy records remain readable/reusable.
     legacy=Evidence(reference="legacy-v1-artifact")
-    legacy_hash=legacy.seal()
+    legacy.seal()
     assert legacy.hash_version==1 and legacy.origin is None
-    legacy_id=db.attach_evidence(rid,legacy)
-    restored=db.get_evidence(legacy_id)
-    assert restored.content_hash==legacy_hash
+    with pytest.raises(ValueError,match="requires origin identity"):
+        db.attach_evidence(rid,legacy)
+
+    # Simulate a pre-ELLA legacy evidence record already present in storage,
+    # then prove re-attaching that exact identity remains compatible.
+    from embers.core.record import EmberRecord
+    from embers.core.types import RecordType, EdgeType
+    from embers.core.record import EdgeRef
+    legacy_rec=EmberRecord(id=legacy.evidence_id,namespace="ella",record_type=RecordType.EVIDENCE,
+        data=legacy.to_dict(),connections=[EdgeRef(edge_id=f"supports:{legacy.evidence_id}:{rid}",
+        target_id=rid,edge_type=EdgeType.SUPPORTS,label="supports")],retrieval_candidate=False)
+    db._writer.write(legacy_rec)
+    db._graph_index.add_edge(legacy.evidence_id,rid,EdgeType.SUPPORTS.value,
+        edge_id=f"supports:{legacy.evidence_id}:{rid}",label="supports")
+    assert db.attach_evidence(rid,legacy)==legacy.evidence_id
+    restored=db.get_evidence(legacy.evidence_id)
     assert restored.hash_version==1 and restored.origin is None
 
     from embers.core.proposal import MemoryProposal
