@@ -372,7 +372,7 @@ fn ella_mixed_polarity_unit_is_unresolved_and_no_evidence_is_distinct() {
 #[test]
 fn ella_same_request_identity_is_hard_dependency() {
     let e1=json!({"id":"e1","evidence_id":"e1","content_hash":"h1","reference":"",
-        "source_type":"reported","origin":Value::Null,"session_id":Value::Null,
+        "source":"tool://inventory","source_type":"reported","origin":Value::Null,"session_id":Value::Null,
         "event_id":Value::Null,"request_id":"req-42","derived_from":[]});
     let e2=json!({"id":"e2","evidence_id":"e2","content_hash":"h2","reference":"",
         "source_type":"reported","origin":Value::Null,"session_id":Value::Null,
