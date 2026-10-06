@@ -45,11 +45,19 @@ def epistemically_neutral_data(data):
 
 
 def public_epistemic_summary(record):
-    """Bounded public ELLA projection for ordinary API/MCP record reads."""
-    projection=explicit_truth(record)
+    """Bounded, non-causal ELLA summary for ordinary API/MCP record reads.
+
+    Ordinary memory visibility must never fail merely because the separate
+    epistemic projection is temporarily unavailable. Dedicated ELLA endpoints
+    still surface projection errors directly for diagnosis.
+    """
+    try:
+        projection=explicit_truth(record)
+    except Exception:
+        return {"available":False,"error":"epistemic_projection_unavailable"}
     keys=("base_epistemic_verdict","public_epistemic_state","score","support_mass",
           "opposition_mass","raw_evidence_count","accepted_unit_count",
           "hard_collapsed_count","soft_cluster_count","unresolved_independence_count",
           "dangling_dependency_count","lineage_coverage","assessment_started",
           "epistemic_revision","evidence_dispute","conflict_overlay")
-    return {k:projection.get(k) for k in keys}
+    return {"available":True,**{k:projection.get(k) for k in keys}}
