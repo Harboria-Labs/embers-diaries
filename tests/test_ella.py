@@ -866,6 +866,9 @@ def test_public_rest_and_mcp_reads_expose_ella_not_legacy_truth(tmp_path,monkeyp
     queried=mcp_json('ember_query',{'namespace':'public-ella'})
     row=next(x for x in queried['records'] if x['id']==rid)
     assert 'verify_status' not in row['data'] and row['epistemic']['conflict_overlay']=='none'
+    query_legacy=[a for a in row['annotations'] if a.get('context')=='verification']
+    assert query_legacy and query_legacy[0]['epistemic_authority'] is False
+    assert query_legacy[0]['legacy_verification_audit'] is True
 
 
 def test_public_record_summary_failure_cannot_hide_memory(rig):
