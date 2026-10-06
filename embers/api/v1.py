@@ -636,7 +636,7 @@ async def propose_memory(
     evidence = []
     for item in body.get("evidence", []):
         origin=item.get("origin")
-        origin_confidence=item.get("origin_confidence", "AGENT_DECLARED" if origin else "UNKNOWN")
+        origin_confidence=item.get("origin_confidence", "UNKNOWN" if not origin or origin == "unknown" else "AGENT_DECLARED")
         if origin_confidence == "SYSTEM_CONFIRMED":
             raise HTTPException(400, "SYSTEM_CONFIRMED origin is reserved for system-captured provenance")
         ev = Evidence(
@@ -822,7 +822,7 @@ async def attach_evidence(
     if not source:
         raise HTTPException(400, "source required")
     origin=body.get("origin")
-    origin_confidence=body.get("origin_confidence", "AGENT_DECLARED" if origin else "UNKNOWN")
+    origin_confidence=body.get("origin_confidence", "UNKNOWN" if not origin or origin == "unknown" else "AGENT_DECLARED")
     if origin_confidence == "SYSTEM_CONFIRMED":
         raise HTTPException(400, "SYSTEM_CONFIRMED origin is reserved for system-captured provenance")
     ev = Evidence(
