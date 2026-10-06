@@ -14,6 +14,11 @@ def enable(db, admins):
     policy = UsefulnessPolicy(**json.loads(Path(path).read_text())) if path else UsefulnessPolicy()
     db._usefulness_policy = policy
     db._usefulness_admins = frozenset(admins)
+    # Backward-compatible bootstrap only: ELLA has its own authority set and
+    # never reads usefulness governance directly. Call enable_epistemic()
+    # separately when the two decision-authority sets should differ.
+    if not hasattr(db, '_epistemic_admins'):
+        db._epistemic_admins = frozenset(admins)
     db._usefulness_enabled = True
     from .write_observation import install
     try:install(db)
