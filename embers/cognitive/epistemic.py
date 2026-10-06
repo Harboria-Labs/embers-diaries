@@ -114,11 +114,31 @@ class EpistemicLedger:
                     if not admin:raise PermissionError('epistemic decision authority required')
                     chosen=payload.get('assessment_ids')
                     if not isinstance(chosen,list) or not chosen or len(set(chosen))!=len(chosen):raise ValueError('unique assessment_ids required')
+                    priors=[]
                     for aid in chosen:
                         prior=next_state['assessments'].get(aid);self._owned(prior,rid,actor,True)
                         if prior['status'] not in ('accepted','confirmation_required'):
                             raise ValueError('only active assessments may be resolved')
-                        prior['status']='resolved'
+                        if prior['target_memory_version']!=target.content_hash:
+                            raise ValueError('resolution must stay on the exact claim version')
+                        priors.append(prior)
+                    if payload.get('evidence_id') not in {a['evidence_id'] for a in priors}:
+                        raise ValueError('resolution evidence must belong to the resolved epistemic unit')
+                    accepted=[a for a in priors if a['status']=='accepted']
+                    if accepted:
+                        current=self.project(rid,state,len(events))
+                        chosen_ids=set(chosen)
+                        matched=any(u.get('status')=='unresolved' and set(u.get('assessment_ids',[]))==chosen_ids
+                                    for u in current.get('units',[]))
+                        if not matched:
+                            raise ValueError('assessment resolution must cover one complete unresolved epistemic unit')
+                    else:
+                        # Threshold-confirmation disagreement is pending rather
+                        # than score-bearing; both assessments must concern the
+                        # same exact evidence record before explicit resolution.
+                        if len({a['evidence_id'] for a in priors})!=1:
+                            raise ValueError('pending resolution must concern one evidence record')
+                    for prior in priors:prior['status']='resolved'
                 if action=='revise':
                     prior=next_state['assessments'].get(payload.get('assessment_id'))
                     self._owned(prior,rid,actor,admin)
