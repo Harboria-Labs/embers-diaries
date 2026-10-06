@@ -333,6 +333,18 @@ fn ella_project(evidence:Value,assessments:Value,conflict:&str)->Value {
 }
 
 #[test]
+fn canonical_truth_preserves_precise_conflict_overlay() {
+    let projection=json!({"base_epistemic_verdict":"VERIFIED",
+        "public_epistemic_state":"DISPUTED","score":3.2,
+        "conflict_overlay":"investigating"});
+    let out=call("truth",json!({"data":{"verify_status":"verified"},
+        "projection":projection,"open_conflict":true})).unwrap();
+    assert_eq!(out["status"],"disputed");
+    assert_eq!(out["conflict_overlay"],"investigating");
+    assert_eq!(out["legacy_status"],"verified");
+}
+
+#[test]
 fn ella_dependency_min_strength_and_conflict_firewall() {
     let e1=ella_evidence("e1","same-artifact");
     let e2=ella_evidence("e2","same-artifact");
