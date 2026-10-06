@@ -1,24 +1,115 @@
-# ELLA V1 working checkpoint — incomplete, not for deployment
+# ELLA V1 takeover checkpoint — implementation candidate, not deployed
 
-Starting commit: 5a1d6b8b76a69589876c9c9057a5b3f7b0b2c8c3. User authorized Option 1: retain MemoryRoom values and explicit filtering. GENERAL-RECALL PERSONAL ISOLATION IS A PRE-EXISTING ROOM/RECALL GAP, outside ELLA.
+Base test branch: `codex/ember-split-feedback-candidate04` at
+`5a1d6b8b76a69589876c9c9057a5b3f7b0b2c8c3`.
 
-Uncommitted draft, isolated from the existing test checkout. No push, deployment, or live server run. Native Rust builds. Twelve focused ELLA tests passed. Full suite at the first integration checkpoint: 715 passed, 13 failed. Some failures are intentional old promotion/truth expectations; four are retrieval/admission regressions and must not be accepted. Later observer projection edits have only been syntax-checked.
+Takeover branch: `codex/ella-v1-takeover`.
 
-Implemented in draft, not claimed complete: Rust policy/assessment validation, dependency grouping and score projection; legacy-compatible Evidence V1 hashes and lineage V2; separate RAW epistemic journal with idempotency/CAS; preliminary assessment/confirmation/withdrawal/merge/split/lineage correction/carry-forward operations; API/MCP surfaces; promotion confidence no longer selects a verified state; annotation authority removed; preliminary observer delivery.
+ELLA V1 research architecture is frozen. This document records implementation
+status only. Do not treat it as permission to deploy.
 
-Still incomplete: comprehensive invariant/security tests, Rust ownership audit of all transitions, resolution edge cases, legacy API migration/docs, policy migration, efficient replay, bounded observer delivery review, full passing integration and live validation. Do not represent the draft as frozen or production-ready.
+## Frozen boundaries preserved
 
-## Integration boundary requiring resolution
+- usefulness / FUR / LADC / Pairing are not epistemic truth
+- promotion is admission, not verification
+- proposal confidence never becomes ELLA score
+- source_type, origin confidence and assessor authority never set evidence strength
+- assessments are claim-version × evidence-record specific
+- detectable hard dependence counts once; hidden dependence remains a known limitation
+- threshold crossings require a distinct second assessor
+- opposite-polarity confirmation remains unresolved and cannot become a voting chain
+- corrections, withdrawal, dependency changes and carry-forward are recomputed
+- semantic conflict overlays public DISPUTED without changing ELLA score
+- MemoryRoom behavior is unchanged by ELLA
+- legacy verification annotations and legacy _status/verify_status are not canonical truth
+- full ELLA metadata is outside the capacity-counted recall block
 
-Current research recall renders `truth_projection` inside each memory row and passes that rendering through its existing exact-token admission checks. The draft made that projection the full ELLA state. This creates a forbidden coupling: changing epistemic evidence enlarges the serialized row and may evict an otherwise identical direct memory or pair.
+## Capacity boundary
 
-Isolated real-native reproduction, configured per-memory cap 600, unchanged content and query scores:
-- Before epistemic assessment: 525 item tokens; admitted.
-- After one WEAK supporting assessment: 623 item tokens; rejected.
-- No W or relevance change caused this; larger truth metadata alone did.
+The original draft inserted the full ELLA projection into each rendered recall
+row. That made evidence growth increase the token size of the row and could evict
+an otherwise identical direct or paired memory.
 
-The default 512-token cap also rejected previously admitted Pairing fixtures when the expanded projection was inserted.
+The accepted integration now keeps the capacity-counted row epistemically neutral:
 
-Smallest proposed integration decision: expose full canonical ELLA state through the distinct epistemic-state API/observer and a separate response metadata field, outside the rendered memory block used for admission. Decide the compatibility representation for existing inline truth fields without introducing verdict-dependent capacity behavior. Do not increase budgets or weaken capacity checks to hide this problem.
+```
+truth_status = "see_epistemic_metadata"
+truth_projection = {
+  "source": "epistemic_metadata",
+  "projection_version": "ella-v1"
+}
+```
 
-No retrieval change should ship until this boundary is settled. Existing math, MemoryRoom and selection algorithms must remain unchanged.
+Canonical state is returned separately under the ELLA metadata/API/observer
+surface. Token budgets and Pairing capacity checks were not increased or weakened.
+
+## Implemented
+
+- native Rust ELLA policy, assessment, dependency grouping, unit reduction,
+  S+/S-/S projection, verdict and conflict-overlay projection
+- native Rust journal transition validation on both commit and replay
+- separate append-only epistemic journal with CAS/idempotency
+- SUPPORTS / OPPOSES and WEAK / MEDIUM / STRONG structured assessment
+- exact claim-version targeting
+- threshold-crossing confirmation
+- confirmation disagreement and explicit resolution
+- withdrawal, revision, evidence invalidation and lineage correction
+- merge/split dependency changes with full recomputation
+- audited evidence carry-forward along later versions only
+- deterministic projection ordering
+- evidence origin / origin-confidence / event / request / derived-from lineage fields
+  with legacy hash compatibility
+- promotion confidence separated from verification
+- REST and MCP epistemic state/feedback surfaces
+- observer/SSE epistemic delivery
+- canonical public PROVISIONAL / VERIFIED / DISFAVORED plus DISPUTED overlay
+- legacy MemoryStatus compatibility now preserves DISFAVORED instead of silently
+  collapsing it to PROVISIONAL
+
+## Validation
+
+A clean candidate run before the final DISFAVORED compatibility fix passed:
+
+- 90 focused feedback/replay regression tests
+- 749 full Python tests
+- 12 native Rust research-domain tests
+- Rust type/build check
+- isolated real-server ELLA acceptance
+
+The live acceptance covered:
+
+- initial PROVISIONAL state
+- threshold confirmation to VERIFIED
+- exact retry idempotency
+- usefulness/epistemic firewall
+- REST/MCP parity
+- semantic-conflict overlay with unchanged ELLA score
+- .99 proposal confidence still promoting as PROVISIONAL
+- correction over an already-open SSE stream
+- read-only observation
+- restart persistence
+
+The final DISFAVORED compatibility regression is awaiting the branch CI run at
+the time of this checkpoint update. Deployment remains blocked until that run
+passes and the final diff is reviewed.
+
+## Known limitations retained intentionally
+
+- hidden/unlinked common-source evidence can still be mistaken for independent evidence
+- a distinct assessor ID is not a proof of cognitive/model independence
+- semantic polarity/strength can be wrong or malicious; Ember bounds and audits
+  the judgment but does not understand arbitrary science
+- W/M/S numeric magnitudes and ELLA thresholds are configurable candidate values,
+  not calibrated posterior probabilities or Wald-SPRT guarantees
+- exact soft-dependence heuristics remain policy/calibration work
+- evidence-dispute threshold remains configurable policy
+- priors are deferred in V1
+- lineage coverage is diagnostic, not a probability of safety
+
+## Separate non-blockers
+
+ROOM ISOLATION remains a pre-existing separate track: general recall without an
+explicit room may return PERSONAL records. ELLA does not change that behavior.
+
+RESEARCH TRACK 7 remains future work: bounded memory / attention / capacity policy
+is broader than the existing token/result/storage caps.
