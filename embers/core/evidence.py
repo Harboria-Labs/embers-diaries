@@ -65,6 +65,7 @@ class Evidence:
     origin: str | None = None
     origin_confidence: str = "UNKNOWN"
     event_id: str | None = None
+    request_id: str | None = None
     derived_from: list[str] = field(default_factory=list)
     hash_version: int = 1
 
@@ -75,13 +76,15 @@ class Evidence:
             raise ValueError("origin must be nonblank text when supplied")
         if self.event_id is not None and (not isinstance(self.event_id, str) or not self.event_id.strip()):
             raise ValueError("event_id must be nonblank text when supplied")
+        if self.request_id is not None and (not isinstance(self.request_id, str) or not self.request_id.strip()):
+            raise ValueError("request_id must be nonblank text when supplied")
         if self.origin_confidence == "SYSTEM_CONFIRMED" and self.origin is None:
             raise ValueError("system-confirmed origin requires an origin identity")
         if self.origin == "unknown" and self.origin_confidence != "UNKNOWN":
             raise ValueError("unknown origin cannot carry a declared or confirmed identity confidence")
         if self.hash_version not in (1, 2):
             raise ValueError("unsupported evidence hash version")
-        lineage = self.origin is not None or self.event_id is not None or self.derived_from or self.origin_confidence != "UNKNOWN"
+        lineage = self.origin is not None or self.event_id is not None or self.request_id is not None or self.derived_from or self.origin_confidence != "UNKNOWN"
         if lineage and self.hash_version == 1:
             if self.content_hash is not None:
                 raise ValueError("legacy hash cannot authenticate new lineage fields")
@@ -112,7 +115,7 @@ class Evidence:
             payload["session_id"] = self.session_id
         if self.hash_version == 2:
             payload.update(hash_version=2, origin=self.origin, origin_confidence=self.origin_confidence,
-                           event_id=self.event_id, derived_from=self.derived_from)
+                           event_id=self.event_id, request_id=self.request_id, derived_from=self.derived_from)
         return payload
 
     def compute_content_hash(self) -> str:
@@ -151,14 +154,15 @@ class Evidence:
 
         if self.hash_version == 2:
             result.update(hash_version=2, origin=self.origin, origin_confidence=self.origin_confidence,
-                          event_id=self.event_id, derived_from=list(self.derived_from))
+                          event_id=self.event_id, request_id=self.request_id, derived_from=list(self.derived_from))
         return result
 
     @classmethod
     def from_dict(cls, d: dict) -> "Evidence":
         return cls(
             origin=d.get('origin'), origin_confidence=d.get('origin_confidence','UNKNOWN'),
-            event_id=d.get('event_id'), derived_from=d.get('derived_from',[]), hash_version=d.get('hash_version',1),
+            event_id=d.get('event_id'), request_id=d.get('request_id'),
+            derived_from=d.get('derived_from',[]), hash_version=d.get('hash_version',1),
             evidence_id  = d["evidence_id"],
             source       = d.get("source", ""),
             source_type  = SourceType(d.get("source_type", "directly_observed")),
