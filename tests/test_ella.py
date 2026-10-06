@@ -827,6 +827,7 @@ def test_public_rest_and_mcp_reads_expose_ella_not_legacy_truth(tmp_path,monkeyp
     assert rest.status_code==200,rest.text
     rest_payload=rest.json()
     assert 'verify_status' not in rest_payload['data'] and '_status' not in rest_payload['data']
+    assert rest_payload['epistemic']['available'] is True
     assert rest_payload['epistemic']['base_epistemic_verdict']=='PROVISIONAL'
     assert rest_payload['epistemic']['public_epistemic_state']=='PROVISIONAL'
     assert rest_payload['epistemic']['conflict_overlay']=='none'
@@ -852,3 +853,13 @@ def test_public_rest_and_mcp_reads_expose_ella_not_legacy_truth(tmp_path,monkeyp
     queried=mcp_json('ember_query',{'namespace':'public-ella'})
     row=next(x for x in queried['records'] if x['id']==rid)
     assert 'verify_status' not in row['data'] and row['epistemic']['conflict_overlay']=='none'
+
+
+def test_public_record_summary_failure_cannot_hide_memory(rig):
+    db,_,rid,_=rig
+    from embers.core.domain import public_epistemic_summary
+    rec=db._reader.get(rid,track_access=False)
+    rec._epistemic_provider=lambda: (_ for _ in ()).throw(ValueError('synthetic projection failure'))
+    summary=public_epistemic_summary(rec)
+    assert summary=={'available':False,'error':'epistemic_projection_unavailable'}
+    assert rec.data['content']=='exact claim'
