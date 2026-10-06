@@ -203,10 +203,9 @@ def test_projection_order_is_deterministic(rig):
 
 
 def test_legacy_verify_status_does_not_create_parallel_lifecycle_truth(rig):
-    db,proto,rid,_=rig
-    rec=db._reader.get(rid,track_access=False)
-    rec.data['verify_status']='verified'
-    report=proto.get_lifecycle(rid)
+    _,proto,_,_=rig
+    legacy=proto.remember({'content':'legacy verified marker','verify_status':'verified'},namespace='ella')
+    report=proto.get_lifecycle(legacy)
     assert report.state.value!='verified'
 
 
