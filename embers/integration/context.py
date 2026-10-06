@@ -162,8 +162,10 @@ class ContextBuilder:
 
     @staticmethod
     def _explicit_status(record):
-        from ..core.domain import historical_inline_truth
-        return historical_inline_truth(record)['status']
+        # Ordinary legacy message recall must not present stored verification
+        # labels or verification annotations as current truth. Keep a fixed
+        # pointer in capacity-counted content; canonical state lives in ELLA.
+        return "see_epistemic_state"
 
     def _format_record_message(self, record: EmberRecord,
                                 effective_confidence: float) -> str:
