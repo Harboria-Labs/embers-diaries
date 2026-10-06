@@ -717,3 +717,33 @@ def test_confirmation_disagreement_parent_cannot_be_orphaned(rig):
         expected_revision=len(events))
     assert not removed['confirmation_required']
     assert not removed['resolution_required']
+
+
+def test_withdrawing_accepted_confirmation_restores_pending_crossing(rig):
+    db,_,rid,l=rig
+    first=ev(rig,'restore-one')
+    second=ev(rig,'restore-two')
+    report(rig,first,polarity='SUPPORTS',strength='STRONG',actor='one')
+    pending=report(rig,second,polarity='SUPPORTS',strength='STRONG',actor='two')
+    parent=pending['confirmation_assessment_ids'][0]
+    state,events=l.load()
+    confirmed=l.apply('confirm',dict(target_memory_id=rid,
+        target_memory_version=db._store.read(rid).content_hash,
+        evidence_id=state['assessments'][parent]['evidence_id'],
+        polarity='SUPPORTS',strength='STRONG',
+        assessment_note='temporary confirmation',
+        confirmation_of=parent),
+        actor='three',request_id='temporary-confirmation',
+        expected_revision=len(events))
+    assert confirmed['base_epistemic_verdict']=='VERIFIED'
+    state,events=l.load()
+    child=next(a['assessment_id'] for a in state['assessments'].values()
+               if a.get('confirmation_of')==parent and a['status']=='accepted')
+    restored=l.apply('withdraw',dict(target_memory_id=rid,
+        target_memory_version=db._store.read(rid).content_hash,
+        assessment_id=child,reason='confirmation withdrawn after correction'),
+        actor='three',request_id='withdraw-confirmation',
+        expected_revision=len(events))
+    assert restored['base_epistemic_verdict']=='PROVISIONAL'
+    assert restored['confirmation_required']
+    assert restored['confirmation_assessment_ids']==[parent]
