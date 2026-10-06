@@ -1511,11 +1511,11 @@ class EmberDB:
         the decision without writing anything."""
         return self._promotion.route(proposal_id)
 
-    # ── Epistemic status of a durable memory (§12) ─────────────────────────────
+    # ── Legacy status compatibility for durable memory (§12) ─────────────────
 
     @staticmethod
     def _with_status(discovery, status, promotion_method) -> dict:
-        """Fold the memory's epistemic status + promotion method into its data.
+        """Fold the legacy admission marker + promotion method into stored data.
 
         The discovery is normally a dict; we add reserved `_status` /
         `_promotion_method` keys alongside it. A non-dict discovery (str, list,
@@ -1533,7 +1533,7 @@ class EmberDB:
         return {"value": discovery, **meta}
 
     def memory_status(self, memory_id: str):
-        """Explicit status. Unknown/unverified memories are provisional, never verified by absence."""
+        """Compatibility enum projected from canonical ELLA public state; use the dedicated epistemic state API for full diagnostics."""
         from .core.domain import explicit_truth
         from .core.types import MemoryStatus
         rec = self._reader.get_current(memory_id) or self._reader.get(memory_id, True, True)
