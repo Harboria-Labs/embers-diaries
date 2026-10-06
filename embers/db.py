@@ -1333,27 +1333,20 @@ class EmberDB:
     # rejected proposal stays permanently distinguishable from a committed one.
 
     def _normalize_new_evidence_origin(self, ev: Evidence) -> None:
-        """Give every NEW evidence submission an explicit origin identity.
+        """Give new unsealed evidence an explicit origin identity.
 
-        Existing stored V1 evidence remains byte-for-byte compatible. An
-        origin-less V1 object that has not yet been stored is a new submission,
-        even if a caller pre-sealed it; migrate it to V2 with origin="unknown"
-        and reseal before persistence.
+        A pre-sealed hash-version-1 Evidence object is a legacy compatibility
+        artifact. Its signed payload cannot be extended with origin without
+        changing its content hash, so it remains byte-for-byte intact. ELLA
+        projects a missing legacy origin as UNKNOWN; current REST/MCP/new
+        unsealed DB submissions persist origin="unknown" explicitly.
         """
-        if ev.origin is not None:
-            return
-        if ev.content_hash is not None and ev.hash_version == 1 and self._reader.exists(ev.evidence_id):
+        if ev.origin is not None or ev.content_hash is not None:
             return
         ev.origin = "unknown"
         ev.origin_confidence = "UNKNOWN"
         if ev.hash_version < 2:
             ev.hash_version = 2
-        # A pre-sealed V1 object must be resealed because origin is part of the
-        # V2 identity payload. The evidence_id is preserved; only its content
-        # hash is upgraded before first persistence.
-        if ev.content_hash is not None:
-            ev.content_hash = None
-            ev.seal()
     def propose(self, proposal: MemoryProposal) -> str:
         """Record a memory proposal (a discovery awaiting validation, §4).
 
