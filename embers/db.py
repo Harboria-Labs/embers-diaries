@@ -1540,7 +1540,10 @@ class EmberDB:
         if rec is None: raise KeyError(memory_id)
         value = explicit_truth(rec, any(c.status.value in ('open','investigating') for c in self.conflicts_for(rec.id)))['status']
         if value == 'superseded': return MemoryStatus.SUPERSEDED
-        return MemoryStatus.VERIFIED if value == 'verified' else MemoryStatus.DISPUTED if value in ('disputed','contested','incorrect') else MemoryStatus.PROVISIONAL
+        if value == 'verified': return MemoryStatus.VERIFIED
+        if value == 'disfavored': return MemoryStatus.DISFAVORED
+        if value in ('disputed','contested','incorrect'): return MemoryStatus.DISPUTED
+        return MemoryStatus.PROVISIONAL
 
     def legacy_memory_status(self, memory_id: str) -> "MemoryStatus":
         """Read the historical `_status` compatibility marker only.
