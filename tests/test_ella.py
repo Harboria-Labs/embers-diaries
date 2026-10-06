@@ -776,3 +776,31 @@ def test_epistemic_decision_authority_is_separate_from_usefulness_admins(rig):
         actor='epistemic-admin',request_id='epistemic-admin-allowed',
         expected_revision=len(events))
     assert result['accepted_unit_count']==0
+
+
+def test_new_db_evidence_submissions_get_explicit_unknown_origin_but_legacy_hashes_survive(rig):
+    db,_,rid,_=rig
+    fresh=Evidence(source="fresh-direct")
+    fresh_id=db.attach_evidence(rid,fresh)
+    stored=db.get_evidence(fresh_id)
+    assert stored.origin=="unknown"
+    assert stored.origin_confidence=="UNKNOWN"
+    assert stored.hash_version>=2
+
+    # Historical V1 evidence that was already sealed remains attachable without
+    # rewriting its hash or inventing lineage retroactively.
+    legacy=Evidence(reference="legacy-v1-artifact")
+    legacy_hash=legacy.seal()
+    assert legacy.hash_version==1 and legacy.origin is None
+    legacy_id=db.attach_evidence(rid,legacy)
+    restored=db.get_evidence(legacy_id)
+    assert restored.content_hash==legacy_hash
+    assert restored.hash_version==1 and restored.origin is None
+
+    from embers.core.proposal import MemoryProposal
+    proposal_evidence=Evidence(source="proposal-fresh")
+    pid=db.propose(MemoryProposal(namespace="ella",discovery={"content":"origin proposal"},
+        reason="origin normalization check",evidence=[proposal_evidence],confidence=.7))
+    proposal=db.get_proposal(pid)
+    assert proposal.evidence[0].origin=="unknown"
+    assert proposal.evidence[0].origin_confidence=="UNKNOWN"
