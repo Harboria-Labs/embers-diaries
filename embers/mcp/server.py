@@ -430,7 +430,7 @@ class EmberMCP:
             evidence = []
             for item in args.get("evidence") or []:
                 origin=item.get("origin")
-                origin_confidence=item.get("origin_confidence", "AGENT_DECLARED" if origin else "UNKNOWN")
+                origin_confidence=item.get("origin_confidence", "UNKNOWN" if not origin or origin == "unknown" else "AGENT_DECLARED")
                 if origin_confidence == "SYSTEM_CONFIRMED":
                     raise ValueError("SYSTEM_CONFIRMED origin is reserved for system-captured provenance")
                 ev = Evidence(
@@ -522,7 +522,7 @@ class EmberMCP:
                 raise KeyError(f'Memory {args["memory_id"]} not found.')
             self.db.require_namespace_access(target.namespace, agent.agent_id, "write")
             origin=args.get("origin")
-            origin_confidence=args.get("origin_confidence", "AGENT_DECLARED" if origin else "UNKNOWN")
+            origin_confidence=args.get("origin_confidence", "UNKNOWN" if not origin or origin == "unknown" else "AGENT_DECLARED")
             if origin_confidence == "SYSTEM_CONFIRMED":
                 raise ValueError("SYSTEM_CONFIRMED origin is reserved for system-captured provenance")
             ev = Evidence(
