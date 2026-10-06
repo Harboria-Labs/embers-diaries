@@ -14,11 +14,11 @@ def explicit_truth(record, open_conflict=False):
 
 
 def historical_inline_truth(record, open_conflict=False):
-    """Pre-ELLA bounded truth rendering for compatibility/capacity only.
+    """Pre-ELLA rendering retained only for legacy compatibility helpers.
 
-    This is intentionally not the canonical epistemic projection. It preserves
-    the historical inline shape so changing ELLA evidence cannot change memory
-    admission merely by enlarging or shortening truth metadata.
+    This is never canonical epistemic authority and must not be used to decide
+    ELLA state. New research recall keeps canonical ELLA state in separate
+    metadata so this historical projection cannot affect admission capacity.
     """
     data=record.data if isinstance(record.data,dict) else {}
     status='unverified';source='unset'
