@@ -1332,18 +1332,25 @@ class EmberDB:
     # reject() supersedes it with a REJECTED copy. Nothing is ever deleted, so a
     # rejected proposal stays permanently distinguishable from a committed one.
 
-    @staticmethod
-    def _normalize_new_evidence_origin(ev: Evidence) -> None:
-        """Give every new evidence submission an explicit origin identity.
+    def _normalize_new_evidence_origin(self, ev: Evidence) -> None:
+        """Give every NEW evidence submission an explicit origin identity.
 
-        "unknown" is an explicit provenance value, not missing data. Already-
-        sealed legacy V1 evidence is preserved byte-for-byte for compatibility.
+        New unsealed evidence with no known origin is sealed as origin="unknown".
+        A sealed origin-less V1 object may only be reused when that exact evidence
+        record already exists in the store; callers cannot manufacture new
+        "legacy" evidence to bypass the V1 origin requirement.
         """
-        if ev.content_hash is None and ev.origin is None:
+        if ev.origin is not None:
+            return
+        if ev.content_hash is None:
             ev.origin = "unknown"
             ev.origin_confidence = "UNKNOWN"
             if ev.hash_version < 2:
                 ev.hash_version = 2
+            return
+        if ev.hash_version == 1 and self._reader.exists(ev.evidence_id):
+            return
+        raise ValueError('new evidence requires origin identity; use origin="unknown" when unknown')
     def propose(self, proposal: MemoryProposal) -> str:
         """Record a memory proposal (a discovery awaiting validation, §4).
 
