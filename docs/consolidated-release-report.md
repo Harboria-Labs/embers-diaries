@@ -265,3 +265,6 @@ No UI equation reconstruction is used.
 
 
 **Resumed isolated validation, 2026-10-16:** With disk headroom restored, the focused security/ACL/session/conflict/index/Batch 1 group passed 128 tests with 2 staged-native-only skips on the installed extension. The final API security cases passed 20 tests; MCP HTTP and lobby REST/MCP parity passed 14. PUBLIC, INTERNAL and PRIVATE maintenance ACL behavior and token/session ownership are directly tested. Live and production status is unchanged; Batches 2-4 remain pending.
+
+
+**Test-branch consolidation, 2026-10-16:** Batch 1 and the targeted API authorization correction, Atlas, tests and curated research evidence were committed locally on codex/ember-split-feedback-candidate04 as 44e52c554de79fa2bbddb1fe43ca65866225d87a. The commit was not pushed or deployed. Batches 2-4 remain pending, and isolated validation is not live production validation.
