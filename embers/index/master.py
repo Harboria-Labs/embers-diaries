@@ -7,6 +7,7 @@ Maintained in-memory with periodic persistence.
 
 import threading
 import weakref
+import hashlib
 from collections import defaultdict
 from pathlib import Path
 from datetime import datetime
@@ -44,6 +45,9 @@ class MasterIndex:
         # Branch-aware version graph.
         self._version_children: dict[str, set] = defaultdict(set)
         self._version_parent: dict[str, str] = {}
+        self.indexed_epoch: int | None = None
+        self._candidate_seal: str | None = None
+        self._health_check = None
 
         self._load()
 
@@ -61,6 +65,11 @@ class MasterIndex:
             return
         try:
             data = decode_index(index_file.read_bytes())
+            self.reset()
+            epoch = data.get("indexed_epoch")
+            if epoch is not None and (type(epoch) is not int or epoch < 0):
+                raise ValueError("Invalid MasterIndex epoch")
+            self.indexed_epoch = epoch
             for rid, meta in data.get("records", {}).items():
                 self._records[rid] = meta
                 self._namespaces[meta["namespace"]].add(rid)
@@ -80,20 +89,60 @@ class MasterIndex:
             for old_id, new_id in self._superseded.items():
                 self._link_version(old_id, new_id)
             self._deprecated = set(data.get("deprecated", []))
+            self._candidate_seal = self._candidate_fingerprint()
         except Exception as e:
+            self.reset()
             print(f"[MasterIndex] Failed to load: {e}")
 
-    def persist(self):
+    def reset(self):
+        """Discard every derived posting before a source-backed rebuild."""
+        with self._lock:
+            self._records.clear()
+            self._namespaces.clear()
+            self._tags.clear()
+            self._superseded.clear()
+            self._supersedes.clear()
+            self._deprecated.clear()
+            self._written_by.clear()
+            self._by_agent.clear()
+            self._by_session.clear()
+            self._version_children.clear()
+            self._version_parent.clear()
+            self.indexed_epoch = None
+            self._candidate_seal = None
+
+    def _candidate_fingerprint(self) -> str:
+        """Detect unexpected in-memory type/namespace posting edits."""
+        rows = sorted((rid, meta.get("namespace"), meta.get("record_type"))
+                      for rid, meta in self._records.items())
+        namespaces = sorted((ns, tuple(sorted(ids)))
+                            for ns, ids in self._namespaces.items())
+        return hashlib.sha256(repr((rows, namespaces)).encode("utf-8")).hexdigest()
+
+    def reload(self):
+        self.reset()
+        self._load()
+
+    def ensure_current(self):
+        if self._health_check is not None:
+            self._health_check()
+
+    def persist(self, indexed_epoch: int | None = None):
         """Save index to disk."""
         with self._lock:
+            published_epoch = (self.indexed_epoch if indexed_epoch is None
+                               else indexed_epoch)
             data = {
                 "records": self._records,
                 "superseded": self._superseded,
                 "deprecated": list(self._deprecated),
+                "indexed_epoch": published_epoch,
                 "persisted_at": datetime.utcnow().isoformat(),
             }
             index_file = self._path / "master.json"
             _quota_atomic_replace(str(index_file), encode_index(data))
+            self.indexed_epoch = published_epoch
+            self._candidate_seal = self._candidate_fingerprint()
 
     def index_record(self, record_id: str, namespace: str, record_type: str,
                      created_at: str, tags: list[str], written_by: str = "system",
@@ -141,11 +190,13 @@ class MasterIndex:
             self._deprecated.add(record_id)
 
     def get_meta(self, record_id: str) -> dict | None:
+        self.ensure_current()
         return self._records.get(record_id)
 
     def get_namespace_ids(self, namespace: str,
                           include_deprecated: bool = False,
                           include_superseded: bool = False) -> list[str]:
+        self.ensure_current()
         ids = self._namespaces.get(namespace, set())
         result = []
         for rid in ids:
@@ -157,9 +208,11 @@ class MasterIndex:
         return result
 
     def get_by_tag(self, tag: str) -> set[str]:
+        self.ensure_current()
         return self._tags.get(tag, set()).copy()
 
     def get_by_tags(self, tags: list[str], match_all: bool = False) -> set[str]:
+        self.ensure_current()
         if not tags:
             return set()
         tag_sets = [self._tags.get(t, set()) for t in tags]
@@ -168,16 +221,20 @@ class MasterIndex:
         return set.union(*tag_sets) if tag_sets else set()
 
     def get_by_author(self, written_by: str) -> set[str]:
+        self.ensure_current()
         return self._written_by.get(written_by, set()).copy()
 
     def get_by_agent(self, agent_id: str) -> set[str]:
+        self.ensure_current()
         return self._by_agent.get(agent_id, set()).copy()
 
     def has_agent(self, agent_id: str) -> bool:
+        self.ensure_current()
         """Feature #8 — has this agent written anything to this store?"""
         return agent_id in self._by_agent
 
     def agents(self) -> list[str]:
+        self.ensure_current()
         """Feature #8 — every agent identity present in the write index.
 
         Derived from the index that also powers get_by_agent(), so it reports
@@ -186,18 +243,23 @@ class MasterIndex:
         return sorted(self._by_agent.keys())
 
     def get_by_session(self, session_id: str) -> set[str]:
+        self.ensure_current()
         return self._by_session.get(session_id, set()).copy()
 
     def is_superseded(self, record_id: str) -> bool:
+        self.ensure_current()
         return record_id in self._superseded
 
     def get_superseded_by(self, record_id: str) -> str | None:
+        self.ensure_current()
         return self._superseded.get(record_id)
 
     def is_deprecated(self, record_id: str) -> bool:
+        self.ensure_current()
         return record_id in self._deprecated
 
     def get_supersession_chain(self, record_id: str) -> list[str]:
+        self.ensure_current()
         current = record_id
         seen = {current}
         while current in self._supersedes:
@@ -220,12 +282,15 @@ class MasterIndex:
         return chain
 
     def get_version_children(self, record_id: str) -> set[str]:
+        self.ensure_current()
         return self._version_children.get(record_id, set()).copy()
 
     def get_version_parent(self, record_id: str) -> str | None:
+        self.ensure_current()
         return self._version_parent.get(record_id)
 
     def get_version_root(self, record_id: str) -> str:
+        self.ensure_current()
         current = record_id
         seen = {current}
         while current in self._version_parent:
@@ -276,7 +341,16 @@ class MasterIndex:
                 for n in self._lineage_nodes(record_id)}
 
     def all_ids(self) -> list[str]:
+        self.ensure_current()
         return list(self._records.keys())
+
+    def get_type_ids(self, record_type: str, namespace: str | None = None) -> list[str]:
+        """Source-certified candidates from the existing MasterIndex rows."""
+        self.ensure_current()
+        if self._candidate_seal != self._candidate_fingerprint():
+            raise ValueError("MasterIndex conflict candidate metadata changed without a source epoch")
+        ids = self._namespaces.get(namespace, set()) if namespace is not None else self._records
+        return [rid for rid in ids if self._records[rid]["record_type"] == record_type]
 
     def record_count(self) -> int:
         return len(self._records)

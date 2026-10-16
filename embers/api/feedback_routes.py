@@ -79,9 +79,16 @@ async def run_maintenance(
     x_ember_token: str | None = Header(default=None),
 ):
     db = _db()
-    _agent(db, x_ember_agent_id, x_ember_token)
+    agent = _agent(db, x_ember_agent_id, x_ember_token)
     from . import v1
-    namespaces = (body or {}).get("namespaces") or ["memories"]
+    namespaces = ["memories"] if body is None or "namespaces" not in body else body["namespaces"]
+    if (not isinstance(namespaces, list) or not namespaces
+            or any(not isinstance(ns, str) or not ns.strip()
+                   for ns in namespaces)):
+        raise HTTPException(400, "namespaces must be a nonempty list of names")
+    # Authorize the complete request before reflect/consolidate can change state.
+    for namespace in namespaces:
+        v1.require_namespace(db, namespace, agent.agent_id, "write")
     return run_maintenance_cycle(v1._proto(db), namespaces)
 
 

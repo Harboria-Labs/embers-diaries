@@ -79,6 +79,14 @@ except ImportError:
     _recover_record_transactions = None
     _write_record_transaction = None
 
+try:
+    from embers._native import source_epoch_protocol_version as _source_epoch_version
+    NATIVE_SOURCE_EPOCH = _source_epoch_version() >= 1
+except ImportError:
+    # The installed extension may predate this source change. Keep its writes
+    # safe through the Python storage wrapper without replacing that binary.
+    NATIVE_SOURCE_EPOCH = False
+
 
 class _StoreTransactionLock:
     """Reentrant thread lock plus one Rust-owned inter-process file lock."""
@@ -165,19 +173,29 @@ class PhysicalStore:
                 "engine":     "ember_diaries",
                 "record_count": 0,
             })
+        epoch_file = self.meta_dir / "source_epoch.json"
+        if not epoch_file.exists():
+            _atomic_replace(str(epoch_file), b'{"epoch":0}')
 
     def _recover(self):
         """Replay any uncommitted WAL entries on startup."""
+        # A recovery commit is a source change too. Invalidate candidates
+        # before invoking native recovery so a crash during replay cannot
+        # leave a new record at the old indexed epoch.
+        pending = self.wal.recover()
+        if pending and not (NATIVE_SOURCE_EPOCH and
+                            _recover_record_transactions is not None):
+            self.begin_index_change()
         if _recover_record_transactions is not None:
             report = json.loads(bytes(_recover_record_transactions(
                 str(self.root), datetime.now(timezone.utc).isoformat())))
             recovered = report.get("recovered", [])
             if recovered:
                 print(f"[EmberStore] Recovered {len(recovered)} uncommitted WAL entries.")
-            for error in report.get("failed", []):
-                print(f"[EmberStore] Recovery failed: {error}")
+            if report.get("failed"):
+                raise RuntimeError("Native WAL recovery failed: " +
+                                   "; ".join(report["failed"]))
             return
-        pending = self.wal.recover()
         if pending:
             print(f"[EmberStore] Recovering {len(pending)} uncommitted WAL entries...")
             for entry in pending:
@@ -187,7 +205,8 @@ class PhysicalStore:
                         self._write_record_file(record)
                         self.wal.commit(entry["wal_id"])
                     except Exception as e:
-                        print(f"[EmberStore] Recovery failed for {entry.get('record_id')}: {e}")
+                        raise RuntimeError(
+                            f"WAL recovery failed for {entry.get('record_id')}: {e}") from e
 
     # ── Write ─────────────────────────────────────────────────────────────────
 
@@ -200,6 +219,11 @@ class PhysicalStore:
             record_dict = record.to_dict()
             raw = encode(record_dict)
             self._check_write_limits(len(raw))
+            # Publish the invalidation before the native WAL transaction.  If
+            # the transaction is interrupted, the epoch can be ahead, never
+            # falsely equal to an index missing an acknowledged record.
+            if not (NATIVE_SOURCE_EPOCH and _write_record_transaction is not None):
+                self.begin_index_change()
 
             if _write_record_transaction is not None:
                 now = datetime.now(timezone.utc).isoformat()
@@ -228,6 +252,39 @@ class PhysicalStore:
             self._increment_record_count()
 
             return record.id
+
+    def index_epoch(self) -> int:
+        """Conservative source-change epoch; missing metadata fails closed."""
+        path = self.meta_dir / "source_epoch.json"
+        data = json.loads(path.read_bytes())
+        epoch = data.get("epoch")
+        if type(epoch) is not int or epoch < 0:
+            raise ValueError("Invalid source index epoch")
+        return epoch
+
+    def begin_index_change(self) -> int:
+        """Invalidate derived candidates before a record or visibility sidecar changes.
+
+        Callers hold the shared store lock. The native atomic replacement is
+        durable before the source mutation; an abandoned epoch only causes a
+        conservative rebuild.
+        """
+        with self._lock:
+            epoch = self.index_epoch() + 1
+            _atomic_replace(str(self.meta_dir / "source_epoch.json"),
+                            json.dumps({"epoch": epoch}).encode("ascii"))
+            return epoch
+
+    def read_strict(self, record_id: str) -> EmberRecord:
+        """Read a known physical record for index certification, failing closed."""
+        path = self.records_dir / f"{record_id}.ember"
+        raw = path.read_bytes()
+        record = EmberRecord.from_dict(decode(raw))
+        if record.id != record_id:
+            raise ValueError(f"Record identity mismatch for {record_id}")
+        if record.content_hash is not None:
+            record.verify_integrity()
+        return record
 
     @property
     def lock(self):

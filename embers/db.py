@@ -139,10 +139,13 @@ class EmberDB:
         self._promotion = PromotionEngine(self, promotion_mode, promotion_policy)
 
         # Register write callbacks to keep indexes updated
+        self._writer.register_before_write(self._ensure_master_index_current)
         self._writer.register_callback(self._on_write)
 
-        # Rebuild indexes from existing records if needed
+        # Certify legacy and persisted candidates against physical source once
+        # on open. Routine reads use the source epoch, not directory scans.
         self._rebuild_indexes_if_needed()
+        self._master_index._health_check = self._ensure_master_index_current
 
         _safe_print(f"🔥 Ember's Diaries connected → {self._path}")
         stats = self._store.stats()
@@ -173,17 +176,59 @@ class EmberDB:
                    runtime_config=runtime_config)
 
     def _rebuild_indexes_if_needed(self):
-        """On startup, rebuild indexes from store if they're empty."""
-        store_count = self._store.record_count()
-        index_count = self._master_index.record_count()
-        if store_count > 0 and index_count == 0:
-            # stderr, not stdout — see _safe_print: stdout may be a protocol
-            # channel (MCP stdio), and rebuild chatter there breaks the client.
-            _safe_print(f"   Rebuilding indexes for {store_count} records...")
-            for rid in self._store.all_ids():
-                record = self._store.read(rid)
-                if record:
-                    self._index_record(record)
+        """Certify a fresh MasterIndex from immutable source at initialization."""
+        with self._store.lock:
+            self._reconcile_master_index()
+
+    def _reconcile_master_index(self):
+        """Explicit source-backed recovery; never used on healthy queries."""
+        from .storage.format import decode_index
+        records = {}
+        children = {}
+        for rid in self._store.all_ids():
+            record = self._store.read_strict(rid)
+            records[rid] = record
+            if record.supersedes:
+                children.setdefault(record.supersedes, []).append(rid)
+        for parent, descendants in children.items():
+            if parent not in records:
+                raise ValueError(f"Missing supersession parent {parent}")
+            sidecar = self._writer.get_superseded_by(parent)
+            if sidecar is None:
+                if len(descendants) != 1:
+                    raise ValueError(f"Ambiguous supersession for {parent}")
+                self._writer._mark_superseded(parent, descendants[0])
+            elif sidecar not in descendants:
+                raise ValueError(f"Inconsistent supersession for {parent}")
+        for sidecar in (self._store.root / "supersessions").glob("*.superseded"):
+            if sidecar.stem not in children:
+                raise ValueError(f"Orphan supersession sidecar {sidecar.name}")
+        deprecated = set()
+        for sidecar in (self._store.root / "deprecations").glob("*.deprecated"):
+            data = decode_index(sidecar.read_bytes())
+            if sidecar.stem not in records or data.get("record_id") != sidecar.stem:
+                raise ValueError(f"Inconsistent deprecation sidecar {sidecar.name}")
+            deprecated.add(sidecar.stem)
+        self._master_index.reset()
+        for record in records.values():
+            self._index_record(record)
+        for parent in children:
+            child = self._writer.get_superseded_by(parent)
+            self._master_index.mark_superseded(parent, child)
+        for rid in deprecated:
+            self._master_index.mark_deprecated(rid)
+        self._master_index.persist(self._store.index_epoch())
+
+    def _ensure_master_index_current(self):
+        """Validate one small epoch marker under the existing shared lock."""
+        with self._store.lock:
+            epoch = self._store.index_epoch()
+            if self._master_index.indexed_epoch == epoch:
+                return
+            # Another handle's persisted snapshot is derived metadata, not a
+            # proof that its callbacks completed. Reconcile from source when
+            # behind; routine equal-epoch reads never enumerate files.
+            self._reconcile_master_index()
 
     def _on_write(self, record: EmberRecord, operation: str):
         """Callback after every write — keeps indexes in sync."""
@@ -194,6 +239,7 @@ class EmberDB:
                 # transaction. Marking it after writer.update() returned left
                 # a window where concurrent readers saw an incomplete chain.
                 self._master_index.mark_superseded(record.supersedes, record.id)
+            self._master_index.persist(self._store.index_epoch())
 
     def _index_record(self, record: EmberRecord):
         """Add a record to all relevant indexes."""
@@ -372,10 +418,13 @@ class EmberDB:
         Mark a record as deprecated. It remains in the store forever.
         Returns True if successful.
         """
-        result = self._writer.deprecate(record_id, reason, note, written_by)
-        if result:
-            self._master_index.mark_deprecated(record_id)
-        return result
+        with self._store.lock:
+            self._ensure_master_index_current()
+            result = self._writer.deprecate(record_id, reason, note, written_by)
+            if result:
+                self._master_index.mark_deprecated(record_id)
+                self._master_index.persist(self._store.index_epoch())
+            return result
 
     # ── Read ──────────────────────────────────────────────────────────────────
 
@@ -790,6 +839,13 @@ class EmberDB:
                      detected_by: str = "system",
                      conflict_type: ConflictType = ConflictType.SEMANTIC,
                      note: str = "") -> str:
+        with self._store.lock:
+            return self._map_conflict_locked(memory_a, memory_b, detected_by,
+                                             conflict_type, note)
+
+    def _map_conflict_locked(self, memory_a: str, memory_b: str,
+                             detected_by: str, conflict_type: ConflictType,
+                             note: str) -> str:
         """Map a SEMANTIC contradiction between two existing memories (§7).
 
         Records a CONFLICT record (status OPEN) AND draws a symmetric
@@ -843,6 +899,7 @@ class EmberDB:
         # Idempotency: is this exact pair already mapped and still live?
         existing = self._find_live_conflict(conflict.pair_fingerprint())
         if existing is not None:
+            self._ensure_conflict_graph_edge(memory_a, memory_b)
             return existing.conflict_id
 
         record = EmberRecord(
@@ -859,9 +916,16 @@ class EmberDB:
 
         # Map the contradiction on the graph too (symmetric), so the existing
         # conflicts() view and the promotion engine's conflict gate see it.
-        self.link(memory_a, memory_b, EdgeType.CONTRADICTS.value,
-                  label="contradicts")
+        self._ensure_conflict_graph_edge(memory_a, memory_b)
         return cid
+
+    def _ensure_conflict_graph_edge(self, memory_a: str, memory_b: str):
+        """Repair a missing mapping edge on an idempotent map retry."""
+        kind = EdgeType.CONTRADICTS.value
+        forward = self._graph_index.connected(memory_a, kind)
+        reverse = self._graph_index.connected(memory_b, kind)
+        if memory_b not in forward and memory_a not in reverse:
+            self.link(memory_a, memory_b, kind, label="contradicts")
 
     def get_conflict(self, conflict_id: str,
                      caller: str | None = None) -> Conflict | None:
@@ -907,26 +971,33 @@ class EmberDB:
 
         Resolves each conflict lineage to its CURRENT version so status is
         accurate, and de-duplicates superseded copies of the same conflict."""
-        out, seen = [], set()
-        namespaces = ([namespace] if namespace is not None
-                      else self._all_namespaces())
-        for ns in namespaces:
-            if caller is not None and not self._ns_manager.check_read(ns, caller):
-                if namespace is not None:
-                    self._ns_manager.require_read(ns, caller)
-                continue
-            for rec in self._reader.get_namespace(ns, include_deprecated=True,
-                                                  limit=None):
-                if rec.record_type != RecordType.CONFLICT:
+        with self._store.lock:
+            if namespace is not None and caller is not None:
+                self._ns_manager.require_read(namespace, caller)
+            out, seen = [], set()
+            candidates = self._master_index.get_type_ids(
+                RecordType.CONFLICT.value, namespace)
+            for rid in candidates:
+                meta = self._master_index.get_meta(rid)
+                ns = meta["namespace"]
+                if caller is not None and not self._ns_manager.check_read(ns, caller):
                     continue
-                current = self._reader.get_current(rec.id) or rec
+                rec = self._reader.get(
+                    rid, include_deprecated=True, include_superseded=True)
+                if rec is None:
+                    raise ValueError(f"Indexed conflict record {rid} is unreadable or missing")
+                if rec.record_type != RecordType.CONFLICT or rec.namespace != ns:
+                    raise ValueError(f"Indexed conflict metadata differs from source for {rid}")
+                current = self._reader.get_current(rid)
+                if current is None or current.record_type != RecordType.CONFLICT:
+                    raise ValueError(f"Conflict lineage for {rid} has no valid head")
                 if current.id in seen:
                     continue
                 seen.add(current.id)
                 c = self._conflict_from_record(current)
                 if status is None or c.status == status:
                     out.append(c)
-        return out
+            return out
 
     def conflicts_for(self, memory_id: str,
                      include_closed: bool = False,
@@ -963,6 +1034,14 @@ class EmberDB:
                                resolution: str = "",
                                changed_by: str = "system",
                                winner_id: str | None = None) -> tuple[str, str]:
+        with self._store.lock:
+            return self._update_conflict_status_locked(
+                conflict_id, status, resolution, changed_by, winner_id)
+
+    def _update_conflict_status_locked(self, conflict_id: str,
+                                       status: ConflictStatus,
+                                       resolution: str, changed_by: str,
+                                       winner_id: str | None) -> tuple[str, str]:
         """Advance a conflict's lifecycle — as a NEW version (append-only, §7).
 
         A transition (open → investigating → resolved | accepted_both |
@@ -990,7 +1069,8 @@ class EmberDB:
         return self.update(
             head.id, payload, written_by=changed_by,
             agent_id=changed_by,
-            creation_reason=f"conflict → {status.value}")
+            creation_reason=f"conflict → {status.value}",
+            expected_hash=head.content_hash)
 
     def resolve_conflict(self, conflict_id: str, resolution: str,
                          changed_by: str = "system") -> tuple[str, str]:
@@ -1900,7 +1980,9 @@ class EmberDB:
 
     def checkpoint(self):
         """Persist all indexes and compact the WAL."""
-        self._master_index.persist()
+        with self._store.lock:
+            self._ensure_master_index_current()
+            self._master_index.persist(self._store.index_epoch())
         self._graph_index.persist()
         self._timeline_index.persist()
         self._vector_index.persist()

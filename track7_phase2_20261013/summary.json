@@ -1,0 +1,209 @@
+{
+  "run30": {
+    "commit": "f183346547cd210f58ca0a6b23df91a56be22b66",
+    "native_sha256": "452cc6d246c96311ddfe590f38947b6d386d39d4cf38f9650319e3833c6c19a5",
+    "python": "3.13.5",
+    "os": "Windows-10-10.0.19045-SP0",
+    "start_free": 345735168,
+    "end_free": 342548480,
+    "store": "C:\\Users\\LENOVO PC\\PROJECTS\\Harboria Labs\\embers_diaries\\track7_phase2_20261013\\store_run_20261013_01",
+    "journal_events": 31,
+    "journal_bytes": 494500,
+    "wal_bytes": 574111,
+    "observation_bytes": 593920,
+    "store_bytes": 1676218,
+    "record_count": 38,
+    "reopen_state_equal": true,
+    "correction_verified": true,
+    "final_revision": 31,
+    "checkpoints": [
+      5,
+      10,
+      20,
+      30
+    ],
+    "budget": {
+      "min_free": 300000000,
+      "max_experiment_bytes": 20000000
+    }
+  },
+  "run50": {
+    "commit": "f183346547cd210f58ca0a6b23df91a56be22b66",
+    "native_sha256": "452cc6d246c96311ddfe590f38947b6d386d39d4cf38f9650319e3833c6c19a5",
+    "python": "3.13.5",
+    "os": "Windows-10-10.0.19045-SP0",
+    "start_free": 340074496,
+    "end_free": 333926400,
+    "store": "C:\\Users\\LENOVO PC\\PROJECTS\\Harboria Labs\\embers_diaries\\track7_phase2_20261013\\store_run_20261013_03",
+    "journal_events": 51,
+    "journal_bytes": 1169040,
+    "wal_bytes": 1322924,
+    "observation_bytes": 1372160,
+    "store_bytes": 3877811,
+    "record_count": 58,
+    "reopen_state_equal": true,
+    "correction_verified": true,
+    "final_revision": 51,
+    "checkpoints": [
+      5,
+      10,
+      20,
+      30,
+      50
+    ],
+    "budget": {
+      "min_free": 300000000,
+      "max_experiment_bytes": 20000000
+    }
+  },
+  "checkpoints": {
+    "5": {
+      "append_ms": 348.1335,
+      "last_5_append_median_ms": 348.1335,
+      "load_same_median_ms": 35.5498,
+      "load_new_median_ms": 41.0895,
+      "project_median_ms": 98.6428,
+      "load_same_range_ms": [
+        21.3012,
+        67.6399
+      ],
+      "project_range_ms": [
+        75.2487,
+        138.7947
+      ],
+      "journal_bytes": 32040,
+      "wal_bytes": 51682,
+      "observation_bytes": 57344,
+      "store_bytes": 154753,
+      "free_after": 339861504,
+      "append_nested_load_ms": 37.19,
+      "append_store_write_ms": 81.3789,
+      "append_observation_append_ms": 27.6952
+    },
+    "10": {
+      "append_ms": 455.9921,
+      "last_5_append_median_ms": 455.9921,
+      "load_same_median_ms": 116.8766,
+      "load_new_median_ms": 59.6378,
+      "project_median_ms": 136.5748,
+      "load_same_range_ms": [
+        38.9804,
+        122.818
+      ],
+      "project_range_ms": [
+        105.4054,
+        163.4763
+      ],
+      "journal_bytes": 84759,
+      "wal_bytes": 112764,
+      "observation_bytes": 118784,
+      "store_bytes": 329994,
+      "free_after": 339664896,
+      "append_nested_load_ms": 85.6891,
+      "append_store_write_ms": 67.5665,
+      "append_observation_append_ms": 22.6126
+    },
+    "20": {
+      "append_ms": 707.8224,
+      "last_5_append_median_ms": 622.6705,
+      "load_same_median_ms": 133.0507,
+      "load_new_median_ms": 106.5281,
+      "project_median_ms": 189.0134,
+      "load_same_range_ms": [
+        88.7204,
+        133.0913
+      ],
+      "project_range_ms": [
+        186.7938,
+        265.3325
+      ],
+      "journal_bytes": 242099,
+      "wal_bytes": 291406,
+      "observation_bytes": 303104,
+      "store_bytes": 850296,
+      "free_after": 338976768,
+      "append_nested_load_ms": 149.1365,
+      "append_store_write_ms": 79.4517,
+      "append_observation_append_ms": 32.6652
+    },
+    "30": {
+      "append_ms": 871.6165,
+      "last_5_append_median_ms": 902.8584,
+      "load_same_median_ms": 169.1235,
+      "load_new_median_ms": 225.6794,
+      "project_median_ms": 300.709,
+      "load_same_range_ms": [
+        160.982,
+        253.9233
+      ],
+      "project_range_ms": [
+        286.9223,
+        412.1677
+      ],
+      "journal_bytes": 468649,
+      "wal_bytes": 545343,
+      "observation_bytes": 561152,
+      "store_bytes": 1588831,
+      "free_after": 337399808,
+      "append_nested_load_ms": 186.9595,
+      "append_store_write_ms": 84.5364,
+      "append_observation_append_ms": 28.2411
+    },
+    "50": {
+      "append_ms": 1934.2858,
+      "last_5_append_median_ms": 1929.0621,
+      "load_same_median_ms": 468.6808,
+      "load_new_median_ms": 442.7645,
+      "project_median_ms": 834.2818,
+      "load_same_range_ms": [
+        369.0036,
+        788.4485
+      ],
+      "project_range_ms": [
+        774.8259,
+        851.9515
+      ],
+      "journal_bytes": 1129349,
+      "wal_bytes": 1279002,
+      "observation_bytes": 1327104,
+      "store_bytes": 3749142,
+      "free_after": 334168064,
+      "append_nested_load_ms": 645.2421,
+      "append_store_write_ms": 100.8062,
+      "append_observation_append_ms": 29.0816
+    }
+  },
+  "failed_run02": {
+    "failed_rows": [
+      {
+        "case": "1",
+        "event_count": "1",
+        "operation": "append",
+        "index": "1",
+        "wall_ms": "366.1904",
+        "cpu_ms": "125.0",
+        "free_before": "341426176",
+        "free_after": "341430272",
+        "store_bytes": "36683",
+        "journal_bytes": "4304",
+        "wal_bytes": "18693",
+        "observation_bytes": "0",
+        "record_count": "8",
+        "rss_bytes": "",
+        "load_ms": "0.4343",
+        "read_ms": "203.0824",
+        "verify_ms": "17.6647",
+        "native_ms": "1.8114",
+        "native_reduce_ms": "0.3646",
+        "store_write_ms": "79.9108",
+        "observation_append_ms": "0.0",
+        "reads": "62",
+        "verifications": "66",
+        "native_reduces": "1",
+        "error": "PermissionError: Access is denied. (os error 5)"
+      }
+    ],
+    "result": "first append failed with PermissionError; isolated partial store retained"
+  },
+  "measurement_note": "timed components overlap; no arithmetic decomposition of wall time"
+}

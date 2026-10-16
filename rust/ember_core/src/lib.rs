@@ -505,6 +505,36 @@ fn atomic_replace_file(path: &Path, data: &[u8]) -> io::Result<()> {
     Ok(())
 }
 
+// A conservative change epoch is published before each native source change.
+// An interrupted transaction may leave the epoch ahead, forcing the Python
+// MasterIndex to reconcile; it can never leave an acknowledged native write
+// hidden behind an equal indexed epoch. Callers use the shared store lock.
+fn advance_source_epoch(root: &Path) -> io::Result<u64> {
+    let path = root.join("meta").join("source_epoch.json");
+    fs::create_dir_all(root.join("meta"))?;
+    let current = match fs::read(&path) {
+        Ok(bytes) => {
+            let value: Value = serde_json::from_slice(&bytes)
+                .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+            value.get("epoch").and_then(Value::as_u64).ok_or_else(|| {
+                io::Error::new(io::ErrorKind::InvalidData, "invalid source epoch")
+            })?
+        }
+        Err(error) if error.kind() == io::ErrorKind::NotFound => 0,
+        Err(error) => return Err(error),
+    };
+    let next = current.checked_add(1).ok_or_else(|| {
+        io::Error::new(io::ErrorKind::InvalidData, "source epoch overflow")
+    })?;
+    let bytes = serde_json::to_vec(&serde_json::json!({"epoch": next}))
+        .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+    atomic_replace_file(&path, &bytes)?;
+    Ok(next)
+}
+
+#[pyfunction]
+fn source_epoch_protocol_version() -> u32 { 1 }
+
 #[pyclass]
 struct StoreFileLock {
     file: Option<File>,
@@ -661,6 +691,7 @@ fn write_record_transaction(
         .into_iter().try_fold(0u64, |n, v| n.checked_add(v))
         .ok_or_else(|| PyValueError::new_err("transaction byte count overflow"))?;
     let _capacity = quota::admit(&root.join("wal.jsonl"), peak)?;
+    advance_source_epoch(root)?;
     durable_append(&root.join("wal.jsonl"), &pending)?;
     let created = atomic_write_new_file(
         &root.join("records").join(format!("{record_id}.ember")), record_bytes)?;
@@ -697,7 +728,11 @@ fn recover_record_transactions(root: &str, commit_timestamp: &str) -> PyResult<V
     let root = Path::new(root);
     let mut recovered = Vec::new();
     let mut failed = Vec::new();
-    for line in pending_wal_lines(&root.join("wal.jsonl"))? {
+    let pending = pending_wal_lines(&root.join("wal.jsonl"))?;
+    if !pending.is_empty() {
+        advance_source_epoch(root)?;
+    }
+    for line in pending {
         let attempt = (|| -> PyResult<Option<String>> {
             let entry: RecoveryWalEntry = serde_json::from_slice(&line).map_err(|error| {
                 PyValueError::new_err(format!("invalid pending WAL entry: {error}"))
@@ -1022,6 +1057,7 @@ fn write_supersession(root: &str, old_id: &str, new_id: &str, timestamp: &str) -
         timestamp,
     })
     .map_err(|error| PyValueError::new_err(format!("invalid supersession: {error}")))?;
+    advance_source_epoch(root)?;
     atomic_replace_file(&supersession_path(root, old_id), &line)?;
     Ok(())
 }
@@ -1146,6 +1182,7 @@ fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(acquire_store_lock, module)?)?;
     module.add_function(wrap_pyfunction!(atomic_write_new, module)?)?;
     module.add_function(wrap_pyfunction!(atomic_replace, module)?)?;
+    module.add_function(wrap_pyfunction!(source_epoch_protocol_version, module)?)?;
     module.add_function(wrap_pyfunction!(configure_store_quota, module)?)?;
     module.add_function(wrap_pyfunction!(store_byte_usage, module)?)?;
     module.add_function(wrap_pyfunction!(write_supersession, module)?)?;

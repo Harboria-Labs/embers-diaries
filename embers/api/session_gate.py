@@ -22,6 +22,14 @@ def resolve_agent(db, agent_id: str | None, token: str | None,
     if agent_id and token:
         try:
             ident=AgentRegistry(db).authenticate(agent_id, token)
+            if session_id:
+                session = db.get_session(session_id)
+                if session is None:
+                    raise HTTPException(401, "unknown session")
+                if session.status != SessionStatus.ACTIVE:
+                    raise HTTPException(401, "session is not active")
+                if session.agent_id != ident.agent_id:
+                    raise HTTPException(403, "session belongs to another agent")
             from ..integration.write_observation import bind
             bind(ident.agent_id,session_id)
             return ident

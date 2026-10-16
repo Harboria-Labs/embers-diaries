@@ -1,0 +1,37 @@
+# Capability status
+
+“Tested” here means a targeted test exists and its asserted behavior is inspectable; no tests were executed during this audit. Loaded native extension and live service behavior remain unverified.
+
+| Capability | Classification | Basis / limit |
+|---|---|---|
+| Immutable record write, sealed read, CAS versions, supersession history | Fully implemented and targeted tests present | `embers/engine/writer.py`, `reader.py`; `tests/test_native_store.py`, `test_native_versioning.py`, `test_versioning_graph.py` |
+| Agent registration, token auth, namespace ACL and v1 history access | Fully implemented and targeted tests present | `embers/identity/registry.py`, `api/v1.py`, `mcp/server.py`; `tests/test_agent_identity.py`, `test_namespace_access.py`, `test_v1_memory_read_api.py` |
+| Text/vector/graph/timeline/master indexes and checkpoint | Implemented with known limitations | `embers/db.py:175-260,1901-1909`; `tests/test_indexes.py`; nonempty stale snapshots are not comprehensively rebuilt |
+| Ordinary recall and context formatting | Implemented with known limitations | `memory_protocol.py:183-317`; room selection and optional ELLA rendering have distinct limits; targeted `tests/test_integration.py`, `test_primary_context.py`, `test_ella.py` |
+| Native LADC/contextual activation and bounded research admission | Implemented and targeted tests present; loaded binary unknown | `consolidated.py`, `dynamics.rs`; `tests/test_consolidated.py`; runtime binary freshness not checked |
+| Pairing V1 one-hop selection, no substitution, contextual W | Implemented and targeted tests present; loaded binary unknown | `pairing.py`, `pairing.rs`; `tests/test_pairing_v1.py` |
+| FUR evidence-derived usefulness journal | Implemented with known scaling limits | `usefulness.py`, `fur.rs`; `tests/test_consolidated.py`, `test_feedback_replay.py`; fresh-object replay and event-ID enumeration remain |
+| ELLA assessment, correction, independence, confirmation and conflict overlay | Implemented with known scaling and epistemic limits | `epistemic.py`, `ella.rs`; `tests/test_ella.py`; full replay per load, hidden common source and assessor-independence limitations |
+| Mapped semantic conflict records/status and graph relation | Implemented with known lookup limitation | `db.py:789-998`; `tests/test_conflict_engine.py`, `test_conflict_interfaces.py`; namespace-wide record reads |
+| Observer journal, capability, cursor/SSE and browser surfaces | Implemented with known delivery/runtime limits | `observation_journal.py`, `research_observer.py`, `observer_routes.py`; `tests/test_research_observer.py`, `test_observation_stream.py`; no live browser verification here |
+| Session lobby and explicit proposal promotion | Implemented with known process-local boundary | `lobby/store.py`, MCP/REST adapters; `tests/test_lobby.py`, `test_lobby_rest_mcp_parity.py` |
+| Native WAL recovery, per-record integrity, index checkpoint, maintenance loop | Implemented and targeted tests present | `storage/store.py`, `core/record.py`, `maintenance.py`; `tests/test_native_wal.py`, `test_verify_integrity.py`; these do not certify every secondary index |
+| Reusable, independently validated ELLA projection/checkpoint | Designed/recommended but not implemented | No checkpoint read/write in `EpistemicLedger.load`; full replay remains |
+| Narrow conflict lookup with exact old integrity/error semantics | Not implemented; proposed integration | Existing lookup is correct reference path; Phase 3 prefilters have counterexamples |
+| Dedicated public paginated ELLA event audit-history surface | Unknown requirement / not found | ELLA source journal exists; state endpoint exposes projection, not event pages |
+| Current loaded native extension, live service and browser behavior | Unknown pending verification | No runtime probe in this audit; the 2026-10-11 benchmark reported an older extension lacking ELLA, while the later isolated persisted Phase 2 run used a native build with ELLA; current loaded identity was not checked |
+| Production-scale persisted ELLA behavior | Unknown pending verification | An isolated 50-report persisted fixture was measured in Phase 2, but no production capacity limit follows from it |
+
+## Existing-mechanism status correction — 2026-10-15
+
+- **Implemented with targeted tests:** native WAL record recovery and atomic publication; native supersession sidecars; sealed immutable memory versions, branching/linear history and memory CAS; `audit_write` per-write provenance trace; Promotion Engine Automatic/Consensus/Human/Hybrid routing; first-class Conflict Engine mapping/status/review. See `track7_atlas_design_20261015/08_EXISTING_MECHANISM_RECONCILIATION.md` and `tests/{test_native_wal,test_native_store,test_native_versioning,test_versioning_graph,test_concurrency,test_write_audit,test_promotion_engine,test_conflict_interfaces}.py`. Tests were inspected, not executed in this reconciliation.
+- **Existing feature needing integration:** nonempty stale MasterIndex reconciliation before narrow conflict candidate use; optional conflict map/status serialization using existing lock/CAS if concurrent tests establish the gap; ELLA cross-operation state reuse using existing journal/native reducer/lock. A new durable ELLA head or conflict index is not established as necessary.
+- **Missing operation, if the frozen independent-audit requirement remains:** strict namespace-wide physical/index audit with observable completion/failure status. `audit_write` and promotion/conflict review do not perform it. Immediate detection of arbitrary old-file tampering during accelerated reads remains an unresolved contract, not a solved capability.
+
+## Seven-upgrade planning status — 2026-10-15
+
+All changes in `track7_atlas_design_20261015/09_COMPLETE_UPGRADE_ROADMAP.md` remain **planned, unimplemented and untested in this planning task**. Existing WAL/immutable history/CAS, Conflict and Promotion Engines, ELLA native reducer, per-record integrity and maintenance lifecycle are reuse targets. MasterIndex trust certification, narrow conflict candidate retrieval, conflict-only concurrency hardening if tests expose races, current-status promotion integration, independent audit/reporting, and cross-operation ELLA cache are modifications or new operation surfaces as classified in `11_REUSE_AND_POLICY_DECISIONS.md`. No status in the original table above should be read as certifying these future behaviors.
+
+## Batch 1 source status — 2026-10-16
+
+**Implemented in the local candidate source, isolated-test validated:** conservative source/applied epoch protocol for MasterIndex; strict startup and behind-epoch reconciliation; CONFLICT-only candidate retrieval through existing MasterIndex; conflict pair/status serialization under shared lock with status CAS; graph-link repair on idempotent map retry. Existing native WAL, immutable memory branching/history, REST/MCP adapters and ACLs remain. Evidence: `track7_atlas_design_20261015/12_BATCH1_IMPLEMENTATION_EVIDENCE.md`. The installed production native module and live service were not updated, so production/live status is **unverified**. Native direct callers require the shared lock; mixed old/new writer processes cannot share this new epoch guarantee. Batches 2–4 remain unimplemented.
