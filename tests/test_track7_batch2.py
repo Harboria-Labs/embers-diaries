@@ -1,6 +1,7 @@
 """Batch 2: current conflict outcomes govern promotion admission."""
 
 import json
+import multiprocessing
 import pytest
 from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
@@ -30,6 +31,20 @@ def _pair(db):
     a = db.write(EmberRecord(namespace="batch2", data={"claim": "A"}))
     b = db.write(EmberRecord(namespace="batch2", data={"claim": "B"}))
     return a, b
+
+
+def _process_submit(store_path, proposal_id, start, results):
+    db = EmberDB.connect(store_path)
+    start.wait(15)
+    results.put(("submit", db.submit(proposal_id).promoted))
+
+
+def _process_resolve(store_path, conflict_id, winner_id, start, results):
+    db = EmberDB.connect(store_path)
+    start.wait(15)
+    db.update_conflict_status(conflict_id, ConflictStatus.RESOLVED,
+                              resolution="other memory won", winner_id=winner_id)
+    results.put(("resolved", True))
 
 
 @pytest.mark.parametrize("status,winner,expected", [
@@ -279,3 +294,28 @@ def test_rest_and_mcp_route_same_current_conflict_status(tmp_path, monkeypatch):
                               resolution="A supported", winner_id=a)
     rest, tool = routes()
     assert rest["outcome"] == tool["outcome"] == "promote"
+
+
+def test_process_resolution_and_submit_never_admit_loser(tmp_path):
+    path = tmp_path / "batch2"
+    db = EmberDB.connect(path)
+    a, b = _pair(db)
+    cid = db.map_conflict(a, b)
+    pid = _proposal(db, a)
+    ctx = multiprocessing.get_context("spawn")
+    start = ctx.Event()
+    results = ctx.Queue()
+    workers = [
+        ctx.Process(target=_process_submit, args=(str(path), pid, start, results)),
+        ctx.Process(target=_process_resolve, args=(str(path), cid, b, start, results)),
+    ]
+    for worker in workers:
+        worker.start()
+    start.set()
+    for worker in workers:
+        worker.join(20)
+        assert worker.exitcode == 0
+    assert dict(results.get(timeout=2) for _ in workers) == {
+        "submit": False, "resolved": True}
+    reopened = EmberDB.connect(path)
+    assert reopened.get_proposal(pid).status.value == "pending"
