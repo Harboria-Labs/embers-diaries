@@ -11,6 +11,7 @@ Usage:
 """
 
 import sys
+import uuid
 from pathlib import Path
 from datetime import datetime
 
@@ -1511,6 +1512,15 @@ class EmberDB:
                 status: "MemoryStatus | None" = None,
                 promotion_method: "PromotionMethod | None" = None,
                 ) -> tuple[str, str]:
+        with self._store.lock:
+            return self._promote_locked(
+                proposal_id, validated_by, status, promotion_method)
+
+    def _promote_locked(self, proposal_id: str,
+                        validated_by: str,
+                        status: "MemoryStatus | None",
+                        promotion_method: "PromotionMethod | None",
+                        ) -> tuple[str, str]:
         """Validate a proposal into a durable memory (§4 validation step).
 
         Writes a NEW durable memory (record_type NODE) carrying the discovery as
@@ -1546,9 +1556,14 @@ class EmberDB:
             raise ValueError(
                 f"Proposal {proposal_id} is {proposal.status.value}, "
                 "only a pending proposal can be promoted.")
+        self.require_namespace_access(proposal.namespace, validated_by, "write")
+        conflict_issues = self._promotion.conflict_hold_reasons(proposal, validated_by)
+        if conflict_issues:
+            raise ValueError("conflict or derivation review required: " + "; ".join(conflict_issues))
 
         # 1. The durable memory — the discovery, now first-class.
         memory = EmberRecord(
+            id=str(uuid.uuid5(uuid.NAMESPACE_URL, f"ember:promotion:{proposal_id}")),
             namespace=proposal.namespace,
             record_type=RecordType.NODE,
             data=self._with_status(proposal.discovery, status, promotion_method),
@@ -1567,7 +1582,18 @@ class EmberDB:
             decay_rate=0.01,
             tags=[t for t in proposal.tags if t != "proposal"],
         )
-        memory_id = self._writer.write(memory)
+        existing = self._reader.get(
+            memory.id, include_deprecated=True, include_superseded=True)
+        if existing is None:
+            memory_id = self._writer.write(memory)
+        else:
+            if (existing.record_type != RecordType.NODE
+                    or existing.namespace != memory.namespace
+                    or existing.data != memory.data
+                    or existing.derived_from != memory.derived_from
+                    or existing.agent_id != memory.agent_id):
+                raise ValueError("promotion recovery record differs from proposal")
+            memory_id = existing.id
 
         # 2. Each piece of evidence → its own EVIDENCE record + SUPPORTS edge.
         for ev in proposal.evidence:
@@ -1577,12 +1603,21 @@ class EmberDB:
         payload = proposal.to_record_payload()
         payload["status"] = ProposalStatus.PROMOTED.value
         payload["promoted_to"] = memory_id
-        self.update(proposal_id, payload, written_by=validated_by,
-                    creation_reason="proposal promoted to durable memory")
+        head = self._reader.get_current(proposal_id)
+        if head is None or head.record_type != RecordType.PROPOSAL:
+            raise ValueError("proposal head changed during promotion")
+        self.update(head.id, payload, written_by=validated_by,
+                    creation_reason="proposal promoted to durable memory",
+                    expected_hash=head.content_hash)
         return memory_id, proposal_id
 
     def reject(self, proposal_id: str, reason: str = "",
                rejected_by: str = "system") -> str:
+        with self._store.lock:
+            return self._reject_locked(proposal_id, reason, rejected_by)
+
+    def _reject_locked(self, proposal_id: str, reason: str,
+                       rejected_by: str) -> str:
         """Reject a proposal (§16 → Promotion: rejected proposals remain
         distinguishable from committed memories).
 
@@ -1596,11 +1631,16 @@ class EmberDB:
             raise ValueError(
                 f"Proposal {proposal_id} is {proposal.status.value}, "
                 "only a pending proposal can be rejected.")
+        self.require_namespace_access(proposal.namespace, rejected_by, "write")
         payload = proposal.to_record_payload()
         payload["status"] = ProposalStatus.REJECTED.value
         payload["rejection_reason"] = reason
-        new_id, _ = self.update(proposal_id, payload, written_by=rejected_by,
-                                creation_reason=f"proposal rejected: {reason}")
+        head = self._reader.get_current(proposal_id)
+        if head is None or head.record_type != RecordType.PROPOSAL:
+            raise ValueError("proposal head changed during rejection")
+        new_id, _ = self.update(head.id, payload, written_by=rejected_by,
+                                creation_reason=f"proposal rejected: {reason}",
+                                expected_hash=head.content_hash)
         return new_id
 
     # ── Promotion Engine (§10–§12) — configurable routing to durable memory ────
@@ -1622,10 +1662,11 @@ class EmberDB:
         memory_id when promoted)."""
         return self._promotion.submit(proposal_id, validated_by=validated_by)
 
-    def promotion_route(self, proposal_id: str) -> "PromotionDecision":
+    def promotion_route(self, proposal_id: str,
+                        actor_id: str | None = None) -> "PromotionDecision":
         """Dry-run: what WOULD the Promotion Engine do with this proposal? Returns
         the decision without writing anything."""
-        return self._promotion.route(proposal_id)
+        return self._promotion.route(proposal_id, actor_id=actor_id)
 
     # ── Legacy status compatibility for durable memory (§12) ─────────────────
 

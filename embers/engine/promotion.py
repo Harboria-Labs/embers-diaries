@@ -146,15 +146,22 @@ class PromotionEngine:
 
     # ── Decision (pure) ────────────────────────────────────────────────────────
 
-    def route(self, proposal_id: str) -> PromotionDecision:
+    def route(self, proposal_id: str, actor_id: str | None = None) -> PromotionDecision:
         """Decide what would happen to this proposal WITHOUT writing anything.
 
         Dispatches on the configured mode. Raises KeyError if the proposal does
         not exist; a proposal that is not currently PENDING always HOLDs (only a
         pending proposal is a candidate for promotion)."""
+        with self._db._store.lock:
+            return self._route_locked(proposal_id, actor_id)
+
+    def _route_locked(self, proposal_id: str,
+                      actor_id: str | None) -> PromotionDecision:
         proposal = self._db.get_proposal(proposal_id)
         if proposal is None:
             raise KeyError(f"Proposal {proposal_id} not found.")
+        if actor_id is not None:
+            self._db.require_namespace_access(proposal.namespace, actor_id, "read")
 
         if proposal.status != ProposalStatus.PENDING:
             return PromotionDecision(
@@ -162,12 +169,12 @@ class PromotionEngine:
                 reasons=[f"proposal is {proposal.status.value}, not pending"])
 
         if self.mode == PromotionMode.HUMAN:
-            return self._route_human(proposal)
+            return self._route_human(proposal, actor_id)
         if self.mode == PromotionMode.CONSENSUS:
-            return self._route_consensus(proposal)
+            return self._route_consensus(proposal, actor_id)
         if self.mode == PromotionMode.HYBRID:
-            return self._route_hybrid(proposal)
-        return self._route_automatic(proposal)
+            return self._route_hybrid(proposal, actor_id)
+        return self._route_automatic(proposal, actor_id)
 
     # ── Action ───────────────────────────────────────────────────────────────
 
@@ -179,21 +186,27 @@ class PromotionEngine:
         returns the new memory id. On HOLD, writes nothing and leaves the
         proposal PENDING (it can be submitted again later once, e.g., more
         evidence has accumulated)."""
-        decision = self.route(proposal_id)
-        if not decision.will_promote:
-            return PromotionResult(decision, memory_id=None)
-        memory_id, _ = self._db.promote(
-            proposal_id, validated_by=validated_by,
-            promotion_method=decision.method)
-        return PromotionResult(decision, memory_id=memory_id)
+        with self._db._store.lock:
+            proposal = self._db.get_proposal(proposal_id)
+            if proposal is None:
+                raise KeyError(f"Proposal {proposal_id} not found.")
+            self._db.require_namespace_access(
+                proposal.namespace, validated_by, "write")
+            decision = self._route_locked(proposal_id, validated_by)
+            if not decision.will_promote:
+                return PromotionResult(decision, memory_id=None)
+            memory_id, _ = self._db.promote(
+                proposal_id, validated_by=validated_by,
+                promotion_method=decision.method)
+            return PromotionResult(decision, memory_id=memory_id)
 
     # ── Mode policies ──────────────────────────────────────────────────────────
 
-    def _automatic_gates(self, proposal) -> list[tuple[bool, str]]:
+    def _automatic_gates(self, proposal, actor_id=None) -> list[tuple[bool, str]]:
         """The AUTOMATIC-mode criteria, each as (passed, explanation). Shared by
         automatic and hybrid so the gate logic lives in exactly one place."""
         p = self.policy
-        conflict = self._has_conflicting_memory(proposal)
+        conflict_issues = self.conflict_hold_reasons(proposal, actor_id)
         evidence_count = len(proposal.evidence)
         evidence_reason = (
             f"{evidence_count} evidence item(s), need {p.minimum_evidence_items}"
@@ -211,12 +224,12 @@ class PromotionEngine:
             (p.is_trusted(proposal.agent_id),
              f"agent {proposal.agent_id!r} "
              f"{'trusted' if p.is_trusted(proposal.agent_id) else 'not trusted'}"),
-            (not conflict,
-             "conflicting memory exists" if conflict else "no conflicting memory"),
+            (not conflict_issues,
+             "; ".join(conflict_issues) if conflict_issues else "no conflicting memory"),
         ]
 
-    def _route_automatic(self, proposal) -> PromotionDecision:
-        gates = self._automatic_gates(proposal)
+    def _route_automatic(self, proposal, actor_id=None) -> PromotionDecision:
+        gates = self._automatic_gates(proposal, actor_id)
         reasons = [why for _, why in gates]
         if all(ok for ok, _ in gates):
             return PromotionDecision(
@@ -228,7 +241,7 @@ class PromotionEngine:
             proposal.proposal_id, PromotionOutcome.HOLD, self.mode,
             reasons=reasons)
 
-    def _route_consensus(self, proposal) -> PromotionDecision:
+    def _route_consensus(self, proposal, actor_id=None) -> PromotionDecision:
         """Admit once enough DISTINCT agents satisfy the consensus admission gate.
 
         This is governance for durable-memory admission only. It is not ELLA
@@ -252,8 +265,9 @@ class PromotionEngine:
             return PromotionDecision(
                 proposal.proposal_id, PromotionOutcome.HOLD, self.mode,
                 reasons=reasons)
-        if self._has_conflicting_memory(proposal):
-            reasons.append("conflicting memory exists")
+        conflict_issues = self.conflict_hold_reasons(proposal, actor_id)
+        if conflict_issues:
+            reasons.extend(conflict_issues)
             return PromotionDecision(
                 proposal.proposal_id, PromotionOutcome.HOLD, self.mode,
                 reasons=reasons)
@@ -267,14 +281,15 @@ class PromotionEngine:
             proposal.proposal_id, PromotionOutcome.HOLD, self.mode,
             reasons=reasons)
 
-    def _route_human(self, proposal) -> PromotionDecision:
+    def _route_human(self, proposal, actor_id=None) -> PromotionDecision:
         """Never auto-promote. A human decides by calling db.promote() directly
         (which records promotion_method=HUMAN)."""
         return PromotionDecision(
             proposal.proposal_id, PromotionOutcome.HOLD, self.mode,
-            reasons=["human approval required"])
+            reasons=["human approval required"] +
+            self.conflict_hold_reasons(proposal, actor_id))
 
-    def _route_hybrid(self, proposal) -> PromotionDecision:
+    def _route_hybrid(self, proposal, actor_id=None) -> PromotionDecision:
         """Route by risk. A high-risk proposal — low confidence, an existing
         conflicting memory, or an untrusted agent — is held for a human. Anything
         else is judged by the ordinary automatic gates."""
@@ -283,8 +298,7 @@ class PromotionEngine:
         if proposal.confidence <= p.risk_confidence:
             risks.append(f"low confidence {proposal.confidence:.2f} "
                          f"≤ risk {p.risk_confidence:.2f}")
-        if self._has_conflicting_memory(proposal):
-            risks.append("conflicting memory exists")
+        risks.extend(self.conflict_hold_reasons(proposal, actor_id))
         if not p.is_trusted(proposal.agent_id):
             risks.append(f"agent {proposal.agent_id!r} not trusted")
         if risks:
@@ -293,7 +307,7 @@ class PromotionEngine:
                 reasons=["high-risk → human review"] + risks)
         # Not high-risk: fall through to the automatic gates, but label the
         # method AUTOMATIC (hybrid promoted it without a human).
-        decision = self._route_automatic(proposal)
+        decision = self._route_automatic(proposal, actor_id)
         decision.mode = self.mode
         return decision
 
@@ -308,11 +322,39 @@ class PromotionEngine:
         We can only check what the proposal points at before it exists: its
         derivation ids. If any derived-from memory currently has a mapped
         conflict, treat the proposal as conflicting."""
+        return bool(self.conflict_hold_reasons(proposal))
+
+    def conflict_hold_reasons(self, proposal, actor_id=None) -> list[str]:
+        """Evaluate current mapped conflict heads and unmapped graph hints."""
+        from ..core.types import ConflictStatus
+
+        issues = []
         for src_id in proposal.derivation:
-            try:
-                if self._db.conflicts(src_id):
-                    return True
-            except Exception:
-                # A missing/unreadable derivation id is not a conflict signal.
+            source = self._db._reader.get(
+                src_id, include_deprecated=True, include_superseded=True)
+            if source is None or source.record_type not in self._db._DURABLE_MEMORY_TYPES:
+                issues.append(f"missing or invalid derivation {src_id}; review required")
                 continue
-        return False
+            if source.namespace != proposal.namespace:
+                issues.append(f"cross-namespace derivation {src_id}; review required")
+                continue
+            if actor_id is not None:
+                self._db.require_namespace_access(source.namespace, actor_id, "read")
+            mapped = self._db.conflicts_for(
+                src_id, include_closed=True, caller=actor_id)
+            mapped_peers = set()
+            for conflict in mapped:
+                peer = (conflict.memory_b if conflict.memory_a == src_id
+                        else conflict.memory_a)
+                mapped_peers.add(peer)
+                if conflict.status in (ConflictStatus.OPEN, ConflictStatus.INVESTIGATING):
+                    issues.append(f"conflicting memory exists: {conflict.conflict_id} is {conflict.status.value}")
+                elif conflict.status == ConflictStatus.RESOLVED:
+                    if conflict.winner_id not in (conflict.memory_a, conflict.memory_b):
+                        issues.append(f"conflict {conflict.conflict_id} has ambiguous resolution; review required")
+                    elif conflict.winner_id != src_id:
+                        issues.append(f"conflict {conflict.conflict_id} rejected derivation; review required")
+            for peer in self._db._graph_index.connected(src_id, "contradicts"):
+                if peer not in mapped_peers:
+                    issues.append(f"conflicting memory exists: unmapped contradicts relationship for {src_id}; investigation required")
+        return issues

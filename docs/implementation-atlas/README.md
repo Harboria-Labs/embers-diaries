@@ -37,3 +37,7 @@ Batch 1 is now implemented in the local working tree and validated with isolated
 ## Targeted API authorization correction (2026-10-16)
 
 POST /v1/maintenance now validates an explicit nonempty namespace list and checks the authenticated agent's existing WRITE ACL for every requested namespace before reflect/consolidate. Default memories applies only when the field is absent. Token authentication with a session header now requires an existing, active session owned by that agent before observation binding. Session-only authentication is unchanged. This does not establish a new integrity-audit permission model or change scheduled/MCP maintenance policy.
+
+## Batch 2 local implementation — 2026-10-17
+
+Promotion now evaluates current mapped CONFLICT status and recorded resolution outcome, with unmapped graph relationships held for investigation. The shared store lock spans routing and admission; direct promotion rechecks conflict state and uses proposal-head CAS. Conflict-related Human overrides remain blocked because no verified human authority exists. See [Batch 2 evidence](../../track7_atlas_design_20261015/13_BATCH2_IMPLEMENTATION_EVIDENCE.md). Isolated validation passed; this is not live deployment. Batches 3 and 4 remain pending.

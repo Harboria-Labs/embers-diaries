@@ -34,3 +34,7 @@ Failure behavior also depends on transport adaptation: `EmberMCP.call_tool` conv
 - **Conflict:** REST/MCP shared protocol → `conflicts_for`/open queue → certified MasterIndex CONFLICT type candidates → selected sealed conflict/current-head reads and ACL/status filtering. Mapping locks pair lookup and write; status transition locks head validation and `update(expected_hash=...)`. An idempotent mapping retry repairs a missing graph edge after an interrupted map. Graph remains a relation, CONFLICT records remain status authority.
 
 The older rows above describe the pre-Batch-1 snapshot. Exact isolated validation and limits are in `track7_atlas_design_20261015/12_BATCH1_IMPLEMENTATION_EVIDENCE.md`.
+
+## Batch 2 promotion path — 2026-10-17
+
+REST/MCP authenticated route or submit -> PromotionEngine._route_locked under the shared store lock -> verified proposal and derivation reads -> conflicts_for(include_closed=True, caller=actor) for current mapped CONFLICT heads -> status/winner and unmapped graph-hint evaluation. HOLD writes nothing. PROMOTE -> EmberDB._promote_locked rechecks ACL and conflict under the lock -> writes/reuses deterministic NODE and EVIDENCE -> updates proposal head with expected_hash CAS. Direct Human promotion uses the same final conflict recheck. Rejection uses the lock and proposal CAS. Integrity, permission, stale head and inconsistent retry errors surface. The multi-record promotion is retryable at tested interruption points but is not one native atomic transaction.

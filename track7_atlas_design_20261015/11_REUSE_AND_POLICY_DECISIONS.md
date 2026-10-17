@@ -21,3 +21,7 @@
 5. **Protocol presentation.** Decide how stale conflict status and preexisting ambiguous forks are represented to REST/MCP clients while preserving existing response shape where possible. A conflict-specific 409-style response is proposed, but source currently exposes mixed validation/concurrency errors.
 
 The first implementation batch can be prepared against existing semantics, but policy-dependent branches in Batches 2–4 remain gated by these decisions. Approval of the roadmap is not approval to edit source under the Atlas maintenance contract.
+
+## Batch 2 approved-policy disposition — 2026-10-17
+
+The user's Batch 2 instruction approved the status table: OPEN/INVESTIGATING hold; RESOLVED winner passes ordinary gates, loser/ambiguous hold; ACCEPTED_BOTH and SUPERSEDED pass ordinary gates; graph-only edge holds; missing/invalid relevant derivation fails closed; any applicable hold blocks automatic admission. This supersedes the first open decision above for current local implementation. Existing Promotion Engine, Conflict Engine, MasterIndex retrieval, lock/CAS and immutable versions were reused; no second engine or index was added. Genuine human identity and conflict-override reason/version policy remain unresolved: no conflict-related override is allowed. The future Ember Control Center is an administrative interface, separate from the read-only Research Observatory. Independent audit and ELLA policy decisions above remain open; Batches 3-4 are not implemented.

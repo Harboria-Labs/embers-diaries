@@ -472,8 +472,9 @@ class EmberMCP:
             })
 
         if name == "ember_promotion_route":
-            self._auth(args)
-            decision = self.db.promotion_route(args["proposal_id"])
+            agent = self._auth(args)
+            decision = self.db.promotion_route(
+                args["proposal_id"], actor_id=agent.agent_id)
             return _text(decision.to_dict())
 
         if name == "ember_promote":

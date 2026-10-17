@@ -692,6 +692,8 @@ async def submit_proposal(
         raise HTTPException(400, "proposal_id required")
     try:
         result = db.submit(pid, validated_by=agent.agent_id)
+    except PermissionError as e:
+        raise HTTPException(403, str(e)) from e
     except KeyError as e:
         raise HTTPException(404, str(e)) from e
     except ValueError as e:
@@ -709,12 +711,14 @@ async def promotion_route(
     """Dry run — what would the engine decide? Writes nothing."""
     from . import _get_db
     db = _get_db()
-    require_agent(db, x_ember_agent_id, x_ember_token)
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
     pid = body.get("proposal_id")
     if not pid:
         raise HTTPException(400, "proposal_id required")
     try:
-        return db.promotion_route(pid).to_dict()
+        return db.promotion_route(pid, actor_id=agent.agent_id).to_dict()
+    except PermissionError as e:
+        raise HTTPException(403, str(e)) from e
     except KeyError as e:
         raise HTTPException(404, str(e)) from e
 
@@ -743,6 +747,8 @@ async def promote_proposal(
             pid, validated_by=agent.agent_id,
             promotion_method=PromotionMethod.HUMAN,
         )
+    except PermissionError as e:
+        raise HTTPException(403, str(e)) from e
     except KeyError as e:
         raise HTTPException(404, str(e)) from e
     except ValueError as e:
@@ -768,6 +774,8 @@ async def reject_proposal(
     try:
         rejected_id = db.reject(pid, reason=body.get("reason", ""),
                                 rejected_by=agent.agent_id)
+    except PermissionError as e:
+        raise HTTPException(403, str(e)) from e
     except KeyError as e:
         raise HTTPException(404, str(e)) from e
     except ValueError as e:

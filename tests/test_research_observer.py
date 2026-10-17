@@ -50,9 +50,15 @@ def test_follows_namespaces_sessions_persistence_and_no_mutation(env):
     assert s1 not in json.dumps(data) and s2 not in json.dumps(data)
     assert data['events'][0]['session']!=data['events'][1]['session']
     assert ro.page(db,grant['code'],data['cursor'])['events']==[]
-    reopened=EmberDB.connect(str(path))
-    assert ro.page(reopened,grant['code'],first['cursor'])['events']==data['events']
     assert file_hashes(path)==before
+    reopened=EmberDB.connect(str(path))
+    # Batch 1 certifies and republishes the derived MasterIndex on open.
+    # Observer reads themselves must leave the reopened store unchanged.
+    after_reopen=file_hashes(path)
+    assert {k:v for k,v in after_reopen.items() if not k.startswith('indexes\\')}=={
+        k:v for k,v in before.items() if not k.startswith('indexes\\')}
+    assert ro.page(reopened,grant['code'],first['cursor'])['events']==data['events']
+    assert file_hashes(path)==after_reopen
 
 
 def test_scope_filters_and_no_cross_agent_or_namespace_leak(env):
