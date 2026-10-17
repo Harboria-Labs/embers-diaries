@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from ..core.feedback import Feedback, FeedbackOutcome, FeedbackAttribution
 from ..maintenance import run_maintenance_cycle
+from ..maintenance import run_integrity_audit, get_integrity_audit
 from . import server
 from .server import _text, _err
 
@@ -130,6 +131,22 @@ _TOOLS = [
             "required": [],
         },
     },
+    {
+        "name": "ember_integrity_audit",
+        "description": "Run an independent physical and MasterIndex audit for authorized namespaces.",
+        "inputSchema": {"type": "object", "properties": {
+            "namespaces": {"type": "array", "items": {"type": "string"}},
+            "agent_id": {"type": "string"}, "token": {"type": "string"},
+            "session_id": {"type": "string"}}, "required": ["namespaces"]},
+    },
+    {
+        "name": "ember_integrity_audit_status",
+        "description": "Read one integrity audit report within authorized namespaces.",
+        "inputSchema": {"type": "object", "properties": {
+            "run_id": {"type": "string"}, "agent_id": {"type": "string"},
+            "token": {"type": "string"}, "session_id": {"type": "string"}},
+            "required": ["run_id"]},
+    },
 ]
 
 
@@ -181,9 +198,21 @@ def install() -> None:
                 return _err(f"record {args['record_id']} not found")
             return _text(report.to_dict())
         if name == "ember_run_maintenance":
-            self._auth(args)
-            namespaces = args.get("namespaces") or [self.protocol.namespace]
+            agent = self._auth(args)
+            namespaces = args.get("namespaces", [self.protocol.namespace])
+            if (not isinstance(namespaces, list) or not namespaces or
+                    any(not isinstance(ns, str) or not ns.strip() or ns != ns.strip()
+                        for ns in namespaces)):
+                raise ValueError("namespaces must be a nonempty list of names")
+            for namespace in namespaces:
+                self.db.require_namespace_access(namespace, agent.agent_id, "write")
             return _text(run_maintenance_cycle(self.protocol, namespaces))
+        if name == "ember_integrity_audit":
+            agent = self._auth(args)
+            return _text(run_integrity_audit(self.db, args.get("namespaces"), agent.agent_id))
+        if name == "ember_integrity_audit_status":
+            agent = self._auth(args)
+            return _text(get_integrity_audit(self.db, args["run_id"], agent.agent_id))
         return orig(self, name, args)
 
     server.EmberMCP._call = _call

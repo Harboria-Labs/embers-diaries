@@ -41,3 +41,6 @@ POST /v1/maintenance now validates an explicit nonempty namespace list and check
 ## Batch 2 local implementation — 2026-10-17
 
 Promotion now evaluates current mapped CONFLICT status and recorded resolution outcome, with unmapped graph relationships held for investigation. The shared store lock spans routing and admission; direct promotion rechecks conflict state and uses proposal-head CAS. Conflict-related Human overrides remain blocked because no verified human authority exists. See [Batch 2 evidence](../../track7_atlas_design_20261015/13_BATCH2_IMPLEMENTATION_EVIDENCE.md). Isolated validation passed; this is not live deployment. Batches 3 and 4 remain pending.
+## Batch 3 implementation note — 2026-10-17
+
+The current test branch adds independent, scoped physical/index audit reporting in existing maintenance code, protected REST/MCP access, and local-operator-only derived-index recovery with re-audit. This supplements older research-only statements above; it does not change normal recall, conflict lookup, ELLA, or observer source. See [Batch 3 evidence](../../track7_atlas_design_20261015/14_BATCH3_IMPLEMENTATION_EVIDENCE.md), [coverage](COVERAGE_REGISTER.md), and the [source-version entry](MAINTENANCE_CONTRACT.md). Batch 4 and live validation remain open.

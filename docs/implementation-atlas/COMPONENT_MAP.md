@@ -36,3 +36,6 @@ The seven-upgrade [contract](../../track7_atlas_design_20261015/09_COMPLETE_UPGR
 ## Batch 2 ownership correction — 2026-10-17
 
 The existing Promotion Engine now owns status-aware admission by reading authoritative CONFLICT heads through Batch 1 conflict retrieval. EmberDB owns the locked final recheck, retry identity and proposal CAS. The Conflict Engine still owns mapping, transition and history; ELLA still owns epistemic truth. REST/MCP pass the authenticated actor to routing. Independent auditing and ELLA state reuse remain pending. Evidence: track7_atlas_design_20261015/13_BATCH2_IMPLEMENTATION_EVIDENCE.md.
+## Batch 3 maintenance integration — 2026-10-17
+
+`embers/maintenance.py` owns opt-in physical/index diagnostics and durable status under `meta/integrity_audits`; it calls strict record decoding/integrity, source epoch, physical sidecars and persisted MasterIndex, then optionally the existing DB reconciliation under a local-operator-only recovery entry. REST `embers/api/feedback_routes.py` and MCP `embers/mcp/feedback_surface.py` share this backend and namespace ACL rules. Reports are diagnostic metadata, not memory records, `audit_write` provenance, Failure records, conflict review, Promotion Engine decisions, ELLA judgments or observer source. The reflect/consolidate scheduler remains separate and unchanged.

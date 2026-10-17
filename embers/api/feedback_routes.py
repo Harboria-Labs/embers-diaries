@@ -6,6 +6,7 @@ from fastapi import APIRouter, Header, HTTPException
 
 from ..core.feedback import Feedback, FeedbackOutcome, FeedbackAttribution
 from ..maintenance import run_maintenance_cycle
+from ..maintenance import run_integrity_audit, get_integrity_audit
 
 router = APIRouter(prefix="/v1")
 
@@ -90,6 +91,52 @@ async def run_maintenance(
     for namespace in namespaces:
         v1.require_namespace(db, namespace, agent.agent_id, "write")
     return run_maintenance_cycle(v1._proto(db), namespaces)
+
+
+@router.post("/maintenance/integrity/audits")
+async def start_integrity_audit(
+    body: dict,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    """Run one independent, read-only physical/index audit in a worker thread."""
+    import asyncio
+    db = _db()
+    agent = _agent(db, x_ember_agent_id, x_ember_token)
+    namespaces = body.get("namespaces")
+    if (not isinstance(namespaces, list) or not namespaces or
+            any(not isinstance(ns, str) or not ns.strip() or ns != ns.strip()
+                for ns in namespaces)):
+        raise HTTPException(400, "namespaces must be a nonempty list of names")
+    from . import v1
+    for namespace in namespaces:
+        v1.require_namespace(db, namespace, agent.agent_id, "write")
+    try:
+        return await asyncio.to_thread(run_integrity_audit, db, namespaces, agent.agent_id)
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(409, str(exc)) from exc
+
+
+@router.get("/maintenance/integrity/audits/{run_id}")
+async def integrity_audit_status(
+    run_id: str,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    db = _db()
+    agent = _agent(db, x_ember_agent_id, x_ember_token)
+    try:
+        return get_integrity_audit(db, run_id, agent.agent_id)
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except KeyError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
 
 
 @router.get("/sessions/{session_id}/work")
