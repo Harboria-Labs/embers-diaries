@@ -48,3 +48,7 @@ The current test branch adds independent, scoped physical/index audit reporting 
 ## Batch 4 local implementation — 2026-10-17
 
 Normal ELLA reads and updates now reuse a bounded, verified process projection after first authoritative replay. The sealed event journal, native reducer and full `load()` replay remain authoritative. Source epoch, journal head, store identity and Batch 3 audit marker govern reuse; committed new events are reduced incrementally. See [Batch 4 evidence](../../track7_atlas_design_20261015/15_BATCH4_IMPLEMENTATION_EVIDENCE.md). Local isolated validation is separate from live-agent and production validation.
+
+## Phase 5 local validation — 2026-10-17
+
+The selected cross-feature and native/recovery test groups passed in isolated stores; the two installed-native source-epoch skips passed separately with a compatible staged build. A disposable 50/150/300-memory probe measured fixed targeted physical-read counts, growing per-query in-memory metadata fingerprint CPU work, and source scans at cold/catch-up/explicit reconciliation. This is consistent with the approved Batch 1 physical-I/O contract, so no runtime index change was made. See [Phase 5 evidence](../../track7_atlas_design_20261015/16_PHASE5_VALIDATION_EVIDENCE.md) for exact results and limits. No live deployment or validation was performed.
