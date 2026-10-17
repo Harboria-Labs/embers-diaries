@@ -112,8 +112,10 @@ def run_integrity_audit(db, namespaces: list[str], actor: str) -> dict:
     with db._store.lock:
         directory = _audit_dir(db)
         active_path = directory / "active.json"
+        last_run_id = None
         if active_path.exists():
             active = decode_index(active_path.read_bytes())
+            last_run_id = active.get("last_run_id")
             if active.get("run_id"):
                 old_path = _report_path(db, active["run_id"])
                 if old_path.exists():
@@ -134,7 +136,8 @@ def run_integrity_audit(db, namespaces: list[str], actor: str) -> dict:
             "findings_truncated": 0, "recovery": [],
         }
         _save_report(db, report)
-        atomic_replace(str(active_path), encode_index({"run_id": run_id}))
+        atomic_replace(str(active_path), encode_index({"run_id": run_id,
+                                                      "last_run_id": last_run_id}))
     records: dict[str, EmberRecord] = {}
     unknown_scope = False
     try:
@@ -283,7 +286,8 @@ def run_integrity_audit(db, namespaces: list[str], actor: str) -> dict:
             active_path = _audit_dir(db) / "active.json"
             active = decode_index(active_path.read_bytes())
             if active.get("run_id") == run_id:
-                atomic_replace(str(active_path), encode_index({"run_id": None}))
+                atomic_replace(str(active_path), encode_index({"run_id": None,
+                                                              "last_run_id": run_id}))
     return report
 
 

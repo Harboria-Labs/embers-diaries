@@ -44,3 +44,7 @@ Promotion now evaluates current mapped CONFLICT status and recorded resolution o
 ## Batch 3 implementation note — 2026-10-17
 
 The current test branch adds independent, scoped physical/index audit reporting in existing maintenance code, protected REST/MCP access, and local-operator-only derived-index recovery with re-audit. This supplements older research-only statements above; it does not change normal recall, conflict lookup, ELLA, or observer source. See [Batch 3 evidence](../../track7_atlas_design_20261015/14_BATCH3_IMPLEMENTATION_EVIDENCE.md), [coverage](COVERAGE_REGISTER.md), and the [source-version entry](MAINTENANCE_CONTRACT.md). Batch 4 and live validation remain open.
+
+## Batch 4 local implementation — 2026-10-17
+
+Normal ELLA reads and updates now reuse a bounded, verified process projection after first authoritative replay. The sealed event journal, native reducer and full `load()` replay remain authoritative. Source epoch, journal head, store identity and Batch 3 audit marker govern reuse; committed new events are reduced incrementally. See [Batch 4 evidence](../../track7_atlas_design_20261015/15_BATCH4_IMPLEMENTATION_EVIDENCE.md). Local isolated validation is separate from live-agent and production validation.

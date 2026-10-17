@@ -4,14 +4,58 @@ Exact memory ID + immutable content hash is the claim version. Observation never
 writes this journal. Evidence is referenced by its stored record ID.
 """
 from copy import deepcopy
+from collections import OrderedDict
+from dataclasses import dataclass
+import os
+from pathlib import Path
+import threading
 import time
 import uuid
 from ..core.domain import call
 from ..core.record import EmberRecord
 from ..core.types import RecordType
 from .usefulness import canonical, digest, identifier
+from ..storage.format import decode_index
 
 KIND='ember.epistemic.v1'
+_CACHE_LIMIT=16
+_CACHE_LOCK=threading.RLock()
+_VERIFIED: OrderedDict[tuple[str,str], '_VerifiedState']=OrderedDict()
+_METRICS={'cold_replays':0,'warm_reuses':0,'incremental_events':0,
+          'head_reads':0,'invalidations':0}
+
+@dataclass
+class _VerifiedState:
+    state: dict
+    revision: int
+    seal: str | None
+    head_hash: str | None
+    epoch: int
+    retries: dict
+    store_identity: tuple[int,int]
+    audit_boundary: bytes
+
+def clear_verified_state(store_path=None, namespace=None):
+    """Discard disposable projections, including after external diagnostics."""
+    with _CACHE_LOCK:
+        if store_path is None:
+            _METRICS['invalidations']+=len(_VERIFIED)
+            _VERIFIED.clear()
+            return
+        path=os.path.normcase(str(Path(store_path).resolve()))
+        for key in list(_VERIFIED):
+            if key[0]==path and (namespace is None or key[1]==namespace):
+                _METRICS['invalidations']+=1
+                del _VERIFIED[key]
+
+def verified_state_stats():
+    """Small diagnostic view; no retained journal events or responses."""
+    with _CACHE_LOCK:
+        return {'projections':len(_VERIFIED), 'limit':_CACHE_LIMIT,
+                'revisions':{str(key):value.revision for key,value in _VERIFIED.items()},
+                'retry_identities':sum(len(value.retries) for value in _VERIFIED.values()),
+                'state_bytes':sum(len(canonical(value.state).encode()) for value in _VERIFIED.values()),
+                **_METRICS}
 
 def enable_epistemic(db, admins):
     """Configure ELLA decision authority independently of usefulness/FUR."""
@@ -22,22 +66,133 @@ class EpistemicLedger:
         self.db,self.namespace=db,namespace
         self.prefix='epistemic-'+uuid.uuid5(uuid.NAMESPACE_URL,KIND+namespace).hex+'-'
 
+    def _cache_key(self):
+        return os.path.normcase(str(self.db._store.root.resolve())),self.namespace
+
+    def _source_identity(self):
+        stat=self.db._store.root.stat()
+        return stat.st_dev,stat.st_ino
+
+    def _audit_boundary(self):
+        path=self.db._store.meta_dir/'integrity_audits'/'active.json'
+        if not path.exists():return b''
+        raw=path.read_bytes()
+        marker=decode_index(raw)
+        if not isinstance(marker,dict) or 'run_id' not in marker:
+            raise ValueError('integrity audit boundary is invalid')
+        return raw
+
+    def _journal_event(self,rid,revision,previous):
+        try:
+            record=self.db._store.read_strict(rid)
+        except Exception as exc:
+            raise ValueError('epistemic journal integrity failure') from exc
+        if (rid!=self.prefix+f'{revision:012d}' or record.namespace!=self.namespace or
+                record.record_type!=RecordType.RAW or record.retrieval_candidate or
+                record.content_hash is None):
+            raise ValueError('epistemic journal integrity failure')
+        event=record.data
+        if (not isinstance(event,dict) or event.get('id')!=rid or
+                event.get('revision')!=revision or event.get('previous')!=previous or
+                digest({k:v for k,v in event.items() if k!='seal'})!=event.get('seal')):
+            raise ValueError('epistemic journal chain failure')
+        return event,record.content_hash
+
+    def _current(self):
+        """Verified in-process state; the journal remains the replay authority."""
+        with self.db._writer.lock:
+            key=self._cache_key()
+            identity=self._source_identity()
+            boundary=self._audit_boundary()
+            epoch=self.db._store.index_epoch()
+            with _CACHE_LOCK:
+                cached=_VERIFIED.get(key)
+            if (cached is not None and cached.store_identity==identity and
+                    cached.audit_boundary==boundary and
+                    not (boundary and decode_index(boundary).get('run_id'))):
+                try:
+                    if cached.revision:
+                        head_id=self.prefix+f'{cached.revision:012d}'
+                        head=self.db._store.read_strict(head_id)
+                        with _CACHE_LOCK:_METRICS['head_reads']+=1
+                        if (head.namespace!=self.namespace or head.record_type!=RecordType.RAW or
+                                head.retrieval_candidate or head.content_hash!=cached.head_hash or
+                                head.data.get('seal')!=cached.seal or
+                                head.data.get('state')!=cached.state):
+                            raise ValueError('epistemic cached head differs from source')
+                    if epoch!=cached.epoch:
+                        ids=sorted(rid for rid in self.db._store.all_ids() if rid.startswith(self.prefix))
+                        if len(ids)<cached.revision or any(
+                                rid!=self.prefix+f'{i:012d}' for i,rid in enumerate(ids,1)):
+                            raise ValueError('epistemic journal sequence changed')
+                        state=cached.state;seal=cached.seal;head_hash=cached.head_hash
+                        retries=dict(cached.retries)
+                        for revision,rid in enumerate(ids[cached.revision:],cached.revision+1):
+                            event,head_hash=self._journal_event(rid,revision,seal)
+                            state=call('ella_reduce',{'state':state,'event':event})
+                            seal=event['seal']
+                            retries[(event['actor'],event['request_id'])]=(event['fingerprint'],rid)
+                            with _CACHE_LOCK:_METRICS['incremental_events']+=1
+                        cached=_VerifiedState(state,len(ids),seal,head_hash,epoch,retries,identity,boundary)
+                    with _CACHE_LOCK:
+                        _VERIFIED[key]=cached;_VERIFIED.move_to_end(key)
+                        _METRICS['warm_reuses']+=1
+                    return cached
+                except Exception:
+                    clear_verified_state(self.db._store.root,self.namespace)
+                    # Replay gives the authoritative result or raises on corrupt source.
+            state,events=self.load()
+            with _CACHE_LOCK:_METRICS['cold_replays']+=1
+            retries={(event['actor'],event['request_id']):(event['fingerprint'],event['id'])
+                     for event in events}
+            revision=len(events)
+            head_hash=(self.db._store.read_strict(events[-1]['id']).content_hash
+                       if events else None)
+            cached=_VerifiedState(state,revision,events[-1]['seal'] if events else None,
+                                  head_hash,epoch,retries,identity,boundary)
+            if not (boundary and decode_index(boundary).get('run_id')):
+                with _CACHE_LOCK:
+                    _VERIFIED[key]=cached;_VERIFIED.move_to_end(key)
+                    while len(_VERIFIED)>_CACHE_LIMIT:_VERIFIED.popitem(last=False)
+            return cached
+
+    def _publish(self,state,event):
+        """Advance only after the immutable journal write has returned."""
+        key=self._cache_key()
+        with _CACHE_LOCK:
+            prior=_VERIFIED.get(key)
+        if prior is None:return
+        retries=dict(prior.retries)
+        retries[(event['actor'],event['request_id'])]=(event['fingerprint'],event['id'])
+        head=self.db._store.read_strict(event['id'])
+        updated=_VerifiedState(state,event['revision'],event['seal'],head.content_hash,
+                               self.db._store.index_epoch(),retries,
+                               self._source_identity(),self._audit_boundary())
+        with _CACHE_LOCK:
+            _VERIFIED[key]=updated;_VERIFIED.move_to_end(key)
+            while len(_VERIFIED)>_CACHE_LIMIT:_VERIFIED.popitem(last=False)
+
     def load(self):
-        events=[]
-        for rid in sorted(x for x in self.db._store.all_ids() if x.startswith(self.prefix)):
-            record=self.db._store.read(rid)
-            if (rid!=self.prefix+f'{len(events)+1:012d}' or record is None or
-                record.namespace!=self.namespace or record.record_type!=RecordType.RAW or
-                record.retrieval_candidate or not record.verify_integrity()):
-                raise ValueError('epistemic journal integrity failure')
-            event=record.data
-            if event['previous']!=(events[-1]['seal'] if events else None) or digest({k:v for k,v in event.items() if k!='seal'})!=event['seal']:
-                raise ValueError('epistemic journal chain failure')
-            events.append(event)
-        state=dict(assessments={},evidence_overrides={},hard_groups={},policy=call('ella_policy_default',None),carried={})
-        for event in events:
-            state=call('ella_reduce',{'state':state,'event':event})
-        return state,events
+        """Authoritative full replay, retained for recovery and verification."""
+        with self.db._writer.lock:
+            try:
+                events=[]
+                for rid in sorted(x for x in self.db._store.all_ids() if x.startswith(self.prefix)):
+                    event,_=self._journal_event(rid,len(events)+1,
+                                                events[-1]['seal'] if events else None)
+                    events.append(event)
+                state=dict(assessments={},evidence_overrides={},hard_groups={},
+                           policy=call('ella_policy_default',None),carried={})
+                for event in events:
+                    state=call('ella_reduce',{'state':state,'event':event})
+                with _CACHE_LOCK:
+                    cached=_VERIFIED.get(self._cache_key())
+                if cached is not None and (cached.revision!=len(events) or cached.state!=state):
+                    clear_verified_state(self.db._store.root,self.namespace)
+                return state,events
+            except Exception:
+                clear_verified_state(self.db._store.root,self.namespace)
+                raise
 
     def target(self,rid):
         rec=self.db._store.read(rid)
@@ -49,7 +204,7 @@ class EpistemicLedger:
     def project(self,rid,state=None,revision=None):
         target=self.target(rid)
         if state is None:
-            state,events=self.load();revision=len(events)
+            current=self._current();state=current.state;revision=current.revision
         evidence=[]
         records={r.id:r for r in self.db.evidence_for(rid)}
         for eid in state.get('carried',{}).get(rid,[]):
@@ -100,17 +255,23 @@ class EpistemicLedger:
         if type(expected_revision)!=int or expected_revision<0:raise ValueError('expected_revision required')
         fingerprint=digest([actor,action,payload,expected_revision])
         with self.db._writer.lock:
-            state,events=self.load()
-            for event in events:
-                if event['actor']==actor and event['request_id']==request_id:
-                    if event['fingerprint']!=fingerprint:raise ValueError('request id reused with different content')
-                    return deepcopy(event['response'])
-            if expected_revision!=len(events):raise ValueError('stale epistemic revision')
+            head=self._current();state=head.state
+            retry=head.retries.get((actor,request_id))
+            if retry is not None:
+                if retry[0]!=fingerprint:raise ValueError('request id reused with different content')
+                retry_revision=int(retry[1][-12:])
+                previous=(None if retry_revision==1 else
+                          self.db._store.read_strict(self.prefix+f'{retry_revision-1:012d}').data['seal'])
+                event,_=self._journal_event(retry[1],retry_revision,previous)
+                if event['fingerprint']!=fingerprint:
+                    raise ValueError('epistemic retry source differs from verified identity')
+                return deepcopy(event['response'])
+            if expected_revision!=head.revision:raise ValueError('stale epistemic revision')
             rid=payload.get('target_memory_id');target=self.target(rid)
             if payload.get('target_memory_version')!=target.content_hash:raise ValueError('exact target content hash required')
             admin=actor in getattr(self.db,'_epistemic_admins',())
             available_evidence={r.id for r in self.db.evidence_for(rid)}|set(state.get('carried',{}).get(rid,[]))
-            next_state=deepcopy(state);revision=len(events)+1;event_id=self.prefix+f'{revision:012d}'
+            next_state=deepcopy(state);revision=head.revision+1;event_id=self.prefix+f'{revision:012d}'
             reason=payload.get('assessment_note') or payload.get('reason')
             identifier(reason,'audit note')
             allowed_common={'target_memory_id','target_memory_version','reason','session_id'}
@@ -147,7 +308,7 @@ class EpistemicLedger:
                         raise ValueError('resolution evidence must belong to the resolved epistemic unit')
                     accepted=[a for a in priors if a['status']=='accepted']
                     if accepted:
-                        current=self.project(rid,state,len(events))
+                        current=self.project(rid,state,revision-1)
                         chosen_ids=set(chosen)
                         matched=any(u.get('status')=='unresolved' and set(u.get('assessment_ids',[]))==chosen_ids
                                     for u in current.get('units',[]))
@@ -157,7 +318,7 @@ class EpistemicLedger:
                         # Threshold-confirmation disagreement is pending rather
                         # than score-bearing. Resolution must cover the complete
                         # opposed confirmation pair; no third-vote shortcut.
-                        current=self.project(rid,state,len(events))
+                        current=self.project(rid,state,revision-1)
                         chosen_ids=set(chosen)
                         if not any(chosen_ids==set(group) for group in current.get('resolution_assessment_groups',[])):
                             raise ValueError('pending resolution must cover one complete confirmation disagreement')
@@ -196,7 +357,7 @@ class EpistemicLedger:
                     else:assessment['status']='confirmation_required'
                 next_state['assessments'][assessment['assessment_id']]=assessment
                 if action!='confirm':
-                    before=self.project(rid,state,len(events));after=self.project(rid,next_state,revision)
+                    before=self.project(rid,state,revision-1);after=self.project(rid,next_state,revision)
                     decision=call('ella_crossing',{'before':before,'after':after})
                     if decision['confirmation_required']:
                         assessment['status']='confirmation_required'
@@ -275,7 +436,7 @@ class EpistemicLedger:
             event=dict(kind=KIND,id=event_id,namespace=self.namespace,revision=revision,actor=actor,request_id=request_id,
                 action=action,payload=deepcopy(payload),created_at=time.time(),fingerprint=fingerprint,
                 observation=dict(operation='epistemic_'+action,memory_ids=[rid],session_id=session,epistemic=response),
-                previous=events[-1]['seal'] if events else None,state=next_state,response=response)
+                previous=head.seal,state=next_state,response=response)
             # The Rust reducer owns journal transition validation both at commit
             # time and replay time. Python supplies authenticated IO context but
             # cannot persist a state mutation the native reducer rejects.
@@ -284,6 +445,9 @@ class EpistemicLedger:
             event['seal']=digest(event)
             self.db._writer.write(EmberRecord(id=event_id,namespace=self.namespace,record_type=RecordType.RAW,
                 data=event,written_by=actor,agent_id=actor,retrieval_candidate=False,training_candidate=False))
+            try:self._publish(next_state,event)
+            except Exception:
+                clear_verified_state(self.db._store.root,self.namespace)
             # Durable source first; delivery is recoverable from this source at startup.
             from ..integration.observation_journal import initialize,append
             from ..integration.observation_stream import committed

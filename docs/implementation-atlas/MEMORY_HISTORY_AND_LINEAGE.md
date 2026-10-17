@@ -25,3 +25,6 @@ Semantic conflicts are `RecordType.CONFLICT` records with their own supersession
 ## Write-audit distinction — 2026-10-15
 
 `audit_write(record_id)` is already a read-only composed trace of one durable write, including exact hashes, branch/version context, causal graph, proposal and evidence provenance (`embers/db.py:443-560`; `tests/test_write_audit.py:42-194`). It is **not** a namespace-wide physical integrity scan. Native WAL, sealed record verification and supersession sidecars already protect their respective source/version paths; their roles are reconciled in `track7_atlas_design_20261015/08_EXISTING_MECHANISM_RECONCILIATION.md`.
+## Batch 4 boundary check — 2026-10-17
+
+The new ELLA projection caches epistemic assessment state and compact journal retry identities only. It does not replace agent-accessible memory-version history, supersession lineage, revision records or relationship semantics. `tests/test_v1_memory_read_api.py` passed in the focused Batch 4 cross-feature group; see `track7_atlas_design_20261015/15_BATCH4_IMPLEMENTATION_EVIDENCE.md`.
