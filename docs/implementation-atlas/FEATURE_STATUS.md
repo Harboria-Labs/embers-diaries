@@ -51,3 +51,11 @@ Batch 2 validation supplement: a spawned-process losing-resolution versus submit
 ## Track 7 current milestone status — 2026-10-17
 
 **Local implementation and isolated validation complete** for the four approved implementation batches and Phase 5 integrated checkpoint on `codex/ember-split-feedback-candidate04` through `fe0a001`. The batch and Phase 5 evidence files remain the detailed record; earlier planning and per-batch pending statements above are historical snapshots. This status does not certify deployment, production behavior or a general capacity bound. Live-agent validation, production-scale performance, mixed-version compatibility and real power-loss durability remain **unverified**. Historical ELLA tamper detection between audits and the documented audit/administrative limits also remain as stated in the batch evidence. No Phase 6 work is included in this milestone.
+
+## Lobby V2 design status — 2026-10-18
+
+The ten Lobby V2 principles and five architectural decisions are **approved**. Implementation, focused tests, harness integration and live validation are tracked by batch. The existing Lobby baseline is a process-local request/response board with explicit promotion. Source reconciliation and requirements are in `paper/lobby_v2_architecture.md` and `paper/lobby_v2_gap_matrix.md`. The Research Observatory remains read only and separate. This status does not reopen Track 7 or start Phase 6.
+
+### Lobby V2 Batch 1 — isolated source milestone
+
+Shared-task scope/membership, bounded restart-resilient provisional items, idempotent submission, author correction/withdrawal, expiry/close, contextual query and separately authorized evidence-reference retrieval are implemented in `embers/lobby/working.py` and `embers/api/lobby_v2.py`. Focused isolated command: **25 passed**; evidence and limits in `paper/lobby_v2_batch1_evidence.md`. Server-pushed delivery, retry-safe durable promotion, attributed peer contributions and automatic harness capture remain pending. No production or live validation is claimed.

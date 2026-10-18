@@ -159,8 +159,10 @@ async def require_legacy_agent(request: Request, call_next):
 
 
 from .v1 import router as v1_router
+from .lobby_v2 import router as lobby_v2_router
 from .mcp_http import router as mcp_router
 app.include_router(v1_router)
+app.include_router(lobby_v2_router)
 app.include_router(mcp_router)
 install_session_gate(app)
 
