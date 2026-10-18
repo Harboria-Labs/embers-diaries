@@ -80,8 +80,12 @@ async def evidence(scope_id: str, item_id: str, session_id: str,
                    x_ember_agent_id: str | None = Header(default=None),
                    x_ember_token: str | None = Header(default=None)):
     db, actor = _caller(x_ember_agent_id, x_ember_token)
-    return _run(lambda: {"evidence_refs": working.get(db, scope_id, session_id, actor,
-                                                       item_id, evidence=True)["evidence_refs"]})
+    def fetch():
+        item = working.get(db, scope_id, session_id, actor, item_id, evidence=True)
+        return {"evidence_refs": item["evidence_refs"] + [
+            ref for contribution in item["contributions"]
+            for ref in contribution["evidence_refs"]]}
+    return _run(fetch)
 
 
 @router.patch("/scopes/{scope_id}/items/{item_id}")
@@ -109,6 +113,23 @@ async def close(scope_id: str, body: dict,
                 x_ember_token: str | None = Header(default=None)):
     db, actor = _caller(x_ember_agent_id, x_ember_token)
     return _run(lambda: working.close_scope(db, scope_id, body.get("session_id"), actor))
+
+
+@router.post("/scopes/{scope_id}/items/{item_id}/contributions")
+async def contribute(scope_id: str, item_id: str, body: dict,
+                     x_ember_agent_id: str | None = Header(default=None),
+                     x_ember_token: str | None = Header(default=None)):
+    db, actor = _caller(x_ember_agent_id, x_ember_token)
+    return _run(lambda: working.contribute(db, scope_id, body.get("session_id"), actor,
+                                           item_id, body))
+
+
+@router.post("/scopes/{scope_id}/items/{item_id}/handoff")
+async def handoff(scope_id: str, item_id: str, body: dict,
+                  x_ember_agent_id: str | None = Header(default=None),
+                  x_ember_token: str | None = Header(default=None)):
+    db, actor = _caller(x_ember_agent_id, x_ember_token)
+    return _run(lambda: working.handoff(db, scope_id, body.get("session_id"), actor, item_id))
 
 
 @router.get("/scopes/{scope_id}/stream")

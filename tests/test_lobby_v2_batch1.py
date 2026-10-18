@@ -105,7 +105,7 @@ def test_rest_scope_submission_and_evidence_authorization(tmp_path):
     granted = client.post(f"/v1/lobby/v2/scopes/{scope}/members", headers=ah,
                           json={"session_id": a, "agent_id": reader})
     assert granted.status_code == 200, granted.text
-    body = {**_item(evidence=[{"reference": "https://example.org/test", "observed_at": "now"}]),
+    body = {**_item(evidence=[{"reference": "https://example.org/test", "observed_at": "2026-10-18T00:00:00Z"}]),
             "session_id": a}
     posted = client.post(f"/v1/lobby/v2/scopes/{scope}/items", headers=ah, json=body)
     assert posted.status_code == 200, posted.text

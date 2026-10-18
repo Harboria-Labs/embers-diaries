@@ -63,3 +63,7 @@ Shared-task scope/membership, bounded restart-resilient provisional items, idemp
 ### Lobby V2 Batch 2 — local single-process delivery
 
 Lobby-specific SSE, post-commit wakeups, bounded ordered event replay, reconnect cursors, reset, per-delivery authorization and revocation behavior are implemented and locally validated: **28 focused tests passed**, including prior Batch 1/V1 checks. See `paper/lobby_v2_batch2_evidence.md`. Cross-worker live push is not implemented; another worker's commit is visible after reconnect only. Multi-worker delivery, live service and external clients remain unverified. Batch 3–4 remain pending.
+
+### Lobby V2 Batch 3 — explicit durable handoff
+
+Peer support/contradiction remains attributed; proposal/failure handoff reuses existing durable mechanisms with deterministic retry IDs, retained local receipts and claim uncertainty. **31 focused isolated tests passed**, including a lost-acknowledgment retry. See `paper/lobby_v2_batch3_evidence.md`. Handoff is one accepted durable ID per provisional item; later corrections need a new submission for a new handoff. External artifact authorization/reachability, full-suite behavior, cross-worker wake and live service remain unverified. Batch 4 harness integration is pending.

@@ -9,6 +9,7 @@ import re
 import sqlite3
 import time
 import uuid
+from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -59,6 +60,10 @@ def _open(db):
       item_id TEXT NOT NULL, version INTEGER NOT NULL, kind TEXT NOT NULL,
       created REAL NOT NULL);
     CREATE INDEX IF NOT EXISTS events_scope ON events(scope_id,seq);
+    CREATE TABLE IF NOT EXISTS handoffs (
+      item_id TEXT NOT NULL, version INTEGER NOT NULL, durable_id TEXT NOT NULL,
+      durable_kind TEXT NOT NULL, accepted REAL NOT NULL,
+      PRIMARY KEY(item_id,version));
     """)
     if "floor_seq" not in {row[1] for row in conn.execute("PRAGMA table_info(scopes)")}:
         conn.execute("ALTER TABLE scopes ADD COLUMN floor_seq INTEGER NOT NULL DEFAULT 0")
@@ -83,10 +88,10 @@ def _session(db, session_id, actor):
     return session
 
 
-def _scope(conn, db, scope_id, session_id, actor, operation):
+def _scope(conn, db, scope_id, session_id, actor, operation, *, allow_closed=False):
     session = _session(db, session_id, actor)
     scope = conn.execute("SELECT * FROM scopes WHERE id=?", (scope_id,)).fetchone()
-    if scope is None or scope["status"] != "open":
+    if scope is None or (scope["status"] != "open" and not allow_closed):
         raise WorkingError("shared task is not open")
     if session.namespace != scope["namespace"] or session.task != scope["task"]:
         raise PermissionError("session task or namespace does not match shared task")
@@ -168,6 +173,10 @@ def _payload(data, actor, session_id):
         observed = row.get("observed_at")
         if not isinstance(observed, str) or not observed:
             raise WorkingError("observed_at required")
+        try:
+            datetime.fromisoformat(observed.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise WorkingError("observed_at must be ISO timestamp") from exc
         clean.append({"evidence_id": str(uuid.uuid4()), "reference": ref,
                       "source": str(row.get("source", "agent-declared"))[:100],
                       "observed_at": observed, "agent_id": actor,
@@ -233,6 +242,19 @@ def _view(row, *, evidence=False):
     else:
         payload["evidence_refs"] = [{k: e[k] for k in ("evidence_id", "source", "observed_at", "agent_id", "availability")}
                                     for e in payload["evidence_refs"]]
+    for contribution in payload.get("contributions", []):
+        contribution["session_id"] = "session-sha256:" + hashlib.sha256(
+            contribution["session_id"].encode()).hexdigest()
+        contribution.pop("digest", None)
+        contribution.pop("client_contribution_id", None)
+        if evidence:
+            contribution["evidence_refs"] = [
+                {**e, "session_id": "session-sha256:" + hashlib.sha256(e["session_id"].encode()).hexdigest()}
+                for e in contribution["evidence_refs"]]
+        else:
+            contribution["evidence_refs"] = [
+                {k: e[k] for k in ("evidence_id", "source", "observed_at", "agent_id", "availability")}
+                for e in contribution["evidence_refs"]]
     return {"item_id": row["id"], "scope_id": row["scope_id"],
             "agent_id": row["agent_id"], "version": row["version"],
             "status": row["status"], "created_at": row["created"],
@@ -340,3 +362,104 @@ def close_scope(db, scope_id, session_id, actor):
         _prune(conn, scope_id)
         conn.execute("UPDATE scopes SET status='closed' WHERE id=?", (scope_id,))
         return {"scope_id": scope_id, "status": "closed", "expired": len(rows)}
+
+
+def contribute(db, scope_id, session_id, actor, item_id, data):
+    key = data.get("client_contribution_id")
+    kind = data.get("kind")
+    if not isinstance(key, str) or not 1 <= len(key) <= 128 or kind not in {"support", "contradiction"}:
+        raise WorkingError("contribution id and support/contradiction kind required")
+    note = data.get("note")
+    if not isinstance(note, str) or not note.strip() or len(note.encode()) > MAX_CLAIM_BYTES:
+        raise WorkingError("valid contribution note required")
+    clean = _payload({"share": True, "kind": "finding", "claim": note,
+                      "evidence_refs": data.get("evidence_refs", [])}, actor, session_id)
+    digest = hashlib.sha256(json.dumps(data, sort_keys=True, default=str).encode()).hexdigest()
+    with _open(db) as conn:
+        _scope(conn, db, scope_id, session_id, actor, "write")
+        row = conn.execute("SELECT * FROM items WHERE id=? AND scope_id=?", (item_id, scope_id)).fetchone()
+        if row is None or row["status"] != "active" or row["expires"] <= time.time():
+            raise WorkingError("item no longer active")
+        if row["agent_id"] == actor:
+            raise WorkingError("author must correct their own item")
+        payload = json.loads(row["payload"])
+        for existing in payload["contributions"]:
+            if existing["agent_id"] == actor and existing["client_contribution_id"] == key:
+                if existing["digest"] != digest:
+                    raise WorkingError("contribution key reused with different content")
+                return _view(row)
+        payload["contributions"].append({"contribution_id": str(uuid.uuid4()),
+          "client_contribution_id": key, "digest": digest, "kind": kind,
+          "note": note.strip(), "agent_id": actor, "session_id": session_id,
+          "evidence_refs": clean["evidence_refs"], "created_at": time.time()})
+        version = row["version"] + 1
+        conn.execute("UPDATE items SET version=?,payload=?,updated=? WHERE id=?",
+                     (version, json.dumps(payload), time.time(), item_id))
+        _event(conn, scope_id, item_id, version, "changed")
+        return _view(conn.execute("SELECT * FROM items WHERE id=?", (item_id,)).fetchone())
+
+
+def handoff(db, scope_id, session_id, actor, item_id):
+    """Freeze one version and reuse its deterministic durable ID on retry."""
+    from ..core.evidence import Evidence
+    from ..core.failure import Failure
+    from ..core.proposal import MemoryProposal
+    from ..core.types import SourceType
+
+    with _open(db) as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        scope, _ = _scope(conn, db, scope_id, session_id, actor, "write", allow_closed=True)
+        row = conn.execute("SELECT * FROM items WHERE id=? AND scope_id=?", (item_id, scope_id)).fetchone()
+        if row is None or row["agent_id"] != actor:
+            raise PermissionError("author must request durable handoff")
+        receipt = conn.execute("SELECT * FROM handoffs WHERE item_id=? ORDER BY version DESC LIMIT 1",
+                               (item_id,)).fetchone()
+        if receipt:
+            return {"item_id": item_id, "version": receipt["version"],
+                    "durable_id": receipt["durable_id"], "kind": receipt["durable_kind"]}
+        if row["status"] != "active" or row["expires"] <= time.time():
+            raise WorkingError("item no longer active")
+        payload = json.loads(row["payload"])
+        version = row["version"]
+        durable_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"ember-lobby-v2:{item_id}:{version}"))
+        kind = "failure" if payload["kind"] == "failure" else "proposal"
+        evidence = []
+        for ref in payload["evidence_refs"] + [e for c in payload["contributions"] for e in c["evidence_refs"]]:
+            ev = Evidence(evidence_id=ref["evidence_id"], source=ref["source"],
+                          source_type=SourceType.REPORTED, reference=ref["reference"],
+                          description="Lobby V2 attributed external observation",
+                          observed_at=datetime.fromisoformat(ref["observed_at"].replace("Z", "+00:00")),
+                          agent_id=ref["agent_id"], session_id=ref["session_id"])
+            ev.seal()
+            evidence.append(ev)
+        if kind == "failure":
+            if db.get_failure(durable_id) is None:
+                failure = Failure(failure_id=durable_id, namespace=scope["namespace"],
+                                  approach=payload["approach"] or payload["claim"][:120],
+                                  failed=payload["claim"], cause="Lobby V2 provisional report; claim unverified",
+                                  agent_id=actor, session_id=session_id, evidence=evidence,
+                                  context={"lobby_item_id": item_id, "version": version,
+                                           "uncertainty": payload["uncertainty"]})
+                db.report_failure(failure)
+            session = db.get_session(session_id)
+            if session and durable_id not in session.failures:
+                db.record_failure(session_id, durable_id, changed_by=actor)
+        else:
+            if db.get_proposal(durable_id) is None:
+                proposal = MemoryProposal(proposal_id=durable_id, namespace=scope["namespace"],
+                    discovery={"content": payload["claim"], "lobby_item_id": item_id,
+                               "lobby_version": version, "uncertainty": payload["uncertainty"],
+                               "contributions": [{"kind": c["kind"], "note": c["note"],
+                                                  "agent_id": c["agent_id"]}
+                                                 for c in payload["contributions"]]},
+                    reason="Explicit Lobby V2 durable handoff; provisional interpretation",
+                    evidence=evidence, confidence=0.5, written_by=actor,
+                    agent_id=actor, session_id=session_id)
+                db.propose(proposal)
+            session = db.get_session(session_id)
+            if session and durable_id not in session.discoveries:
+                db.record_discovery(session_id, durable_id, changed_by=actor)
+        conn.execute("INSERT INTO handoffs VALUES(?,?,?,?,?)",
+                     (item_id, version, durable_id, kind, time.time()))
+        return {"item_id": item_id, "version": version, "durable_id": durable_id,
+                "kind": kind}
