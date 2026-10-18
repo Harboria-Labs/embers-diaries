@@ -59,3 +59,7 @@ The ten Lobby V2 principles and five architectural decisions are **approved**. I
 ### Lobby V2 Batch 1 — isolated source milestone
 
 Shared-task scope/membership, bounded restart-resilient provisional items, idempotent submission, author correction/withdrawal, expiry/close, contextual query and separately authorized evidence-reference retrieval are implemented in `embers/lobby/working.py` and `embers/api/lobby_v2.py`. Focused isolated command: **25 passed**; evidence and limits in `paper/lobby_v2_batch1_evidence.md`. Server-pushed delivery, retry-safe durable promotion, attributed peer contributions and automatic harness capture remain pending. No production or live validation is claimed.
+
+### Lobby V2 Batch 2 — local single-process delivery
+
+Lobby-specific SSE, post-commit wakeups, bounded ordered event replay, reconnect cursors, reset, per-delivery authorization and revocation behavior are implemented and locally validated: **28 focused tests passed**, including prior Batch 1/V1 checks. See `paper/lobby_v2_batch2_evidence.md`. Cross-worker live push is not implemented; another worker's commit is visible after reconnect only. Multi-worker delivery, live service and external clients remain unverified. Batch 3–4 remain pending.

@@ -1,6 +1,7 @@
 """Authenticated V2 working-memory API; provisional state never enters Ember records."""
 
-from fastapi import APIRouter, Header, HTTPException, Query
+from fastapi import APIRouter, Header, HTTPException, Query, Request
+from fastapi.responses import StreamingResponse
 
 from ..lobby import working
 
@@ -108,3 +109,22 @@ async def close(scope_id: str, body: dict,
                 x_ember_token: str | None = Header(default=None)):
     db, actor = _caller(x_ember_agent_id, x_ember_token)
     return _run(lambda: working.close_scope(db, scope_id, body.get("session_id"), actor))
+
+
+@router.get("/scopes/{scope_id}/stream")
+async def stream(scope_id: str, session_id: str, request: Request, after: int = Query(default=0, ge=0),
+                 last_event_id: str | None = Header(default=None),
+                 x_ember_agent_id: str | None = Header(default=None),
+                 x_ember_token: str | None = Header(default=None)):
+    from ..lobby.realtime_v2 import stream as delivery
+    db, actor = _caller(x_ember_agent_id, x_ember_token)
+    if last_event_id is not None:
+        try:
+            after = int(last_event_id)
+        except ValueError as exc:
+            raise HTTPException(400, "invalid event cursor") from exc
+    _run(lambda: working.events(db, scope_id, session_id, actor, after=after, limit=1))
+    return StreamingResponse(delivery(db, scope_id, session_id, actor, after,
+                                      request.is_disconnected),
+                             media_type="text/event-stream",
+                             headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})

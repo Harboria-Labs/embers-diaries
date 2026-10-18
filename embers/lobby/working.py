@@ -43,7 +43,7 @@ def _open(db):
     CREATE TABLE IF NOT EXISTS scopes (
       id TEXT PRIMARY KEY, namespace TEXT NOT NULL, task TEXT NOT NULL,
       room TEXT NOT NULL, owner TEXT NOT NULL, status TEXT NOT NULL,
-      created REAL NOT NULL);
+      created REAL NOT NULL, floor_seq INTEGER NOT NULL DEFAULT 0);
     CREATE TABLE IF NOT EXISTS members (
       scope_id TEXT NOT NULL, agent_id TEXT NOT NULL, role TEXT NOT NULL,
       PRIMARY KEY(scope_id,agent_id));
@@ -60,9 +60,18 @@ def _open(db):
       created REAL NOT NULL);
     CREATE INDEX IF NOT EXISTS events_scope ON events(scope_id,seq);
     """)
+    if "floor_seq" not in {row[1] for row in conn.execute("PRAGMA table_info(scopes)")}:
+        conn.execute("ALTER TABLE scopes ADD COLUMN floor_seq INTEGER NOT NULL DEFAULT 0")
+    before = conn.execute("SELECT COALESCE(MAX(seq),0) FROM events").fetchone()[0]
     try:
         with conn:
             yield conn
+        scopes = [row[0] for row in conn.execute(
+            "SELECT DISTINCT scope_id FROM events WHERE seq>?", (before,))]
+        if scopes:
+            from .realtime_v2 import wake
+            for scope_id in scopes:
+                wake(db, scope_id)
     finally:
         conn.close()
 
@@ -96,7 +105,7 @@ def create_scope(db, session_id, actor, *, task, namespace, room="task"):
     db.require_namespace_access(namespace, actor, "write")
     scope_id = str(uuid.uuid4())
     with _open(db) as conn:
-        conn.execute("INSERT INTO scopes VALUES(?,?,?,?,?,?,?)",
+        conn.execute("INSERT INTO scopes(id,namespace,task,room,owner,status,created) VALUES(?,?,?,?,?,?,?)",
                      (scope_id, namespace, task, room, actor, "open", time.time()))
         conn.execute("INSERT INTO members VALUES(?,?,?)", (scope_id, actor, "owner"))
     return {"scope_id": scope_id, "task": task, "namespace": namespace, "room": room}
@@ -112,6 +121,7 @@ def grant(db, scope_id, session_id, actor, grantee):
         if db.check_namespace_access(scope["namespace"], grantee, "read") is False:
             raise PermissionError("grantee lacks namespace read access")
         conn.execute("INSERT OR IGNORE INTO members VALUES(?,?,?)", (scope_id, grantee, "member"))
+        _event(conn, scope_id, "", 0, "membership_changed")
     return {"scope_id": scope_id, "agent_id": grantee, "role": "member"}
 
 
@@ -121,6 +131,7 @@ def revoke(db, scope_id, session_id, actor, grantee):
         if role != "owner" or grantee == actor:
             raise PermissionError("shared-task owner required")
         conn.execute("DELETE FROM members WHERE scope_id=? AND agent_id=?", (scope_id, grantee))
+        _event(conn, scope_id, "", 0, "membership_changed")
     return {"scope_id": scope_id, "revoked": grantee}
 
 
@@ -175,9 +186,35 @@ def _event(conn, scope_id, item_id, version, kind):
     conn.execute("INSERT INTO events(scope_id,item_id,version,kind,created) VALUES(?,?,?,?,?)",
                  (scope_id, item_id, version, kind, time.time()))
     # Keep an ordered, bounded replay window for the future SSE route.
-    conn.execute("""DELETE FROM events WHERE scope_id=? AND seq <= COALESCE(
-      (SELECT seq FROM events WHERE scope_id=? ORDER BY seq DESC LIMIT 1 OFFSET ?), -1)""",
-                 (scope_id, scope_id, MAX_EVENTS_PER_SCOPE))
+    cutoff = conn.execute("SELECT seq FROM events WHERE scope_id=? ORDER BY seq DESC LIMIT 1 OFFSET ?",
+                          (scope_id, MAX_EVENTS_PER_SCOPE)).fetchone()
+    if cutoff:
+        conn.execute("DELETE FROM events WHERE scope_id=? AND seq<=?", (scope_id, cutoff[0]))
+        conn.execute("UPDATE scopes SET floor_seq=? WHERE id=?", (cutoff[0], scope_id))
+
+
+def events(db, scope_id, session_id, actor, *, after=0, limit=100):
+    if type(after) is not int or after < 0 or type(limit) is not int or not 1 <= limit <= 100:
+        raise WorkingError("invalid event cursor or limit")
+    with _open(db) as conn:
+        scope, _ = _scope(conn, db, scope_id, session_id, actor, "read")
+        floor = scope["floor_seq"]
+        if after < floor:
+            return {"reset": True, "reason": "missed_history", "events": [], "cursor": floor}
+        last = conn.execute("SELECT COALESCE(MAX(seq),0) FROM events WHERE scope_id=?", (scope_id,)).fetchone()[0]
+        if after > last or (after and after != floor and not conn.execute(
+                "SELECT 1 FROM events WHERE scope_id=? AND seq=?", (scope_id, after)).fetchone()):
+            return {"reset": True, "reason": "invalid_cursor", "events": [], "cursor": last}
+        rows = conn.execute("SELECT seq,item_id,version,kind,created FROM events WHERE scope_id=? AND seq>? ORDER BY seq LIMIT ?",
+                            (scope_id, after, limit)).fetchall()
+        items = [{"cursor": r["seq"], "item_id": r["item_id"], "version": r["version"],
+                  "change": r["kind"], "at": r["created"]} for r in rows]
+        return {"reset": False, "events": items, "cursor": items[-1]["cursor"] if items else after}
+
+
+def authorize(db, scope_id, session_id, actor):
+    with _open(db) as conn:
+        _scope(conn, db, scope_id, session_id, actor, "read")
 
 
 def _prune(conn, scope_id):
