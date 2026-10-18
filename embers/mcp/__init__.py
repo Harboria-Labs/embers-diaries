@@ -6,6 +6,7 @@ from .lobby_surface import install as install_lobby
 from .session_collab import install as install_session_collab
 from .feedback_surface import install as install_feedback
 from .proposal_surface import install as install_proposal_listing
+from .lobby_v2_surface import install as install_lobby_v2
 from ..db import EmberDB
 from ..db_feedback import bind as bind_feedback
 
@@ -17,5 +18,6 @@ install_lobby()
 install_session_collab()
 install_feedback()
 install_proposal_listing()
+install_lobby_v2()
 
 __all__ = ["EmberMCP", "TOOLS", "main"]

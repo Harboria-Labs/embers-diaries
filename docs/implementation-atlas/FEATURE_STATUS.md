@@ -67,3 +67,7 @@ Lobby-specific SSE, post-commit wakeups, bounded ordered event replay, reconnect
 ### Lobby V2 Batch 3 — explicit durable handoff
 
 Peer support/contradiction remains attributed; proposal/failure handoff reuses existing durable mechanisms with deterministic retry IDs, retained local receipts and claim uncertainty. **31 focused isolated tests passed**, including a lost-acknowledgment retry. See `paper/lobby_v2_batch3_evidence.md`. Handoff is one accepted durable ID per provisional item; later corrections need a new submission for a new handoff. External artifact authorization/reachability, full-suite behavior, cross-worker wake and live service remain unverified. Batch 4 harness integration is pending.
+
+### Lobby V2 Batch 4 — adapter boundary implemented, real hook gate open
+
+REST/MCP share the working-memory operations; an opt-in Codex Stop adapter accepts an agent-selected finding and bounded redacted artifact. An isolated simulated Stop payload drove upload, submission, SSE change and authorized peer retrieval. The focused Batch 4 plus prior-boundary group passed **39 tests, 1 dependency warning**. The actual Codex runtime hook was not installed or exercised; automatic real-agent capture and second live-agent delivery remain **unverified**. Batch 3 handoff was hardened with a committed intent and retained artifact before durable write, then a durable receipt; isolated close/expiry retry evidence is in the Batch 4 focused tests. See `paper/lobby_v2_batch4_evidence.md`. Cross-worker wake and live deployment remain open.

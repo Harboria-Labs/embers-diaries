@@ -9,7 +9,7 @@ import re
 import sqlite3
 import time
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -20,6 +20,9 @@ MAX_ITEMS_PER_SCOPE = 1000
 MAX_EVENTS_PER_SCOPE = 2000
 MAX_CLAIM_BYTES = 4096
 MAX_EVIDENCE = 16
+MAX_ARTIFACT_BYTES = 16384
+MAX_ARTIFACTS_PER_SCOPE = 2000
+MAX_ARTIFACT_BYTES_PER_SCOPE = 32 * 1024 * 1024
 KINDS = {"finding", "failure", "question", "outcome"}
 UNCERTAINTY = {"unverified", "observed", "contradicted", "resolved"}
 
@@ -37,6 +40,7 @@ def path(db):
 def _open(db):
     p = path(db)
     conn = sqlite3.connect(p, timeout=30)
+    p.chmod(0o600)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA synchronous=FULL")
@@ -64,9 +68,23 @@ def _open(db):
       item_id TEXT NOT NULL, version INTEGER NOT NULL, durable_id TEXT NOT NULL,
       durable_kind TEXT NOT NULL, accepted REAL NOT NULL,
       PRIMARY KEY(item_id,version));
+    CREATE TABLE IF NOT EXISTS handoff_intents (
+      item_id TEXT PRIMARY KEY, scope_id TEXT NOT NULL, version INTEGER NOT NULL,
+      durable_id TEXT NOT NULL, durable_kind TEXT NOT NULL, payload TEXT NOT NULL,
+      agent_id TEXT NOT NULL, session_id TEXT NOT NULL, created REAL NOT NULL);
+    CREATE TABLE IF NOT EXISTS artifacts (
+      id TEXT PRIMARY KEY, scope_id TEXT NOT NULL, agent_id TEXT NOT NULL,
+      content TEXT NOT NULL, digest TEXT NOT NULL, created REAL NOT NULL,
+      expires REAL NOT NULL, submission_key TEXT, retained INTEGER NOT NULL DEFAULT 0);
     """)
     if "floor_seq" not in {row[1] for row in conn.execute("PRAGMA table_info(scopes)")}:
         conn.execute("ALTER TABLE scopes ADD COLUMN floor_seq INTEGER NOT NULL DEFAULT 0")
+    if "submission_key" not in {row[1] for row in conn.execute("PRAGMA table_info(artifacts)")}:
+        conn.execute("ALTER TABLE artifacts ADD COLUMN submission_key TEXT")
+    if "retained" not in {row[1] for row in conn.execute("PRAGMA table_info(artifacts)")}:
+        conn.execute("ALTER TABLE artifacts ADD COLUMN retained INTEGER NOT NULL DEFAULT 0")
+    conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS artifacts_key ON artifacts(scope_id,agent_id,submission_key)")
+    conn.commit()
     before = conn.execute("SELECT COALESCE(MAX(seq),0) FROM events").fetchone()[0]
     try:
         with conn:
@@ -143,6 +161,8 @@ def revoke(db, scope_id, session_id, actor, grantee):
 def _reference(value):
     if not isinstance(value, str) or len(value) > 512:
         raise WorkingError("invalid evidence reference")
+    if re.fullmatch(r"lobby-artifact:[0-9a-f-]{36}", value):
+        return value
     parsed = urlsplit(value)
     if parsed.scheme != "https" or not parsed.netloc or parsed.username or parsed.password or parsed.query or parsed.fragment:
         raise WorkingError("evidence reference must be a clean HTTPS URL")
@@ -229,8 +249,19 @@ def authorize(db, scope_id, session_id, actor):
 def _prune(conn, scope_id):
     # An expired key remains retryable through one additional TTL, then leaves
     # provisional storage. Durable handoff receipts will be separate in Batch 3.
-    conn.execute("DELETE FROM items WHERE scope_id=? AND expires<? AND status!='active'",
-                 (scope_id, time.time() - TTL_SECONDS))
+    now = time.time()
+    expired = conn.execute("SELECT id,version FROM items WHERE scope_id=? AND status='active' AND expires<=?",
+                           (scope_id, now)).fetchall()
+    for row in expired:
+        conn.execute("UPDATE items SET status='expired',version=version+1 WHERE id=?", (row["id"],))
+        _event(conn, scope_id, row["id"], row["version"] + 1, "removed")
+    conn.execute("""DELETE FROM items WHERE scope_id=? AND expires<? AND status!='active'
+      AND id NOT IN (SELECT item_id FROM handoffs)
+      AND id NOT IN (SELECT item_id FROM handoff_intents)""",
+                 (scope_id, now - TTL_SECONDS))
+    conn.execute("DELETE FROM artifacts WHERE scope_id=? AND expires<? AND retained=0",
+                 (scope_id, now))
+    return len(expired)
 
 
 def _view(row, *, evidence=False):
@@ -271,6 +302,15 @@ def submit(db, scope_id, session_id, actor, data):
     with _open(db) as conn:
         _scope(conn, db, scope_id, session_id, actor, "write")
         _prune(conn, scope_id)
+        for evidence in payload["evidence_refs"]:
+            reference = evidence["reference"]
+            if reference.startswith("lobby-artifact:"):
+                artifact = conn.execute("SELECT * FROM artifacts WHERE id=? AND scope_id=? AND expires>?",
+                                        (reference.split(":", 1)[1], scope_id, time.time())).fetchone()
+                if artifact is None or artifact["agent_id"] != actor:
+                    raise WorkingError("artifact unavailable or not owned by submitter")
+                evidence["content_digest"] = artifact["digest"]
+                evidence["availability"] = "lobby"
         old = conn.execute("SELECT * FROM items WHERE scope_id=? AND agent_id=? AND submission_id=?",
                            (scope_id, actor, key)).fetchone()
         if old:
@@ -316,6 +356,8 @@ def query(db, scope_id, session_id, actor, *, context="", limit=20):
 def change(db, scope_id, session_id, actor, item_id, *, version, correction=None, withdraw=False):
     with _open(db) as conn:
         _scope(conn, db, scope_id, session_id, actor, "write")
+        if conn.execute("SELECT 1 FROM handoff_intents WHERE item_id=?", (item_id,)).fetchone():
+            raise WorkingError("handoff in progress; retry handoff first")
         row = conn.execute("SELECT * FROM items WHERE id=? AND scope_id=?", (item_id, scope_id)).fetchone()
         if row is None or row["agent_id"] != actor:
             raise PermissionError("only the author may change this item")
@@ -340,13 +382,7 @@ def change(db, scope_id, session_id, actor, item_id, *, version, correction=None
 def expire(db, scope_id, session_id, actor):
     with _open(db) as conn:
         _scope(conn, db, scope_id, session_id, actor, "write")
-        _prune(conn, scope_id)
-        rows = conn.execute("SELECT id,version FROM items WHERE scope_id=? AND status='active' AND expires<=?",
-                            (scope_id, time.time())).fetchall()
-        for row in rows:
-            conn.execute("UPDATE items SET status='expired',version=version+1 WHERE id=?", (row["id"],))
-            _event(conn, scope_id, row["id"], row["version"] + 1, "removed")
-        return len(rows)
+        return _prune(conn, scope_id)
 
 
 def close_scope(db, scope_id, session_id, actor):
@@ -377,6 +413,8 @@ def contribute(db, scope_id, session_id, actor, item_id, data):
     digest = hashlib.sha256(json.dumps(data, sort_keys=True, default=str).encode()).hexdigest()
     with _open(db) as conn:
         _scope(conn, db, scope_id, session_id, actor, "write")
+        if conn.execute("SELECT 1 FROM handoff_intents WHERE item_id=?", (item_id,)).fetchone():
+            raise WorkingError("handoff in progress; retry handoff first")
         row = conn.execute("SELECT * FROM items WHERE id=? AND scope_id=?", (item_id, scope_id)).fetchone()
         if row is None or row["status"] != "active" or row["expires"] <= time.time():
             raise WorkingError("item no longer active")
@@ -406,9 +444,12 @@ def handoff(db, scope_id, session_id, actor, item_id):
     from ..core.proposal import MemoryProposal
     from ..core.types import SourceType
 
+    # Commit the intent and pin referenced artifacts BEFORE the durable write.
+    # A crash after the Ember write can then be reconciled by the same ID even
+    # after ordinary provisional retention has passed.
     with _open(db) as conn:
         conn.execute("BEGIN IMMEDIATE")
-        scope, _ = _scope(conn, db, scope_id, session_id, actor, "write", allow_closed=True)
+        _scope(conn, db, scope_id, session_id, actor, "write", allow_closed=True)
         row = conn.execute("SELECT * FROM items WHERE id=? AND scope_id=?", (item_id, scope_id)).fetchone()
         if row is None or row["agent_id"] != actor:
             raise PermissionError("author must request durable handoff")
@@ -417,19 +458,46 @@ def handoff(db, scope_id, session_id, actor, item_id):
         if receipt:
             return {"item_id": item_id, "version": receipt["version"],
                     "durable_id": receipt["durable_id"], "kind": receipt["durable_kind"]}
-        if row["status"] != "active" or row["expires"] <= time.time():
-            raise WorkingError("item no longer active")
-        payload = json.loads(row["payload"])
-        version = row["version"]
-        durable_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"ember-lobby-v2:{item_id}:{version}"))
-        kind = "failure" if payload["kind"] == "failure" else "proposal"
+        intent = conn.execute("SELECT * FROM handoff_intents WHERE item_id=?", (item_id,)).fetchone()
+        if intent is None:
+            if row["status"] != "active" or row["expires"] <= time.time():
+                raise WorkingError("item no longer active")
+            payload = json.loads(row["payload"])
+            version = row["version"]
+            durable_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f"ember-lobby-v2:{item_id}:{version}"))
+            kind = "failure" if payload["kind"] == "failure" else "proposal"
+            conn.execute("INSERT INTO handoff_intents VALUES(?,?,?,?,?,?,?,?,?)",
+                         (item_id, scope_id, version, durable_id, kind, json.dumps(payload),
+                          actor, session_id, time.time()))
+            for ref in payload["evidence_refs"] + [e for c in payload["contributions"] for e in c["evidence_refs"]]:
+                if ref["reference"].startswith("lobby-artifact:"):
+                    conn.execute("UPDATE artifacts SET retained=1 WHERE id=? AND scope_id=?",
+                                 (ref["reference"].split(":", 1)[1], scope_id))
+
+    with _open(db) as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        scope, _ = _scope(conn, db, scope_id, session_id, actor, "write", allow_closed=True)
+        intent = conn.execute("SELECT * FROM handoff_intents WHERE item_id=?", (item_id,)).fetchone()
+        receipt = conn.execute("SELECT * FROM handoffs WHERE item_id=? ORDER BY version DESC LIMIT 1",
+                               (item_id,)).fetchone()
+        if receipt:
+            return {"item_id": item_id, "version": receipt["version"],
+                    "durable_id": receipt["durable_id"], "kind": receipt["durable_kind"]}
+        if intent is None or intent["agent_id"] != actor:
+            raise WorkingError("handoff intent missing")
+        payload = json.loads(intent["payload"])
+        version, durable_id, kind = intent["version"], intent["durable_id"], intent["durable_kind"]
+        source_session_ref = "session-sha256:" + hashlib.sha256(
+            intent["session_id"].encode()).hexdigest()
         evidence = []
         for ref in payload["evidence_refs"] + [e for c in payload["contributions"] for e in c["evidence_refs"]]:
             ev = Evidence(evidence_id=ref["evidence_id"], source=ref["source"],
                           source_type=SourceType.REPORTED, reference=ref["reference"],
-                          description="Lobby V2 attributed external observation",
+                          description="Lobby V2 attributed observation; artifact digest: " +
+                                      ref.get("content_digest", "external-unverified"),
                           observed_at=datetime.fromisoformat(ref["observed_at"].replace("Z", "+00:00")),
-                          agent_id=ref["agent_id"], session_id=ref["session_id"])
+                          agent_id=ref["agent_id"],
+                          session_id="session-sha256:" + hashlib.sha256(ref["session_id"].encode()).hexdigest())
             ev.seal()
             evidence.append(ev)
         if kind == "failure":
@@ -437,9 +505,10 @@ def handoff(db, scope_id, session_id, actor, item_id):
                 failure = Failure(failure_id=durable_id, namespace=scope["namespace"],
                                   approach=payload["approach"] or payload["claim"][:120],
                                   failed=payload["claim"], cause="Lobby V2 provisional report; claim unverified",
-                                  agent_id=actor, session_id=session_id, evidence=evidence,
+                                  agent_id=actor, session_id=None, evidence=evidence,
                                   context={"lobby_item_id": item_id, "version": version,
-                                           "uncertainty": payload["uncertainty"]})
+                                           "uncertainty": payload["uncertainty"],
+                                           "source_session_ref": source_session_ref})
                 db.report_failure(failure)
             session = db.get_session(session_id)
             if session and durable_id not in session.failures:
@@ -449,17 +518,66 @@ def handoff(db, scope_id, session_id, actor, item_id):
                 proposal = MemoryProposal(proposal_id=durable_id, namespace=scope["namespace"],
                     discovery={"content": payload["claim"], "lobby_item_id": item_id,
                                "lobby_version": version, "uncertainty": payload["uncertainty"],
+                               "source_session_ref": source_session_ref,
                                "contributions": [{"kind": c["kind"], "note": c["note"],
                                                   "agent_id": c["agent_id"]}
                                                  for c in payload["contributions"]]},
                     reason="Explicit Lobby V2 durable handoff; provisional interpretation",
                     evidence=evidence, confidence=0.5, written_by=actor,
-                    agent_id=actor, session_id=session_id)
+                    agent_id=actor, session_id=None)
                 db.propose(proposal)
             session = db.get_session(session_id)
             if session and durable_id not in session.discoveries:
                 db.record_discovery(session_id, durable_id, changed_by=actor)
         conn.execute("INSERT INTO handoffs VALUES(?,?,?,?,?)",
                      (item_id, version, durable_id, kind, time.time()))
+        conn.execute("DELETE FROM handoff_intents WHERE item_id=?", (item_id,))
         return {"item_id": item_id, "version": version, "durable_id": durable_id,
                 "kind": kind}
+
+
+def upload_artifact(db, scope_id, session_id, actor, *, content, safe_to_share=False,
+                    redacted=False, client_artifact_id=None):
+    if safe_to_share is not True or redacted is not True:
+        raise WorkingError("explicit safe_to_share and redacted required")
+    if not isinstance(content, str) or not content or len(content.encode("utf-8")) > MAX_ARTIFACT_BYTES:
+        raise WorkingError("invalid or oversized artifact")
+    if client_artifact_id is not None and (not isinstance(client_artifact_id, str) or not 1 <= len(client_artifact_id) <= 128):
+        raise WorkingError("invalid client_artifact_id")
+    artifact_id = str(uuid.uuid4())
+    digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
+    now = time.time()
+    with _open(db) as conn:
+        _scope(conn, db, scope_id, session_id, actor, "write")
+        _prune(conn, scope_id)
+        old = conn.execute("SELECT * FROM artifacts WHERE scope_id=? AND agent_id=? AND submission_key=?",
+                           (scope_id, actor, client_artifact_id)).fetchone() if client_artifact_id else None
+        if old:
+            if old["digest"] != digest:
+                raise WorkingError("artifact key reused with different content")
+            return {"reference": "lobby-artifact:" + old["id"], "sha256": old["digest"],
+                    "expires_at": old["expires"],
+                    "observed_at": datetime.fromtimestamp(old["created"], timezone.utc).isoformat()}
+        usage = conn.execute("SELECT COUNT(*), COALESCE(SUM(LENGTH(CAST(content AS BLOB))),0) FROM artifacts WHERE scope_id=?",
+                             (scope_id,)).fetchone()
+        if usage[0] >= MAX_ARTIFACTS_PER_SCOPE or usage[1] + len(content.encode("utf-8")) > MAX_ARTIFACT_BYTES_PER_SCOPE:
+            raise WorkingError("shared-task artifact capacity reached")
+        conn.execute("INSERT INTO artifacts(id,scope_id,agent_id,content,digest,created,expires,submission_key) VALUES(?,?,?,?,?,?,?,?)",
+                     (artifact_id, scope_id, actor, content, digest, now, now + TTL_SECONDS,
+                      client_artifact_id))
+    return {"reference": "lobby-artifact:" + artifact_id, "sha256": digest,
+            "expires_at": now + TTL_SECONDS,
+            "observed_at": datetime.fromtimestamp(now, timezone.utc).isoformat()}
+
+
+def get_artifact(db, scope_id, session_id, actor, artifact_id):
+    with _open(db) as conn:
+        scope, _ = _scope(conn, db, scope_id, session_id, actor, "read", allow_closed=True)
+        row = conn.execute("SELECT * FROM artifacts WHERE id=? AND scope_id=? AND (expires>? OR retained=1)",
+                           (artifact_id, scope_id, time.time())).fetchone()
+        if row is None or (scope["status"] != "open" and not row["retained"]):
+            raise WorkingError("artifact unavailable")
+        if hashlib.sha256(row["content"].encode("utf-8")).hexdigest() != row["digest"]:
+            raise WorkingError("artifact integrity failure")
+        return {"reference": "lobby-artifact:" + row["id"], "sha256": row["digest"],
+                "content": row["content"], "created_at": row["created"]}

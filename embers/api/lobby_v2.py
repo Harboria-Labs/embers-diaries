@@ -57,6 +57,24 @@ async def submit(scope_id: str, body: dict, x_ember_agent_id: str | None = Heade
     return _run(lambda: working.submit(db, scope_id, body.get("session_id"), actor, body))
 
 
+@router.post("/scopes/{scope_id}/artifacts")
+async def upload_artifact(scope_id: str, body: dict,
+                          x_ember_agent_id: str | None = Header(default=None),
+                          x_ember_token: str | None = Header(default=None)):
+    db, actor = _caller(x_ember_agent_id, x_ember_token)
+    return _run(lambda: working.upload_artifact(db, scope_id, body.get("session_id"), actor,
+                 content=body.get("content"), safe_to_share=body.get("safe_to_share"),
+                 redacted=body.get("redacted"), client_artifact_id=body.get("client_artifact_id")))
+
+
+@router.get("/scopes/{scope_id}/artifacts/{artifact_id}")
+async def get_artifact(scope_id: str, artifact_id: str, session_id: str,
+                       x_ember_agent_id: str | None = Header(default=None),
+                       x_ember_token: str | None = Header(default=None)):
+    db, actor = _caller(x_ember_agent_id, x_ember_token)
+    return _run(lambda: working.get_artifact(db, scope_id, session_id, actor, artifact_id))
+
+
 @router.get("/scopes/{scope_id}/items")
 async def query(scope_id: str, session_id: str, context: str = "",
                 limit: int = Query(default=20, ge=1, le=100),

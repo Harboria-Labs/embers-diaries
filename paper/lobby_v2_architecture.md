@@ -1,6 +1,6 @@
 # Ember Lobby V2: architecture and implementation contract
 
-Status (2026-10-18): **the ten principles and five decisions below are approved.** Implementation and batch validation are tracked separately. The V1 board contract remains in [lobby_design.md](lobby_design.md); the source comparison is in [lobby_v2_gap_matrix.md](lobby_v2_gap_matrix.md).
+Status (2026-10-18): **the ten principles and five decisions below are approved.** Batches 1–3 have isolated source validation; Batch 4 has an opt-in Codex adapter and simulated hook-boundary evidence, with real harness invocation pending. No deployment or live store validation is claimed. The V1 board contract remains in [lobby_design.md](lobby_design.md); the source comparison is in [lobby_v2_gap_matrix.md](lobby_v2_gap_matrix.md).
 
 ## Approved implementation decisions
 

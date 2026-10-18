@@ -16,3 +16,12 @@ Status: 2026-10-18 source review. The ten principles and five architectural deci
 | Agent integration | REST/MCP Lobby calls; no general harness completion hook or background wake contract | **Extend at boundary.** Manual submit/query works first; each harness separately proves capture and push hooks. |
 
 The Observatory's read-only journal, access grants and research event model are deliberately **separate** from Lobby's causal working-memory submissions. Track 7 is closed at its local milestone and has no V2 dependency or planned change here.
+
+## Current local implementation update — 2026-10-18
+
+| Area | Local result | Remaining boundary |
+| --- | --- | --- |
+| Shared provisional foundation | Implemented in `embers/lobby/working.py` with REST, bounded SQLite persistence, explicit membership, context query, correction and expiry; Batch 1 isolated validation passed. | Production/store migration and live behavior unverified. |
+| Realtime signals | Lobby-only SSE and retained cursor window implemented; Batch 2 isolated validation passed. | Cross-worker live wake is unavailable; reconnect catches up. |
+| Attributed evidence and durable handoff | Peer contributions, separate artifact read, retained promoted artifacts, handoff intent/receipt and proposal/failure reuse implemented; Batch 3 isolated validation passed. | Real power-loss and external artifact permissions unverified. |
+| Agent adapters | MCP manual tool and opt-in Codex Stop adapter tested with simulated hook payload and isolated service. | Actual Codex hook firing, another live agent client, and automatic hooks for other harnesses unverified. |
