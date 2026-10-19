@@ -55,8 +55,8 @@ def test_follows_namespaces_sessions_persistence_and_no_mutation(env):
     # Batch 1 certifies and republishes the derived MasterIndex on open.
     # Observer reads themselves must leave the reopened store unchanged.
     after_reopen=file_hashes(path)
-    assert {k:v for k,v in after_reopen.items() if not k.startswith('indexes\\')}=={
-        k:v for k,v in before.items() if not k.startswith('indexes\\')}
+    assert {k:v for k,v in after_reopen.items() if not k.replace('\\', '/').startswith('indexes/')}=={
+        k:v for k,v in before.items() if not k.replace('\\', '/').startswith('indexes/')}
     assert ro.page(reopened,grant['code'],first['cursor'])['events']==data['events']
     assert file_hashes(path)==after_reopen
 

@@ -318,7 +318,8 @@ class EmberMCP:
                 if parsed.scheme not in ('http','https') or not parsed.netloc or parsed.username or parsed.password or parsed.query or parsed.fragment:
                     raise ValueError('server_url must be an HTTP(S) origin without credentials/query/fragment')
             result=issue(self.db,actor,ttl_seconds=args.get('ttl_seconds',3600),namespaces=args.get('namespaces'),
-                         session_id=args.get('session_id'),span_sessions=args.get('span_sessions',True),observer_target=args.get('observer_target'))
+                         session_id=args.get('session_id'),span_sessions=args.get('span_sessions',True),observer_target=args.get('observer_target'),
+                         lobby_scope_id=args.get('lobby_scope_id'),lobby_session_id=args.get('lobby_session_id'))
             if base:result['visualization_url']=parsed.scheme+'://'+parsed.netloc+result['viewer_path']
             return _text(result)
         if name == "ember_visualizer_access":

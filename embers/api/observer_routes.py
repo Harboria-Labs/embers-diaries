@@ -42,7 +42,10 @@ async def lobby_snapshot(request:Request):
 async def lobby_stream(request:Request,after:int=0):
     from ..lobby import working
     from ..lobby.realtime_v2 import stream
-    if after<0:raise HTTPException(400,'invalid cursor')
+    try:
+        after=int(request.headers.get('last-event-id', after))
+        if after<0:raise ValueError()
+    except (ValueError,TypeError):raise HTTPException(400,'invalid cursor')
     db,code,grant=lobby_access(request)
     scope=grant['lobby_scope_id'];session=grant['lobby_session_id'];actor=grant['observed_agent_id']
     def permit():

@@ -22,6 +22,7 @@ MAX_CLAIM_BYTES = 4096
 MAX_EVIDENCE = 16
 MAX_ARTIFACT_BYTES = 16384
 MAX_ARTIFACTS_PER_SCOPE = 2000
+MAX_OBSERVED_CONTRIBUTIONS = 16
 MAX_ARTIFACT_BYTES_PER_SCOPE = 32 * 1024 * 1024
 KINDS = {"finding", "failure", "question", "outcome"}
 UNCERTAINTY = {"unverified", "observed", "contradicted", "resolved"}
@@ -255,6 +256,8 @@ def _read_open(db):
         raise WorkingError("shared task unavailable")
     conn = sqlite3.connect(p.as_uri() + "?mode=ro", uri=True, timeout=5)
     conn.row_factory = sqlite3.Row
+    # One consistent read snapshot: rows and cursor must describe the same commit.
+    conn.execute("BEGIN")
     try:
         yield conn
     finally:
@@ -297,12 +300,30 @@ def observation_snapshot(db, scope_id, session_id, actor):
             "SELECT item_id FROM handoff_intents WHERE scope_id=?", (scope_id,))}
         items = []
         now = time.time()
+        def evidence_summary(ref):
+            # No URLs, artifact bodies, execution context, or bearer session IDs.
+            result = {k: ref.get(k) for k in
+                      ("evidence_id", "source", "observed_at", "agent_id", "availability")}
+            reference = ref.get("reference", "")
+            if reference.startswith("lobby-artifact:"):
+                artifact = conn.execute("SELECT expires FROM artifacts WHERE id=? AND scope_id=?",
+                    (reference.split(":", 1)[1], scope_id)).fetchone()
+                result["availability"] = "lobby" if artifact and artifact["expires"] > now else "unavailable"
+            return result
         for row in rows:
             payload = json.loads(row["payload"])
             status = "expired" if row["status"] == "active" and row["expires"] <= now else row["status"]
             items.append({"item_id": row["id"], "scope_id": scope_id, "agent_id": row["agent_id"],
                           "kind": payload["kind"], "claim": payload["claim"] if status == "active" else None,
                           "uncertainty": payload["uncertainty"], "status": status, "version": row["version"],
+                          "uncertainty_note": payload.get("uncertainty_note") if status == "active" else None,
+                          "evidence_status": payload.get("evidence_status", "unavailable"),
+                          "evidence": [evidence_summary(e) for e in payload.get("evidence_refs", [])],
+                          "contributions": [{"agent_id": c["agent_id"], "kind": c["kind"],
+                              "created_at": c["created_at"],
+                              "evidence": [evidence_summary(e) for e in c.get("evidence_refs", [])]}
+                              for c in payload.get("contributions", [])[-MAX_OBSERVED_CONTRIBUTIONS:]],
+                          "contributions_truncated": len(payload.get("contributions", [])) > MAX_OBSERVED_CONTRIBUTIONS,
                           "created_at": row["created"], "updated_at": row["updated"],
                           "expires_at": row["expires"],
                           "evidence_count": len(payload.get("evidence_refs", [])) + sum(
@@ -314,7 +335,8 @@ def observation_snapshot(db, scope_id, session_id, actor):
                               (scope_id,)).fetchone()[0]
         return {"scope": {"scope_id": scope_id, "namespace": scope["namespace"],
                           "task": scope["task"], "status": scope["status"], "created_at": scope["created"],
-                          "members": members}, "items": items, "cursor": cursor}
+                          "members": members}, "items": items, "cursor": cursor,
+                "observed_at": now, "item_limit": MAX_ITEMS_PER_SCOPE}
 
 
 def _prune(conn, scope_id):
@@ -468,6 +490,7 @@ def close_scope(db, scope_id, session_id, actor):
             _event(conn, scope_id, row["id"], row["version"] + 1, "removed")
         _prune(conn, scope_id)
         conn.execute("UPDATE scopes SET status='closed' WHERE id=?", (scope_id,))
+        _event(conn, scope_id, "", 0, "scope_closed")
         return {"scope_id": scope_id, "status": "closed", "expired": len(rows)}
 
 

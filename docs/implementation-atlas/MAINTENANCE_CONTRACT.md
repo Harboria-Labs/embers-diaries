@@ -74,3 +74,8 @@ Branch `codex/ember-split-feedback-candidate04`, pre-checkpoint HEAD `dbbbaf2`; 
 ## Track 7 milestone status entry — 2026-10-17
 
 Branch `codex/ember-split-feedback-candidate04`, pre-closure HEAD `fe0a001174fc53379a590330eed467dc58539760`. Documentation-only status update to Atlas feature status/README and canonical Production × Research Map. Four batch implementation checkpoints and Phase 5 local integrated validation are marked complete at the local/isolated milestone. All evidence, residual limits and historical rows are retained. No runtime source, tests, native binary, live service or store changed; no new Track 7 test cycle was run. Live-agent, production-scale, mixed-version and power-loss validation remain unverified. Unrelated working-tree files excluded.
+
+
+### Live Lobby Observatory completion follow-up — 2026-10-19
+
+Inspected Candidate 04 at `dcd898e`; changes remain on that branch. Existing storage/SSE/adapter/handoff mechanisms retained. The panel now reports safe evidence/contributor metadata and explicit uncertainty/handoff limits; fixes cover atomic read-only row/cursor snapshots, Last-Event-ID, serialized event-triggered refresh/recovery, local expiry, scope-close notifications and MCP Lobby delegation. **45 focused Python tests passed**, including seven client state-machine cases; standalone Node run also passed seven. Real isolated HTTP SSE/replay and cross-process wakeup ran. Browser access to the isolated server was refused, so visual/deployed validation remains open. No Track 7 validation or deployed changes. Full source, limits and operator startup instructions: [Live Lobby Observatory](../live-lobby-observatory.md).

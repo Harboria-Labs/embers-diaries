@@ -90,6 +90,13 @@ def test_http_lobby_stream_reconnects_from_committed_cursor(tmp_path):
         with urlopen(Request(base + "/v1/observer/lobby", headers=observer_headers), timeout=5) as response:
             observed = json.load(response)
         before = observed["cursor"]
+        from hashlib import sha256
+        def durable_hashes():
+            return {str(p): sha256(p.read_bytes()).hexdigest() for p in tmp_path.rglob("*") if p.is_file() and not str(p).endswith(("-shm", "-wal"))}
+        readonly_before = durable_hashes()
+        with urlopen(Request(base + "/v1/observer/lobby", headers=observer_headers), timeout=5):
+            pass
+        assert durable_hashes() == readonly_before
         observer_stream = f"{base}/v1/observer/lobby/stream?after={before}"
         with urlopen(Request(observer_stream, headers=observer_headers), timeout=6) as response:
             assert "event: ready" in _frame(response)
@@ -104,6 +111,17 @@ def test_http_lobby_stream_reconnects_from_committed_cursor(tmp_path):
             removed = _frame(response)
             assert "event: working_memory_removed" in removed
             assert third["item_id"] in "".join(removed)
+        # The header cursor must override the stale query cursor on reconnect.
+        last_cursor = next(line[4:] for line in removed if line.startswith("id: "))
+        fourth = working.submit(api._db, scope, a, author["agent_id"], {
+            "client_submission_id": "fourth", "share": True, "kind": "finding", "claim": "replayed"})
+        readonly_before = durable_hashes()
+        with urlopen(Request(observer_stream, headers={**observer_headers, "Last-Event-ID": last_cursor}), timeout=6) as response:
+            assert "event: ready" in _frame(response)
+            replay = _frame(response)
+            assert fourth["item_id"] in "".join(replay)
+            assert third["item_id"] not in "".join(replay)
+        assert durable_hashes() == readonly_before
         with urlopen(Request(base + "/v1/observer/lobby", headers=observer_headers), timeout=5) as response:
             projection = json.load(response)
         assert next(i for i in projection["items"] if i["item_id"] == third["item_id"])["status"] == "withdrawn"

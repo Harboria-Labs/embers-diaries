@@ -564,6 +564,8 @@ TOOLS.append({"name":"ember_visualize",
   "action":{"type":"string","enum":["create","revoke"],"default":"create"},
   "observer_target":{"type":"string","description":"If supplied, must equal authenticated caller."},
   "observer_id":{"type":"string"},"server_url":{"type":"string"},
+  "lobby_scope_id":{"type":"string","description":"Explicit shared Lobby task to observe; requires current membership."},
+  "lobby_session_id":{"type":"string","description":"Active owned session matching that Lobby task and namespace."},
   "ttl_seconds":{"type":"integer","minimum":60,"maximum":86400,"default":3600},
   "span_sessions":{"type":"boolean","default":True},"namespaces":{"type":"array","items":{"type":"string"},"maxItems":128},
   "agent_id":{"type":"string"},"token":{"type":"string"},"session_id":{"type":"string"}}}})
