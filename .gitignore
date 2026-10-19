@@ -47,3 +47,6 @@ ember-experimental-store/
 ember-experimental-credentials.json
 
 *-candidate-credentials.json
+
+# Local Observatory browser validation store, browser profile and access code
+.observer_validation_*/

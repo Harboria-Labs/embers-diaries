@@ -5,7 +5,7 @@ const source=fs.readFileSync('embers/api/lobby_observer.js','utf8');
 function fixture(){
  let now=1000000,next=0;const timers=new Map(),requests=[],streams=[],responses=[];
  class Element{
-  constructor(){this.children=[];this.dataset={};this.hidden=false;this.value='';this.textContent='';this.listeners={};this.classList={add(){},remove(){}}}
+  constructor(){this.children=[];this.dataset={};this.hidden=false;this.value='';this.textContent='';this.listeners={};this.classList={add(){},remove(){},toggle(){}}}
   append(e){e.parent=this;this.children.push(e)}
   replaceChildren(...es){this.children=[];for(const e of es)this.append(e)}
   remove(){this.parent.children=this.parent.children.filter(e=>e!==this)}
@@ -22,7 +22,7 @@ function fixture(){
  const snapshot=(cursor=1,items=[])=>({scope:{namespace:'fixture',task:'Test',status:'open',members:['a']},items,cursor,observed_at:now/1000,item_limit:1000});
  responses.push({status:200,data:snapshot()});
  const window={addEventListener(){}};
- vm.runInNewContext(source,{document:{getElementById:k=>elements[k],createElement:()=>new Element()},window,EventSource,
+ vm.runInNewContext(source,{document:{body:new Element(),getElementById:k=>elements[k],createElement:()=>new Element()},window,EventSource,
   Date:class extends Date{static now(){return now}},
   setTimeout(fn,ms){const id=++next;timers.set(id,{fn,at:now+ms});return id},clearTimeout:id=>timers.delete(id),
   fetch:async(url,options)=>{requests.push({url,options});const r=responses.shift();if(!r)throw Error('unexpected GET');if(r.wait)return r.wait;return{ok:r.status===200,status:r.status,json:async()=>r.data}}

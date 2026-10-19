@@ -84,10 +84,10 @@
     s.onerror=()=>{if(source===s)recover(Error('Lobby stream disconnected; recovering from the last rendered cursor.'))};
   }
   toggle.onclick=()=>{
-    const show=panel.hidden;panel.hidden=!show;byId('observerWorkspace').hidden=show;byId('filters').hidden=show;toggle.textContent=show?'Research activity':'Live Lobby';
+    const show=panel.hidden;panel.hidden=!show;document.body.classList.toggle('lobby-active',show);byId('observerWorkspace').hidden=show;byId('filters').hidden=show;toggle.textContent=show?'Research activity':'Live Lobby';
     if(show&&grant?.lobby_scope_id){active=true;reload(true)}else{stop();active=false;state('PAUSED')}
   };
   panel.querySelectorAll('[data-filter]').forEach(input=>input.addEventListener('input',render));
   window.addEventListener('pagehide',stop);
-  window.EmberLobbyObserver={open(value){stop();active=false;grant=value;cursor=0;snapshot=null;stats={snapshots:0,reconnects:0,events:0};toggle.hidden=!value.lobby_scope_id;panel.hidden=true;byId('lobbyItems').replaceChildren();byId('observerWorkspace').hidden=false;byId('filters').hidden=false;toggle.textContent='Live Lobby';state('NOT CONNECTED')}};
+  window.EmberLobbyObserver={open(value){stop();active=false;grant=value;cursor=0;snapshot=null;stats={snapshots:0,reconnects:0,events:0};toggle.hidden=!value.lobby_scope_id;panel.hidden=true;document.body.classList.remove('lobby-active');byId('lobbyItems').replaceChildren();byId('observerWorkspace').hidden=false;byId('filters').hidden=false;toggle.textContent='Live Lobby';state('NOT CONNECTED')}};
 })();
