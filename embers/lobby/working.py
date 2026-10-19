@@ -92,9 +92,10 @@ def _open(db):
         scopes = [row[0] for row in conn.execute(
             "SELECT DISTINCT scope_id FROM events WHERE seq>?", (before,))]
         if scopes:
-            from .realtime_v2 import wake
+            from .realtime_v2 import committed, wake
             for scope_id in scopes:
                 wake(db, scope_id)
+            committed(db)
     finally:
         conn.close()
 
@@ -244,6 +245,76 @@ def events(db, scope_id, session_id, actor, *, after=0, limit=100):
 def authorize(db, scope_id, session_id, actor):
     with _open(db) as conn:
         _scope(conn, db, scope_id, session_id, actor, "read")
+
+
+@contextmanager
+def _read_open(db):
+    """Observe an existing Lobby file without schema setup, pruning or commits."""
+    p = path(db)
+    if not p.is_file():
+        raise WorkingError("shared task unavailable")
+    conn = sqlite3.connect(p.as_uri() + "?mode=ro", uri=True, timeout=5)
+    conn.row_factory = sqlite3.Row
+    try:
+        yield conn
+    finally:
+        conn.close()
+
+
+def observation(db, scope_id, session_id, actor, *, after=0, limit=100):
+    """Read-only scoped projection for a delegated Observatory capability."""
+    if type(after) is not int or after < 0 or type(limit) is not int or not 1 <= limit <= 100:
+        raise WorkingError("invalid event cursor or limit")
+    with _read_open(db) as conn:
+        scope, _ = _scope(conn, db, scope_id, session_id, actor, "read", allow_closed=True)
+        floor = scope["floor_seq"]
+        last = conn.execute("SELECT COALESCE(MAX(seq),0) FROM events WHERE scope_id=?", (scope_id,)).fetchone()[0]
+        if after < floor or after > last or (after and after != floor and not conn.execute(
+                "SELECT 1 FROM events WHERE scope_id=? AND seq=?", (scope_id, after)).fetchone()):
+            return {"reset": True, "reason": "missed_history" if after < floor else "invalid_cursor",
+                    "events": [], "cursor": last}
+        rows = conn.execute("SELECT seq,item_id,version,kind,created FROM events WHERE scope_id=? AND seq>? ORDER BY seq LIMIT ?",
+                            (scope_id, after, limit)).fetchall()
+        changes = [{"cursor": r["seq"], "item_id": r["item_id"], "version": r["version"],
+                    "change": r["kind"], "at": r["created"]} for r in rows]
+        return {"reset": False, "events": changes,
+                "cursor": changes[-1]["cursor"] if changes else after}
+
+
+def observation_snapshot(db, scope_id, session_id, actor):
+    """Bounded Lobby status view; no artifact content or evidence references."""
+    with _read_open(db) as conn:
+        scope, _ = _scope(conn, db, scope_id, session_id, actor, "read", allow_closed=True)
+        members = [r["agent_id"] for r in conn.execute(
+            "SELECT agent_id FROM members WHERE scope_id=? ORDER BY agent_id", (scope_id,))]
+        rows = conn.execute("SELECT * FROM items WHERE scope_id=? ORDER BY updated DESC LIMIT ?",
+                            (scope_id, MAX_ITEMS_PER_SCOPE)).fetchall()
+        handoffs = {r["item_id"]: {"durable_id": r["durable_id"], "durable_kind": r["durable_kind"],
+                                     "accepted_at": r["accepted"]} for r in conn.execute(
+            "SELECT item_id,durable_id,durable_kind,accepted FROM handoffs WHERE item_id IN "
+            "(SELECT id FROM items WHERE scope_id=?)", (scope_id,))}
+        pending = {r["item_id"] for r in conn.execute(
+            "SELECT item_id FROM handoff_intents WHERE scope_id=?", (scope_id,))}
+        items = []
+        now = time.time()
+        for row in rows:
+            payload = json.loads(row["payload"])
+            status = "expired" if row["status"] == "active" and row["expires"] <= now else row["status"]
+            items.append({"item_id": row["id"], "scope_id": scope_id, "agent_id": row["agent_id"],
+                          "kind": payload["kind"], "claim": payload["claim"] if status == "active" else None,
+                          "uncertainty": payload["uncertainty"], "status": status, "version": row["version"],
+                          "created_at": row["created"], "updated_at": row["updated"],
+                          "expires_at": row["expires"],
+                          "evidence_count": len(payload.get("evidence_refs", [])) + sum(
+                              len(c.get("evidence_refs", [])) for c in payload.get("contributions", [])),
+                          "contribution_count": len(payload.get("contributions", [])),
+                          "handoff": handoffs.get(row["id"]),
+                          "handoff_pending": row["id"] in pending})
+        cursor = conn.execute("SELECT COALESCE(MAX(seq),0) FROM events WHERE scope_id=?",
+                              (scope_id,)).fetchone()[0]
+        return {"scope": {"scope_id": scope_id, "namespace": scope["namespace"],
+                          "task": scope["task"], "status": scope["status"], "created_at": scope["created"],
+                          "members": members}, "items": items, "cursor": cursor}
 
 
 def _prune(conn, scope_id):

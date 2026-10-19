@@ -14,6 +14,47 @@ from . import observer_build
 router=APIRouter()
 
 
+def lobby_access(request):
+    from . import _get_db
+    from ..lobby import working
+    db=_get_db();code=request.cookies.get('ember_observer')
+    try:
+        grant=observer.verify(db,code)
+        scope=grant.get('lobby_scope_id');session=grant.get('lobby_session_id')
+        if not scope or not session:raise PermissionError('Lobby observation was not delegated')
+        # This read-only projection checks current task membership, session and ACL.
+        working.observation_snapshot(db,scope,session,grant['observed_agent_id'])
+    except (PermissionError,working.WorkingError) as e:
+        raise HTTPException(403,str(e)) from e
+    return db,code,grant
+
+
+@router.get('/v1/observer/lobby')
+async def lobby_snapshot(request:Request):
+    from ..lobby import working
+    db,_,grant=lobby_access(request)
+    return JSONResponse(working.observation_snapshot(db,grant['lobby_scope_id'],
+                        grant['lobby_session_id'],grant['observed_agent_id']),
+                        headers={'Cache-Control':'no-store'})
+
+
+@router.get('/v1/observer/lobby/stream')
+async def lobby_stream(request:Request,after:int=0):
+    from ..lobby import working
+    from ..lobby.realtime_v2 import stream
+    if after<0:raise HTTPException(400,'invalid cursor')
+    db,code,grant=lobby_access(request)
+    scope=grant['lobby_scope_id'];session=grant['lobby_session_id'];actor=grant['observed_agent_id']
+    def permit():
+        current=observer.verify(db,code)
+        if current.get('lobby_scope_id')!=scope or current.get('lobby_session_id')!=session:
+            raise PermissionError('Lobby observation changed')
+    return StreamingResponse(stream(db,scope,session,actor,after,request.is_disconnected,
+                                    read=working.observation,permit=permit),
+                             media_type='text/event-stream',
+                             headers={'Cache-Control':'no-store','X-Accel-Buffering':'no'})
+
+
 def access(request):
     from . import _get_db
     db=_get_db();code=request.cookies.get('ember_observer')
@@ -34,7 +75,8 @@ async def create(body:dict,request:Request,x_ember_agent_id:str|None=Header(defa
         if body.get('action','create')=='revoke':return observer.revoke(db,body.get('observer_id'),actor)
         if body.get('action','create')!='create':raise ValueError('Invalid action')
         result=observer.issue(db,actor,ttl_seconds=body.get('ttl_seconds',3600),namespaces=body.get('namespaces'),
-                              session_id=current_session_id(),span_sessions=body.get('span_sessions',True),observer_target=body.get('observer_target'))
+                              session_id=current_session_id(),span_sessions=body.get('span_sessions',True),observer_target=body.get('observer_target'),
+                              lobby_scope_id=body.get('lobby_scope_id'),lobby_session_id=body.get('lobby_session_id'))
         result['visualization_url']=str(request.base_url).rstrip('/')+result['viewer_path']
         return JSONResponse(result,headers={'Cache-Control':'no-store'})
     except PermissionError as e:raise HTTPException(403,str(e)) from e
@@ -47,7 +89,8 @@ async def exchange(body:dict,request:Request):
     code=body.get('code')
     try:grant=observer.verify(_get_db(),code)
     except PermissionError as e:raise HTTPException(403,str(e)) from e
-    response=JSONResponse({k:grant[k] for k in ('observer_id','authorized_observer','observed_agent_id','scope','span_sessions','expires_at')},headers={'Cache-Control':'no-store'})
+    response=JSONResponse({**{k:grant[k] for k in ('observer_id','authorized_observer','observed_agent_id','scope','span_sessions','expires_at')},
+                           'lobby_scope_id':grant.get('lobby_scope_id')},headers={'Cache-Control':'no-store'})
     response.set_cookie('ember_observer',code,max_age=max(0,int(grant['expires_at']-time.time())),
                         httponly=True,secure=request.url.scheme=='https',samesite='strict',path='/v1/observer')
     return response

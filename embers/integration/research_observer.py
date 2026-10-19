@@ -61,7 +61,8 @@ def _events(db, actor, namespaces=None):
         yield e
 
 
-def issue(db, actor, *, ttl_seconds=3600, namespaces=None, session_id=None, span_sessions=True, observer_target=None):
+def issue(db, actor, *, ttl_seconds=3600, namespaces=None, session_id=None, span_sessions=True,
+          observer_target=None, lobby_scope_id=None, lobby_session_id=None):
     if observer_target is not None and observer_target!=actor:
         raise PermissionError('Agents may delegate observation of themselves only')
     if type(ttl_seconds) is not int or not 60<=ttl_seconds<=86400:raise ValueError('ttl_seconds must be 60..86400')
@@ -73,6 +74,11 @@ def issue(db, actor, *, ttl_seconds=3600, namespaces=None, session_id=None, span
     if not span_sessions:
         actual=db.get_session(session_id) if session_id else None
         if actual is None or actual.agent_id!=actor or actual.status.value!='active':raise PermissionError('Active own session required')
+    if lobby_scope_id is not None:
+        if not isinstance(lobby_scope_id,str) or not lobby_session_id:
+            raise ValueError('Lobby scope and session required')
+        from ..lobby.working import observation_snapshot
+        observation_snapshot(db,lobby_scope_id,lobby_session_id,actor)
     baseline={}
     with db._writer.lock:
         for e in _events(db,actor,namespaces):baseline[e['namespace']]=max(baseline.get(e['namespace'],0),e['revision'])
@@ -81,10 +87,12 @@ def issue(db, actor, *, ttl_seconds=3600, namespaces=None, session_id=None, span
         data={'observer_id':observer_id,'authorized_observer':'capability-holder:'+uuid.uuid4().hex,
               'observed_agent_id':actor,'scope':'agent-activity:read','namespaces':namespaces,
               'session_id':None if span_sessions else session_id,'span_sessions':span_sessions,
-              'created_at':time.time(),'expires_at':time.time()+ttl_seconds,'baseline':baseline,'revoked':False}
+              'created_at':time.time(),'expires_at':time.time()+ttl_seconds,'baseline':baseline,'revoked':False,
+              'lobby_scope_id':lobby_scope_id,'lobby_session_id':lobby_session_id}
         _save(_directory(db)/(observer_id+'.json'),data)
     return {'code':code,'observer_id':observer_id,'authorized_observer':data['authorized_observer'],
             'observed_agent_id':actor,'scope':data['scope'],'span_sessions':span_sessions,'expires_at':data['expires_at'],
+            'lobby_scope_id':lobby_scope_id,
             'viewer_path':'/visualizer?mode=observer#observe='+code}
 
 
