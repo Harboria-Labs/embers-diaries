@@ -1,6 +1,7 @@
 """Opt-in Codex Stop adapter and MCP parity using isolated stores."""
 
 import asyncio
+import hashlib
 import json
 
 import pytest
@@ -21,6 +22,8 @@ def test_codex_stop_selected_finding_artifact_push_and_peer_recall(tmp_path):
     working.grant(db, scope, author_sid, "codex-agent", "reader-agent")
     outbox = tmp_path / ".ember-lobby-outbox"
     outbox.mkdir()
+    # Synthetic fixture: adapter publication coverage, not automatic runtime capture.
+    (outbox / "unrelated.txt").write_text("unrelated private output", encoding="utf-8")
     (outbox / "result.txt").write_text("3 passed in isolated pytest\n", encoding="utf-8")
     marker = {"share": True, "kind": "finding", "claim": "three parser tests passed",
               "uncertainty": "unverified", "artifact_file": "result.txt", "redacted": True}
@@ -57,7 +60,19 @@ def test_codex_stop_selected_finding_artifact_push_and_peer_recall(tmp_path):
         artifact = working.get_artifact(db, scope, reader_sid, "reader-agent",
                                         evidence["reference"].split(":", 1)[1])
         assert artifact["content"] == "3 passed in isolated pytest\n"
+        assert evidence["execution_context"].endswith(
+            hashlib.sha256(artifact["content"].encode()).hexdigest())
+        assert "unrelated private output" not in json.dumps(evidence)
+        before_retry = working.events(db, scope, reader_sid, "reader-agent")["cursor"]
         assert process_stop(event, settings, post)["item_id"] == receipt["item_id"]
+        assert working.events(db, scope, reader_sid, "reader-agent")["cursor"] == before_retry
+        outsider_sid = db.start_session("outsider", task="task", namespace="shared")
+        with pytest.raises(PermissionError, match="membership required"):
+            working.get(db, scope, outsider_sid, "outsider", receipt["item_id"], evidence=True)
+        (outbox / "result.txt").write_text("changed bytes", encoding="utf-8")
+        with pytest.raises(working.WorkingError, match="different content"):
+            process_stop(event, settings, post)
+        assert working.events(db, scope, reader_sid, "reader-agent")["cursor"] == before_retry
         await gen.aclose()
     asyncio.run(run())
 
@@ -147,3 +162,37 @@ def test_artifact_capacity_and_expiry_signal(tmp_path, monkeypatch):
     page = working.events(db, scope, sid, "owner", after=cursor)
     assert page["events"][0]["item_id"] == item["item_id"]
     assert page["events"][0]["change"] == "removed"
+
+
+@pytest.mark.parametrize("hook,recursive", [("PostToolUse", False), ("Stop", True)])
+def test_stop_adapter_is_not_a_tool_result_collector(tmp_path, hook, recursive):
+    """Synthetic hook inputs establish the boundary, not runtime capture proof."""
+    event = {"hook_event_name": hook, "stop_hook_active": recursive,
+             "tool_name": "shell", "tool_output": "unrelated private output",
+             "exit_code": 0, "cwd": str(tmp_path), "turn_id": "synthetic"}
+    def forbidden(*args):
+        raise AssertionError("unselected tool activity must not publish")
+    assert process_stop(event, {}, forbidden) is None
+
+
+def test_stop_without_selected_artifact_does_not_fabricate_execution_evidence(tmp_path):
+    outbox = tmp_path / ".ember-lobby-outbox"
+    outbox.mkdir()
+    (outbox / "unrelated.txt").write_text("must not publish")
+    marker = {"share": True, "kind": "finding", "claim": "synthetic conclusion"}
+    event = {"hook_event_name": "Stop", "turn_id": "synthetic",
+             "cwd": str(tmp_path), "tool_output": "not a supported evidence input",
+             "last_assistant_message": "<ember-lobby-v2>" + json.dumps(marker) + "</ember-lobby-v2>"}
+    settings = {"url": "http://127.0.0.1:9200", "agent_id": "a", "token": "x",
+                "session_id": "s", "scope_id": "scope"}
+    calls = []
+    def post(url, headers, body):
+        calls.append((url, body))
+        return body
+    result = process_stop(event, settings, post)
+    assert len(calls) == 1 and calls[0][0].endswith("/items")
+    assert result["evidence_status"] == "unavailable"
+    assert result["evidence_refs"] == []
+    assert result["uncertainty"] == "unverified"
+    assert "must not publish" not in json.dumps(result)
+    assert "tool_output" not in result

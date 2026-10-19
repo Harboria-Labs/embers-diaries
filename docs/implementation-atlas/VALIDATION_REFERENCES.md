@@ -71,3 +71,17 @@ Source: `embers/cognitive/epistemic.py` verified-state LRU/current/publish/full-
 ## Phase 5 executed evidence — 2026-10-17
 
 Final `tests/test_track7_phase5.py` passed 4; the earlier selected Batch 1–4/Phase 5 and cross-feature group passed 309 with 2 installed-native skips; the observation stream/concurrency/native recovery group passed 46. The two skipped tests passed on a separately staged compatible native build without changing the installed binary. `phase5_scale.py` measured 50/150/300 unrelated-memory tiers and cold/cross-process/explicit reconciliation in disposable stores, with raw JSON lines retained. Commands, physical-read and metadata/CPU/latency counts, native identity and limits: `track7_atlas_design_20261015/16_PHASE5_VALIDATION_EVIDENCE.md`. No live validation.
+
+
+### Final focused harness-capture validation — 2026-10-19
+
+Inspected/pulled Candidate 04 at `b3159d052f3354d250f5bfdf7c48b0bc90a265d0`.
+**Automatic tool-result capture remains unproven**: current Stop adapter uploads a
+selected preexisting outbox file; this remote environment has no supported
+completed-tool hook integration or Codex CLI on PATH. Historical real CLI turns
+used harness-prepared evidence. Simulated adapter plus isolated REST/MCP/SSE,
+authorization, retry, read-only and client tests: **42 passed, 0 failed, 0 skipped**,
+one dependency warning. New assertions explicitly distinguish synthetic fixtures
+from execution receipts. Runtime source unchanged; no deployment/browser proof,
+no Track 7 work. Full source boundary, command and evidence grades:
+[final capture validation](../../paper/lobby_v2_final_capture_validation.md).

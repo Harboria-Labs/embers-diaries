@@ -79,3 +79,17 @@ Branch `codex/ember-split-feedback-candidate04`, pre-closure HEAD `fe0a001174fc5
 ### Live Lobby Observatory completion follow-up — 2026-10-19
 
 Inspected Candidate 04 at `dcd898e`; changes remain on that branch. Existing storage/SSE/adapter/handoff mechanisms retained. The panel now reports safe evidence/contributor metadata and explicit uncertainty/handoff limits; fixes cover atomic read-only row/cursor snapshots, Last-Event-ID, serialized event-triggered refresh/recovery, local expiry, scope-close notifications and MCP Lobby delegation. **45 focused Python tests passed**, including seven client state-machine cases; standalone Node run also passed seven. Real isolated HTTP SSE/replay and cross-process wakeup ran. Browser access to the isolated server was refused, so visual/deployed validation remains open. No Track 7 validation or deployed changes. Full source, limits and operator startup instructions: [Live Lobby Observatory](../live-lobby-observatory.md).
+
+
+### Final focused harness-capture validation — 2026-10-19
+
+Inspected/pulled Candidate 04 at `b3159d052f3354d250f5bfdf7c48b0bc90a265d0`.
+**Automatic tool-result capture remains unproven**: current Stop adapter uploads a
+selected preexisting outbox file; this remote environment has no supported
+completed-tool hook integration or Codex CLI on PATH. Historical real CLI turns
+used harness-prepared evidence. Simulated adapter plus isolated REST/MCP/SSE,
+authorization, retry, read-only and client tests: **42 passed, 0 failed, 0 skipped**,
+one dependency warning. New assertions explicitly distinguish synthetic fixtures
+from execution receipts. Runtime source unchanged; no deployment/browser proof,
+no Track 7 work. Full source boundary, command and evidence grades:
+[final capture validation](../../paper/lobby_v2_final_capture_validation.md).
