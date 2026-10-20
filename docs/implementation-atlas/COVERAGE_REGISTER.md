@@ -125,3 +125,18 @@ certified. This is isolated implementation/regression closure, not deployment.
 Final resumed run, 2026-10-20: **896 Python tests passed, no failures/skips;
 16 Rust tests passed, no failures/ignored tests**. One Python dependency warning.
 Raw outputs are retained with the finalization evidence.
+
+
+## Control Center safe foundation — 2026-10-20
+
+Baseline Candidate 04 `6d325c0eaf5a2fe7e8c89d6b5c51781a1a2ba8bb` inspected.
+Added separate read-only Control Center with validated startup route, existing
+agent/namespace authorization and research settings/proposal/conflict readers.
+No human role exists: administrative configuration and review writes deliberately
+return 403. Runtime staging/restart detection remains unavailable; no privileged
+default or observer write authority introduced. See [scope and dependency](../control-center.md).
+Focused configuration, control, promotion and observer regression group: 65 passed,
+one dependency warning. Browser/deployment validation not performed. Track 7 and
+Lobby preserved. Source: `embers/api/control.py`, HTML/JS/CSS, `embers/config.py`,
+normal API registration; tests: `tests/test_control_center.py`. This is partial
+administrative completion, blocked on an approved operator authorization model.

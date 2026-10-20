@@ -356,3 +356,7 @@ def _serialize_record(record: EmberRecord) -> dict:
     if record.record_type in (RecordType.DOCUMENT, RecordType.NODE):
         result["epistemic"] = public_epistemic_summary(record)
     return result
+
+
+from .control import install as _install_control
+_install_control(app, _get_config().api.control_path)

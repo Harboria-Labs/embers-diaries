@@ -13,6 +13,8 @@ interval_seconds = 0
 namespaces = ["memories"]
 
 [api]
+# Control Center shell route; restart required. A custom path is not authentication.
+control_path = "/control"
 rest_enabled = true
 mcp_enabled = true
 # Loopback is the secure default. Authentication remains mandatory.
