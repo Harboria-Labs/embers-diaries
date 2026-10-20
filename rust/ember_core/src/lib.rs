@@ -1,3 +1,5 @@
+mod domain;
+mod quota;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
 use base64::Engine;
 use pyo3::exceptions::{PyTypeError, PyValueError};
@@ -283,6 +285,7 @@ fn sha256_hex(canonical_bytes: &[u8]) -> String {
 }
 
 fn durable_append(path: &Path, line: &[u8]) -> io::Result<()> {
+    let _capacity = quota::admit_append(path, line)?;
     let mut framed = Vec::with_capacity(line.len() + 1);
     framed.extend_from_slice(line);
     framed.push(b'\n');
@@ -387,17 +390,9 @@ fn pending_wal_lines(path: &Path) -> io::Result<Vec<Vec<u8>>> {
 
 fn compact_wal(path: &Path) -> io::Result<usize> {
     let pending = pending_wal_lines(path)?;
-    let mut file = OpenOptions::new()
-        .create(true)
-        .write(true)
-        .truncate(true)
-        .open(path)?;
-    for line in &pending {
-        file.write_all(line)?;
-        file.write_all(b"\n")?;
-    }
-    file.flush()?;
-    file.sync_all()?;
+    let mut bytes = Vec::new();
+    for line in &pending { bytes.extend_from_slice(line); bytes.push(b'\n'); }
+    atomic_replace_file(path, &bytes)?;
     Ok(pending.len())
 }
 
@@ -436,6 +431,7 @@ fn write_synced_temporary_file(path: &Path, data: &[u8]) -> io::Result<PathBuf> 
 }
 
 fn atomic_write_new_file(path: &Path, data: &[u8]) -> io::Result<bool> {
+    let _capacity = quota::admit(path, if path.exists() { 0 } else { data.len() as u64 })?;
     if path.exists() {
         return Ok(false);
     }
@@ -500,6 +496,7 @@ fn replace_path(source: &Path, destination: &Path) -> io::Result<()> {
 }
 
 fn atomic_replace_file(path: &Path, data: &[u8]) -> io::Result<()> {
+    let _capacity = quota::admit(path, data.len() as u64)?;
     let temp = write_synced_temporary_file(path, data)?;
     if let Err(error) = replace_path(&temp, path) {
         let _ = fs::remove_file(&temp);
@@ -507,6 +504,36 @@ fn atomic_replace_file(path: &Path, data: &[u8]) -> io::Result<()> {
     }
     Ok(())
 }
+
+// A conservative change epoch is published before each native source change.
+// An interrupted transaction may leave the epoch ahead, forcing the Python
+// MasterIndex to reconcile; it can never leave an acknowledged native write
+// hidden behind an equal indexed epoch. Callers use the shared store lock.
+fn advance_source_epoch(root: &Path) -> io::Result<u64> {
+    let path = root.join("meta").join("source_epoch.json");
+    fs::create_dir_all(root.join("meta"))?;
+    let current = match fs::read(&path) {
+        Ok(bytes) => {
+            let value: Value = serde_json::from_slice(&bytes)
+                .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+            value.get("epoch").and_then(Value::as_u64).ok_or_else(|| {
+                io::Error::new(io::ErrorKind::InvalidData, "invalid source epoch")
+            })?
+        }
+        Err(error) if error.kind() == io::ErrorKind::NotFound => 0,
+        Err(error) => return Err(error),
+    };
+    let next = current.checked_add(1).ok_or_else(|| {
+        io::Error::new(io::ErrorKind::InvalidData, "source epoch overflow")
+    })?;
+    let bytes = serde_json::to_vec(&serde_json::json!({"epoch": next}))
+        .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+    atomic_replace_file(&path, &bytes)?;
+    Ok(next)
+}
+
+#[pyfunction]
+fn source_epoch_protocol_version() -> u32 { 1 }
 
 #[pyclass]
 struct StoreFileLock {
@@ -640,42 +667,51 @@ fn validate_conflict_transition(
 }
 
 #[pyfunction]
+#[pyo3(signature = (root, wal_id, pending_timestamp, commit_timestamp, record_id, data_json, record_bytes, meta_bytes=None))]
 fn write_record_transaction(
-    root: &str,
-    wal_id: &str,
-    pending_timestamp: &str,
-    commit_timestamp: &str,
-    record_id: &str,
-    data_json: &[u8],
-    record_bytes: &[u8],
+    root: &str, wal_id: &str, pending_timestamp: &str, commit_timestamp: &str,
+    record_id: &str, data_json: &[u8], record_bytes: &[u8], meta_bytes: Option<&[u8]>,
 ) -> PyResult<bool> {
     let root = Path::new(root);
     let data: Value = serde_json::from_slice(data_json)
         .map_err(|error| PyValueError::new_err(format!("invalid record WAL data: {error}")))?;
-    append_json(
-        &root.join("wal.jsonl"),
-        &PendingWalEntry {
-            wal_id,
-            operation: "write",
-            record_id,
-            data,
-            status: "PENDING",
-            timestamp: pending_timestamp,
-        },
-    )?;
+    if matches!(data["record_type"].as_str(), Some("node" | "document")) {
+        if let Some(context)=data["data"].get("primary_context") {
+            domain::context(context).map_err(PyValueError::new_err)?;
+        }
+    }
+    let pending = serde_json::to_vec(&PendingWalEntry {
+        wal_id, operation: "write", record_id, data, status: "PENDING", timestamp: pending_timestamp,
+    }).map_err(|e| PyValueError::new_err(e.to_string()))?;
+    let commit = serde_json::to_vec(&CommittedWalEntry {
+        wal_id, status: "COMMITTED", timestamp: commit_timestamp,
+    }).map_err(|e| PyValueError::new_err(e.to_string()))?;
+    let peak = [pending.len() as u64, (commit.len() as u64).max(quota::commit_reserve(wal_id)), 2,
+                record_bytes.len() as u64, meta_bytes.map_or(0, |b| b.len()) as u64]
+        .into_iter().try_fold(0u64, |n, v| n.checked_add(v))
+        .ok_or_else(|| PyValueError::new_err("transaction byte count overflow"))?;
+    let _capacity = quota::admit(&root.join("wal.jsonl"), peak)?;
+    advance_source_epoch(root)?;
+    durable_append(&root.join("wal.jsonl"), &pending)?;
     let created = atomic_write_new_file(
-        &root.join("records").join(format!("{record_id}.ember")),
-        record_bytes,
-    )?;
-    append_json(
-        &root.join("wal.jsonl"),
-        &CommittedWalEntry {
-            wal_id,
-            status: "COMMITTED",
-            timestamp: commit_timestamp,
-        },
-    )?;
+        &root.join("records").join(format!("{record_id}.ember")), record_bytes)?;
+    durable_append(&root.join("wal.jsonl"), &commit)?;
+    if let Some(bytes) = meta_bytes {
+        atomic_replace_file(&root.join("meta").join("store.json"), bytes)?;
+    }
     Ok(created)
+}
+
+#[pyfunction]
+fn configure_store_quota(root: &str, max_total_bytes: u64) -> PyResult<()> {
+    quota::configure(Path::new(root), max_total_bytes)?;
+    Ok(())
+}
+
+#[pyfunction]
+fn store_byte_usage(root: &str) -> PyResult<(u64, Option<u64>)> {
+    let root = Path::new(root);
+    Ok((quota::usage(root)?, quota::limit(root)?))
 }
 
 #[derive(Deserialize)]
@@ -688,10 +724,15 @@ struct RecoveryWalEntry {
 
 #[pyfunction]
 fn recover_record_transactions(root: &str, commit_timestamp: &str) -> PyResult<Vec<u8>> {
+    let _capacity = quota::admit(&Path::new(root).join("wal.jsonl"), 0)?;
     let root = Path::new(root);
     let mut recovered = Vec::new();
     let mut failed = Vec::new();
-    for line in pending_wal_lines(&root.join("wal.jsonl"))? {
+    let pending = pending_wal_lines(&root.join("wal.jsonl"))?;
+    if !pending.is_empty() {
+        advance_source_epoch(root)?;
+    }
+    for line in pending {
         let attempt = (|| -> PyResult<Option<String>> {
             let entry: RecoveryWalEntry = serde_json::from_slice(&line).map_err(|error| {
                 PyValueError::new_err(format!("invalid pending WAL entry: {error}"))
@@ -911,8 +952,9 @@ fn python_to_canonical_json(value: &Bound<'_, PyAny>) -> PyResult<Value> {
 #[pyfunction]
 fn canonical_record_bytes(payload: &Bound<'_, PyAny>) -> PyResult<Vec<u8>> {
     let normalized = python_to_canonical_json(payload)?;
-    serde_json::to_vec(&normalized)
-        .map_err(|error| PyValueError::new_err(format!("canonical encoding failed: {error}")))
+    // Domain reducers preserve insertion order; record hashes must retain the
+    // historical recursive sorted-key encoding regardless of serde map backend.
+    Ok(domain::canonical(&normalized).into_bytes())
 }
 
 fn json_to_msgpack(value: Value) -> rmpv::Value {
@@ -1015,6 +1057,7 @@ fn write_supersession(root: &str, old_id: &str, new_id: &str, timestamp: &str) -
         timestamp,
     })
     .map_err(|error| PyValueError::new_err(format!("invalid supersession: {error}")))?;
+    advance_source_epoch(root)?;
     atomic_replace_file(&supersession_path(root, old_id), &line)?;
     Ok(())
 }
@@ -1119,8 +1162,17 @@ fn checkpoint_wal(path: &str) -> PyResult<usize> {
     Ok(compact_wal(Path::new(path))?)
 }
 
+#[pyfunction]
+fn domain_call(operation: &str, input: &str) -> PyResult<String> {
+    let value: Value = serde_json::from_str(input).map_err(|e| PyValueError::new_err(e.to_string()))?;
+    domain::call(operation, value).map(|v|v.to_string()).map_err(|e| {
+        if let Some(message)=e.strip_prefix("AUTH:") { pyo3::exceptions::PyPermissionError::new_err(message.to_owned()) }
+        else { PyValueError::new_err(e) }
+    })
+}
 #[pymodule]
 fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add_function(wrap_pyfunction!(domain_call, module)?)?;
     module.add_function(wrap_pyfunction!(sha256_hex, module)?)?;
     module.add_function(wrap_pyfunction!(append_wal_line, module)?)?;
     module.add_function(wrap_pyfunction!(append_wal_pending, module)?)?;
@@ -1130,6 +1182,9 @@ fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(acquire_store_lock, module)?)?;
     module.add_function(wrap_pyfunction!(atomic_write_new, module)?)?;
     module.add_function(wrap_pyfunction!(atomic_replace, module)?)?;
+    module.add_function(wrap_pyfunction!(source_epoch_protocol_version, module)?)?;
+    module.add_function(wrap_pyfunction!(configure_store_quota, module)?)?;
+    module.add_function(wrap_pyfunction!(store_byte_usage, module)?)?;
     module.add_function(wrap_pyfunction!(write_supersession, module)?)?;
     module.add_function(wrap_pyfunction!(get_superseded_by, module)?)?;
     module.add_function(wrap_pyfunction!(get_supersession_chain, module)?)?;

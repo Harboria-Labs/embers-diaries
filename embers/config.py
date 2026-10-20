@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import math
+import re
 import os
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -23,9 +24,9 @@ DEFAULT_CONFIG_PATH = Path("config.toml")
 DEFAULT_STORAGE_PATH = Path("./ember_store")
 
 _SUPPORTED_KEYS = {
-    "storage": {"path", "max_store_bytes", "max_record_bytes"},
+    "storage": {"path", "max_store_bytes", "max_record_bytes", "max_total_bytes"},
     "maintenance": {"interval_seconds", "namespaces"},
-    "api": {"rest_enabled", "mcp_enabled", "host", "port", "cors_origins"},
+    "api": {"rest_enabled", "mcp_enabled", "host", "port", "cors_origins", "control_path"},
     "lobby": {
         "enabled", "max_agents", "message_ttl_seconds",
         "presence_timeout_seconds", "heartbeat_interval_seconds",
@@ -55,10 +56,12 @@ _ENV_KEYS = {
     "EMBER_STORE": "storage.path",
     "EMBER_STORAGE_MAX_STORE_BYTES": "storage.max_store_bytes",
     "EMBER_STORAGE_MAX_RECORD_BYTES": "storage.max_record_bytes",
+    "EMBER_STORAGE_MAX_TOTAL_BYTES": "storage.max_total_bytes",
     "EMBER_MAINTENANCE_INTERVAL_SECONDS": "maintenance.interval_seconds",
     "EMBER_MAINTENANCE_NAMESPACES": "maintenance.namespaces",
     "EMBER_API_REST_ENABLED": "api.rest_enabled",
     "EMBER_API_MCP_ENABLED": "api.mcp_enabled",
+    "EMBER_CONTROL_PATH": "api.control_path",
     "EMBER_API_HOST": "api.host",
     "EMBER_API_PORT": "api.port",
     "EMBER_CORS_ORIGINS": "api.cors_origins",
@@ -105,6 +108,7 @@ class StorageConfig:
     path: Path = DEFAULT_STORAGE_PATH
     max_store_bytes: int = 0       # 0 = unlimited
     max_record_bytes: int = 0      # 0 = unlimited
+    max_total_bytes: int = 0       # 0 inherits a persisted cap, or is unlimited for new stores
 
 
 @dataclass(frozen=True)
@@ -119,6 +123,7 @@ class MaintenanceConfig:
 
 @dataclass(frozen=True)
 class ApiConfig:
+    control_path: str = "/control"
     rest_enabled: bool = True
     mcp_enabled: bool = True
     host: str = "127.0.0.1"
@@ -330,6 +335,18 @@ def _section(values: Mapping[str, Any], name: str) -> Mapping[str, Any]:
     return raw if isinstance(raw, Mapping) else {}
 
 
+def _control_path(value):
+    # A single segment prevents nested API/static routing collisions and URL tricks.
+    if not isinstance(value, str) or not re.fullmatch(r"/[a-z][a-z0-9-]{0,47}", value):
+        raise ConfigError("api.control_path must be one lowercase URL segment")
+    reserved = {"v1", "mcp", "health", "docs", "redoc", "openapi", "observer",
+                "visualizer", "research", "status", "static", "records", "namespaces",
+                "search", "query", "graph", "memory", "timeline"}
+    if value[1:] in reserved:
+        raise ConfigError("api.control_path conflicts with a reserved route")
+    return value
+
+
 def load_config(
     config_path: str | os.PathLike[str] | None = None,
     *,
@@ -376,12 +393,14 @@ def load_config(
             path=_path(storage.get("path", DEFAULT_STORAGE_PATH), "storage.path"),
             max_store_bytes=_integer(storage.get("max_store_bytes", 0), "storage.max_store_bytes"),
             max_record_bytes=_integer(storage.get("max_record_bytes", 0), "storage.max_record_bytes"),
+            max_total_bytes=_integer(storage.get("max_total_bytes", 0), "storage.max_total_bytes"),
         ),
         maintenance=MaintenanceConfig(
             interval_seconds=_integer(maintenance.get("interval_seconds", 0), "maintenance.interval_seconds"),
             namespaces=_strings(maintenance.get("namespaces", ("memories",)), "maintenance.namespaces"),
         ),
         api=ApiConfig(
+            control_path=_control_path(api.get("control_path", "/control")),
             rest_enabled=_boolean(api.get("rest_enabled", True), "api.rest_enabled"),
             mcp_enabled=_boolean(api.get("mcp_enabled", True), "api.mcp_enabled"),
             host=_text(api.get("host", "127.0.0.1"), "api.host"),
@@ -445,4 +464,8 @@ def load_config(
         raise ConfigError("logging.level must be CRITICAL, ERROR, WARNING, INFO, or DEBUG")
     if config.native.transport not in {"embedded", "process"}:
         raise ConfigError("native.transport must be embedded or process")
+    if (config.storage.max_total_bytes or
+            (config.storage.path / "meta" / "storage-limits.json").exists()):
+        if config.logging.file is not None and config.logging.file.resolve().is_relative_to(config.storage.path.resolve()):
+            raise ConfigError("quota-managed stores require logging.file outside storage.path")
     return config

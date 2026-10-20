@@ -112,12 +112,15 @@ class MemoryProtocol:
                  agent_id: str | None = None,
                  session_id: str | None = None,
                  creation_reason: str | None = None,
-                 derived_from: list | None = None) -> str:
+                 derived_from: list | None = None,
+                 primary_context: str | None = None) -> str:
         """Store a new memory. Agent sets kind and room on write.
 
         Kind ≠ room. Unknown or missing labels become unscoped.
         Ember does not guess. Recall must not invent a room later.
         """
+        from ..core.primary_context import validate_context
+        validate_context(primary_context)
         ns = namespace or self.namespace
 
         try:
@@ -129,7 +132,9 @@ class MemoryProtocol:
         except ValueError:
             resolved_room = MemoryRoom.UNSCOPED.value
 
-        data = content if isinstance(content, dict) else {"content": str(content)}
+        data = dict(content) if isinstance(content, dict) else {"content": str(content)}
+        from ..core.domain import call
+        data = call('context_write', {'data':data, 'supplied':primary_context})
         if "memory_type" not in data:
             data["memory_type"] = resolved_type
         else:
@@ -181,8 +186,14 @@ class MemoryProtocol:
                room: str | None = None,
                threshold: float | None = None,
                include_annotations: bool = True,
-               format: str = "text") -> str | list[dict]:
-        """Retrieve relevant memories. room filters by stored room only."""
+               format: str = "text",
+               primary_context: str | None = None,
+               inspect_context: bool = False) -> str | list[dict] | dict:
+        """Retrieve memories; primary_context is observable metadata, not a filter."""
+        from ..core.primary_context import validate_context
+        validate_context(primary_context)
+        if type(inspect_context) is not bool:
+            raise ValueError("inspect_context must be boolean")
         ns = namespace or self.namespace
 
         top_k = min(top_k, self.search_config.max_results)
@@ -242,21 +253,82 @@ class MemoryProtocol:
             except Exception:
                 pass
 
+        def observed(result):
+            if format == 'raw': direct_ids = [r.id for r in result]
+            elif format == 'structured': direct_ids = [r['id'] for r in result]
+            elif format == 'messages': direct_ids = [r['metadata']['ember_record_id'] for r in result]
+            else: direct_ids = self.context_builder.get_last_injected()
+            pair_route = None
+            if getattr(self.db, '_usefulness_enabled', False) and direct_ids:
+                from .pairing import select
+                paired, route = select(self.db, ns, direct_ids, primary_context)
+                # top_k bounds direct retrieval; the separate hard result cap also bounds the pair.
+                if paired is not None and len(direct_ids) < self.search_config.max_results:
+                    # Render separately: never reorder or evict already admitted direct rows.
+                    from .context import ContextBuilder
+                    builder = ContextBuilder(self.decay, self.context_builder.max_tokens,
+                                             self.context_builder._chars_per_token)
+                    if format == 'raw':
+                        result = result + [paired]; pair_route = route
+                    elif format == 'structured':
+                        row = self._stamp_conflicts(builder.build_structured_context([paired]))[0]
+                        row['retrieval'] = route
+                        result = result + [row]; pair_route = route
+                    elif format == 'messages':
+                        addition = builder.build_message_context([paired])
+                        if addition and sum(len(x['content']) for x in result + addition) / builder._chars_per_token <= builder.max_tokens:
+                            addition[0]['metadata']['retrieval'] = route
+                            result = result + addition; pair_route = route
+                    else:
+                        addition = builder.build_text_context([paired], include_annotations=include_annotations)
+                        if addition and builder._estimate_tokens(result + '\n' + addition) <= builder.max_tokens:
+                            result = result + '\n' + addition; pair_route = route
+                            self.context_builder._last_injected.append(paired.id)
+                    if pair_route: records.append(paired)
+            if not inspect_context and primary_context is None and not pair_route:
+                return result
+            if format == "raw":
+                emitted = {r.id for r in result}
+            elif format == "structured":
+                emitted = {r["id"] for r in result}
+            elif format == "messages":
+                emitted = {r["metadata"]["ember_record_id"] for r in result}
+            else:
+                emitted = set(self.context_builder.get_last_injected())
+            return {"query": query, "primary_context": primary_context,
+                    "direct_ids": direct_ids, "primary_memory_id": direct_ids[0] if direct_ids else None,
+                    "pair_expansion": pair_route,
+                    "context_policy": "agent-supplied-pass-through-v1",
+                    "retrieval_model": "legacy-query-discovery-v1",
+                    "candidates": [{"id": r.id, "primary_context": (r.data.get("primary_context") if isinstance(r.data, dict) else None)}
+                                   for r, _ in candidates.values()],
+                    "results": [{"id": r.id, "primary_context": (r.data.get("primary_context") if isinstance(r.data, dict) else None)}
+                                for r in records if r.id in emitted], "memories": result}
+
         if format == "raw":
-            return records
+            return observed(records)
         elif format == "messages":
-            return self.context_builder.build_message_context(records)
+            return observed(self.context_builder.build_message_context(records))
         elif format == "structured":
             rows = self.context_builder.build_structured_context(records)
-            return self._stamp_conflicts(rows)
+            return observed(self._stamp_conflicts(rows))
         else:
-            return self.context_builder.build_text_context(
-                records, include_annotations=include_annotations)
+            return observed(self.context_builder.build_text_context(
+                records, include_annotations=include_annotations))
+
+    def orient(self, clues: str, namespace: str | None = None, *, hints=None,
+               limits=None, signals=None) -> dict:
+        """Read-only Contract 02 orientation; the agent selects the context."""
+        from .orientation import orient
+        return orient(self.db, clues=clues, namespace=namespace or self.namespace,
+                      hints=hints, limits=limits, signals=signals)
 
     def verify(self, record_id: str,
                status: str = "verified",
                note: str = "",
                written_by: str = "llm") -> bool:
+        import warnings
+        warnings.warn('verify() records a legacy annotation only; use ember_epistemic_feedback for authoritative evidence', DeprecationWarning, stacklevel=2)
         valid_statuses = {"verified", "hypothesis", "contested", "deprecated"}
         if status not in valid_statuses:
             raise ValueError(f"Invalid status: {status}. Must be one of {valid_statuses}")
@@ -324,7 +396,7 @@ class MemoryProtocol:
 
     _DURABLE_MEMORY_TYPES = frozenset({RecordType.NODE, RecordType.DOCUMENT})
     _CONFLICT_SKIP_KEYS = frozenset({
-        "subject", "content", "memory_type", "room", "verify_status",
+        "subject", "content", "memory_type", "room", "verify_status", "primary_context",
     })
 
     def _check_conflicts(self, new_record: EmberRecord):

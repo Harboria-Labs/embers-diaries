@@ -19,6 +19,7 @@ from ..core.record import EmberRecord
 from ..core.errors import StorageLimitError
 from ..core.annotation import Annotation
 from ..core.types import RecordType, DeprecationReason
+from ..core.domain import epistemically_neutral_data, public_epistemic_summary
 from ..identity.registry import AgentRegistry
 from ..integration import MemoryProtocol
 from .session_gate import install as install_session_gate, resolve_agent
@@ -48,13 +49,17 @@ def _get_db() -> EmberDB:
             require_evidence=config.evidence.require_evidence,
             minimum_evidence_items=config.evidence.minimum_items,
         )
-        _db = EmberDB.connect(
+        db = EmberDB.connect(
             config.storage.path,
             promotion_policy=policy,
             max_store_bytes=config.storage.max_store_bytes,
             max_record_bytes=config.storage.max_record_bytes,
+            max_total_bytes=config.storage.max_total_bytes,
             runtime_config=config,
         )
+        from ..integration.server_memory import prepare_memory_services
+        prepare_memory_services(db, config.storage.path)
+        _db = db
         from ..mcp.lobby_surface import STORE
         STORE.configure(config.lobby)
     return _db
@@ -154,8 +159,10 @@ async def require_legacy_agent(request: Request, call_next):
 
 
 from .v1 import router as v1_router
+from .lobby_v2 import router as lobby_v2_router
 from .mcp_http import router as mcp_router
 app.include_router(v1_router)
+app.include_router(lobby_v2_router)
 app.include_router(mcp_router)
 install_session_gate(app)
 
@@ -335,9 +342,10 @@ async def get_timeline(namespace: str, limit: int = Query(default=50, le=500)):
 
 
 def _serialize_record(record: EmberRecord) -> dict:
-    return {
+    result = {
         "id": record.id, "namespace": record.namespace,
-        "record_type": record.record_type.value, "data": record.data, "tags": record.tags,
+        "record_type": record.record_type.value,
+        "data": epistemically_neutral_data(record.data), "tags": record.tags,
         "confidence": record.confidence, "decay_rate": record.decay_rate,
         "written_by": record.written_by, "agent_id": record.agent_id,
         "session_id": record.session_id, "created_at": record.created_at.isoformat(),
@@ -345,3 +353,10 @@ def _serialize_record(record: EmberRecord) -> dict:
         "supersedes": record.supersedes, "superseded_by": record.superseded_by,
         "annotations_count": len(record.annotations),
     }
+    if record.record_type in (RecordType.DOCUMENT, RecordType.NODE):
+        result["epistemic"] = public_epistemic_summary(record)
+    return result
+
+
+from .control import install as _install_control
+_install_control(app, _get_config().api.control_path)

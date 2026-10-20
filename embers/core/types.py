@@ -118,7 +118,10 @@ class AccessLevel(str, Enum):
 
 
 class VerifyStatus(str, Enum):
-    """Knowledge entry verification states."""
+    """Legacy verification labels retained for stored-data compatibility.
+
+    They are not canonical ELLA verdicts. MemoryProtocol.verify() records these
+    as audit annotations only; ELLA owns authoritative epistemic state."""
     VERIFIED   = "verified"
     HYPOTHESIS = "hypothesis"
     CONTESTED  = "contested"
@@ -128,12 +131,12 @@ class VerifyStatus(str, Enum):
 class SourceType(str, Enum):
     """How a piece of evidence came to be known (spec §5).
 
-    This is the distinction future agents need in order to weigh a memory:
-    was the underlying claim *directly observed*, merely *inferred*, *reported
-    by another agent* (hearsay — trust it as far as you trust that agent),
-    *experimentally verified*, *imported* from an external corpus, or
-    *manually entered* by a human? It separates the strong chain
-    CLAIM → EVIDENCE → SOURCE from the weak chain CLAIM → agent assertion."""
+    This is provenance, not epistemic strength. It tells future agents whether
+    the artifact was directly observed, inferred, reported, experimentally
+    produced, imported, or manually entered. ELLA MUST NOT map these labels to
+    WEAK/MEDIUM/STRONG or multiply likelihood weight by source/agent trust.
+    It separates CLAIM → EVIDENCE → SOURCE from a bare agent assertion without
+    deciding how strongly that evidence bears on a particular claim."""
     DIRECTLY_OBSERVED       = "directly_observed"
     INFERRED                = "inferred"
     REPORTED                = "reported"          # by another agent
@@ -160,23 +163,27 @@ class ProposalStatus(str, Enum):
 
 
 class MemoryStatus(str, Enum):
-    """The epistemic state a DURABLE memory carries after promotion (spec §12).
+    """Legacy durable-memory status retained for storage/API compatibility.
 
-    Crucial semantic (the whole point of the Promotion Engine): promotion does
-    NOT assert a memory is definitely true. It asserts the proposal met the
-    criteria to enter durable memory. The memory therefore still carries an
-    explicit status, decoupled from the fact that it was stored at all:
+    ELLA is the canonical epistemic authority. These values may still appear in
+    historical records and lifecycle-compatible APIs, but they MUST NOT set,
+    override, or weight the ELLA score/verdict.
 
-      VERIFIED     grounded and confident enough to rely on
-      PROVISIONAL  admitted to memory but not yet strongly confirmed
-      DISPUTED     conflicting evidence exists; mapped, not resolved (§7)
-      SUPERSEDED   a newer version has replaced it (mirrors the version chain)
+      PROVISIONAL  normal admission status for newly promoted durable memory
+      VERIFIED     canonical ELLA verification when returned by memory_status()
+      DISFAVORED   canonical ELLA lower verdict when returned by memory_status()
+      DISPUTED     canonical public dispute projection when returned by memory_status()
+      SUPERSEDED   lifecycle label: a newer version replaced this record
 
-    Status is an immutable per-version fact (folded into the content hash), so a
-    status change is a new version — the history verified→disputed is preserved,
-    never overwritten."""
+    Historical `_status` values using the same strings remain compatibility
+    markers only; the enum value does not make such a stored marker authoritative.
+
+    Promotion is admission only. New promotion writes PROVISIONAL; authoritative
+    VERIFIED / DISFAVORED / DISPUTED projections come from ELLA plus the conflict
+    overlay, not from this enum."""
     VERIFIED    = "verified"
     PROVISIONAL = "provisional"
+    DISFAVORED  = "disfavored"
     DISPUTED    = "disputed"
     SUPERSEDED  = "superseded"
 
@@ -184,13 +191,13 @@ class MemoryStatus(str, Enum):
 class PromotionMethod(str, Enum):
     """HOW a memory came to be durable (spec §12 + the configurable engine).
 
-    Recorded on the promoted memory so a later reader can weigh it by the
-    process that admitted it, not just its confidence number:
+    This is admission provenance only, not ELLA truth weight. A later reader can
+    audit the process that admitted the memory, but ELLA MUST NOT numerically
+    strengthen or weaken evidence because of this value:
 
-      AUTOMATIC  policy gates passed (evidence valid, confidence high enough,
-                 agent trusted, no known conflict) — no human in the loop
-      CONSENSUS  enough independent agents corroborated it (multi-agent evidence)
-      HUMAN      a human explicitly approved it
+      AUTOMATIC  policy gates passed — no human in the loop
+      CONSENSUS  the configured distinct-agent admission criterion passed
+      HUMAN      a human explicitly approved admission
       DIRECT     written straight to memory without the proposal pipeline
                  (an ordinary db.write, tagged so it is distinguishable)"""
     AUTOMATIC = "automatic"
@@ -208,15 +215,16 @@ class PromotionMode(str, Enum):
 
       AUTOMATIC  promote as soon as policy gates pass (evidence valid, confidence
                  high enough, agent trusted, no conflicting memory) — no human
-      CONSENSUS  promote once enough independent agents have corroborated the
-                 discovery (distinct evidence authors ≥ threshold)
+      CONSENSUS  promote once enough distinct agents meet the configured
+                 admission criterion (distinct evidence authors ≥ threshold).
+                 This is not an ELLA independence or truth claim.
       HUMAN      never auto-promote; a human must explicitly approve
       HYBRID     route by risk: high-risk proposals (low confidence / conflict /
                  untrusted agent) go to the human gate, the rest auto-promote
 
-    A mode governs only the DECISION. It never changes the append-only,
-    hash-versioned nature of what promotion writes, and it never asserts a
-    memory is true — a promoted memory still carries its own [[MemoryStatus]]."""
+    A mode governs only the ADMISSION DECISION. It never changes the append-only,
+    hash-versioned nature of what promotion writes and never asserts truth.
+    Canonical epistemic state is maintained separately by ELLA."""
     AUTOMATIC = "automatic"
     CONSENSUS = "consensus"
     HUMAN     = "human"

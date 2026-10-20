@@ -1,0 +1,224 @@
+{
+  "kind": "diskless synthetic ELLA report journal using production load/reducer",
+  "counts": [
+    10,
+    20,
+    30,
+    50
+  ],
+  "reps": 5,
+  "python": "3.13.5",
+  "os": "Windows-10-10.0.19045-SP0",
+  "processor": "Intel64 Family 6 Model 61 Stepping 4, GenuineIntel",
+  "cases": {
+    "10": {
+      "fixture_ms": 17.142699998657918,
+      "encoded_bytes": 32104,
+      "event_count": 10,
+      "rows": {
+        "chain_digest": {
+          "median_wall_ms": 1.0099,
+          "min_wall_ms": 0.8462,
+          "max_wall_ms": 1.2044
+        },
+        "enumerate": {
+          "median_wall_ms": 0.0172,
+          "min_wall_ms": 0.0113,
+          "max_wall_ms": 0.0222
+        },
+        "explicit_verify": {
+          "median_wall_ms": 4.1336,
+          "min_wall_ms": 3.8214,
+          "max_wall_ms": 7.6501
+        },
+        "first_load": {
+          "median_wall_ms": 17.0775,
+          "min_wall_ms": 17.0775,
+          "max_wall_ms": 17.0775
+        },
+        "fixture_create": {
+          "median_wall_ms": 17.142699998657918,
+          "min_wall_ms": 17.142699998657918,
+          "max_wall_ms": 17.142699998657918
+        },
+        "native_replay_boundary": {
+          "median_wall_ms": 8.5701,
+          "min_wall_ms": 4.3492,
+          "max_wall_ms": 12.1149
+        },
+        "new_object": {
+          "median_wall_ms": 23.0433,
+          "min_wall_ms": 17.601,
+          "max_wall_ms": 25.1345
+        },
+        "read_decode_verify": {
+          "median_wall_ms": 6.0239,
+          "min_wall_ms": 4.2971,
+          "max_wall_ms": 10.0192
+        },
+        "same_object": {
+          "median_wall_ms": 18.9405,
+          "min_wall_ms": 17.4564,
+          "max_wall_ms": 22.6209
+        }
+      }
+    },
+    "20": {
+      "fixture_ms": 41.99329999755719,
+      "encoded_bytes": 98729,
+      "event_count": 20,
+      "rows": {
+        "chain_digest": {
+          "median_wall_ms": 4.2136,
+          "min_wall_ms": 2.6368,
+          "max_wall_ms": 5.1143
+        },
+        "enumerate": {
+          "median_wall_ms": 0.0234,
+          "min_wall_ms": 0.0128,
+          "max_wall_ms": 0.0293
+        },
+        "explicit_verify": {
+          "median_wall_ms": 10.207,
+          "min_wall_ms": 7.1816,
+          "max_wall_ms": 12.4887
+        },
+        "first_load": {
+          "median_wall_ms": 58.0406,
+          "min_wall_ms": 58.0406,
+          "max_wall_ms": 58.0406
+        },
+        "fixture_create": {
+          "median_wall_ms": 41.99329999755719,
+          "min_wall_ms": 41.99329999755719,
+          "max_wall_ms": 41.99329999755719
+        },
+        "native_replay_boundary": {
+          "median_wall_ms": 21.4373,
+          "min_wall_ms": 20.2876,
+          "max_wall_ms": 32.6191
+        },
+        "new_object": {
+          "median_wall_ms": 52.4597,
+          "min_wall_ms": 46.7059,
+          "max_wall_ms": 59.3943
+        },
+        "read_decode_verify": {
+          "median_wall_ms": 17.6326,
+          "min_wall_ms": 14.3162,
+          "max_wall_ms": 20.007
+        },
+        "same_object": {
+          "median_wall_ms": 51.6444,
+          "min_wall_ms": 47.0171,
+          "max_wall_ms": 60.2665
+        }
+      }
+    },
+    "30": {
+      "fixture_ms": 111.43379999703029,
+      "encoded_bytes": 199864,
+      "event_count": 30,
+      "rows": {
+        "chain_digest": {
+          "median_wall_ms": 4.8841,
+          "min_wall_ms": 4.5495,
+          "max_wall_ms": 7.3736
+        },
+        "enumerate": {
+          "median_wall_ms": 0.0192,
+          "min_wall_ms": 0.0171,
+          "max_wall_ms": 0.0319
+        },
+        "explicit_verify": {
+          "median_wall_ms": 17.9834,
+          "min_wall_ms": 14.937,
+          "max_wall_ms": 20.633
+        },
+        "first_load": {
+          "median_wall_ms": 104.6709,
+          "min_wall_ms": 104.6709,
+          "max_wall_ms": 104.6709
+        },
+        "fixture_create": {
+          "median_wall_ms": 111.43379999703029,
+          "min_wall_ms": 111.43379999703029,
+          "max_wall_ms": 111.43379999703029
+        },
+        "native_replay_boundary": {
+          "median_wall_ms": 60.4773,
+          "min_wall_ms": 53.8208,
+          "max_wall_ms": 68.1458
+        },
+        "new_object": {
+          "median_wall_ms": 114.5292,
+          "min_wall_ms": 107.5677,
+          "max_wall_ms": 201.6633
+        },
+        "read_decode_verify": {
+          "median_wall_ms": 32.489,
+          "min_wall_ms": 28.9348,
+          "max_wall_ms": 34.2402
+        },
+        "same_object": {
+          "median_wall_ms": 108.8216,
+          "min_wall_ms": 102.1074,
+          "max_wall_ms": 226.9691
+        }
+      }
+    },
+    "50": {
+      "fixture_ms": 263.8048000007984,
+      "encoded_bytes": 505634,
+      "event_count": 50,
+      "rows": {
+        "chain_digest": {
+          "median_wall_ms": 18.7042,
+          "min_wall_ms": 15.1883,
+          "max_wall_ms": 22.4638
+        },
+        "enumerate": {
+          "median_wall_ms": 0.0376,
+          "min_wall_ms": 0.0202,
+          "max_wall_ms": 0.1661
+        },
+        "explicit_verify": {
+          "median_wall_ms": 54.6795,
+          "min_wall_ms": 39.7297,
+          "max_wall_ms": 128.1195
+        },
+        "first_load": {
+          "median_wall_ms": 265.444,
+          "min_wall_ms": 265.444,
+          "max_wall_ms": 265.444
+        },
+        "fixture_create": {
+          "median_wall_ms": 263.8048000007984,
+          "min_wall_ms": 263.8048000007984,
+          "max_wall_ms": 263.8048000007984
+        },
+        "native_replay_boundary": {
+          "median_wall_ms": 151.1351,
+          "min_wall_ms": 133.0737,
+          "max_wall_ms": 180.8601
+        },
+        "new_object": {
+          "median_wall_ms": 377.8504,
+          "min_wall_ms": 295.13,
+          "max_wall_ms": 431.2444
+        },
+        "read_decode_verify": {
+          "median_wall_ms": 76.2623,
+          "min_wall_ms": 70.4272,
+          "max_wall_ms": 89.027
+        },
+        "same_object": {
+          "median_wall_ms": 289.1027,
+          "min_wall_ms": 274.9164,
+          "max_wall_ms": 357.299
+        }
+      }
+    }
+  },
+  "peak_tracemalloc_bytes_50": 2208898
+}

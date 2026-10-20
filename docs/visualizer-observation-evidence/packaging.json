@@ -1,0 +1,14 @@
+{
+  "wheel": "embers_diaries-0.2.0-cp312-cp312-manylinux_2_34_x86_64.whl",
+  "asset_bytes_match_source": [
+    "embers/api/visualizer.html",
+    "embers/api/observer.html",
+    "embers/api/observer_transport.js",
+    "embers/api/visualizer_theme.css",
+    "embers/api/observer_build.py",
+    "embers/integration/observation_journal.py",
+    "embers/integration/write_observation.py"
+  ],
+  "transport_sha256": "b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0",
+  "result": "PASS"
+}

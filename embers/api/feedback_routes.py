@@ -6,6 +6,7 @@ from fastapi import APIRouter, Header, HTTPException
 
 from ..core.feedback import Feedback, FeedbackOutcome, FeedbackAttribution
 from ..maintenance import run_maintenance_cycle
+from ..maintenance import run_integrity_audit, get_integrity_audit
 
 router = APIRouter(prefix="/v1")
 
@@ -34,15 +35,8 @@ async def give_feedback(
     if not outcome:
         raise HTTPException(400, "outcome required")
     try:
-        fb = Feedback(
-            memory_id=memory_id,
-            agent_id=agent.agent_id,
-            outcome=FeedbackOutcome(outcome),
-            usefulness=body.get("usefulness"),
-            accuracy=body.get("accuracy"),
-            attribution=(FeedbackAttribution(body["attribution"])
-                         if body.get("attribution") else None),
-            note=body.get("note", ""),
+        fb = Feedback.from_submission(
+            memory_id, agent.agent_id, body,
             session_id=body.get("session_id") or x_ember_session_id,
         )
         fid = db.give_feedback(memory_id, fb)
@@ -86,10 +80,63 @@ async def run_maintenance(
     x_ember_token: str | None = Header(default=None),
 ):
     db = _db()
-    _agent(db, x_ember_agent_id, x_ember_token)
+    agent = _agent(db, x_ember_agent_id, x_ember_token)
     from . import v1
-    namespaces = (body or {}).get("namespaces") or ["memories"]
+    namespaces = ["memories"] if body is None or "namespaces" not in body else body["namespaces"]
+    if (not isinstance(namespaces, list) or not namespaces
+            or any(not isinstance(ns, str) or not ns.strip()
+                   for ns in namespaces)):
+        raise HTTPException(400, "namespaces must be a nonempty list of names")
+    # Authorize the complete request before reflect/consolidate can change state.
+    for namespace in namespaces:
+        v1.require_namespace(db, namespace, agent.agent_id, "write")
     return run_maintenance_cycle(v1._proto(db), namespaces)
+
+
+@router.post("/maintenance/integrity/audits")
+async def start_integrity_audit(
+    body: dict,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    """Run one independent, read-only physical/index audit in a worker thread."""
+    import asyncio
+    db = _db()
+    agent = _agent(db, x_ember_agent_id, x_ember_token)
+    namespaces = body.get("namespaces")
+    if (not isinstance(namespaces, list) or not namespaces or
+            any(not isinstance(ns, str) or not ns.strip() or ns != ns.strip()
+                for ns in namespaces)):
+        raise HTTPException(400, "namespaces must be a nonempty list of names")
+    from . import v1
+    for namespace in namespaces:
+        v1.require_namespace(db, namespace, agent.agent_id, "write")
+    try:
+        return await asyncio.to_thread(run_integrity_audit, db, namespaces, agent.agent_id)
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(409, str(exc)) from exc
+
+
+@router.get("/maintenance/integrity/audits/{run_id}")
+async def integrity_audit_status(
+    run_id: str,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    db = _db()
+    agent = _agent(db, x_ember_agent_id, x_ember_token)
+    try:
+        return get_integrity_audit(db, run_id, agent.agent_id)
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc)) from exc
+    except KeyError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
 
 
 @router.get("/sessions/{session_id}/work")
@@ -115,3 +162,68 @@ async def session_work(
         "failures": list(session.failures),
         "feedback": feedback_ids,
     }
+
+
+@router.post("/relevance/{namespace}/{context_id}/resolve")
+async def resolve_relevance(
+    namespace: str, context_id: str, body: dict,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    from ..integration.feedback_service import resolve
+    from ..cognitive.feedback_replay import RevisionConflict
+    db = _db()
+    agent = _agent(db, x_ember_agent_id, x_ember_token)
+    try:
+        return resolve(db, namespace, context_id, agent.agent_id, body)
+    except PermissionError as error:
+        raise HTTPException(403, str(error)) from error
+    except KeyError as error:
+        raise HTTPException(404, str(error)) from error
+    except RevisionConflict as error:
+        raise HTTPException(409, str(error)) from error
+    except ValueError as error:
+        raise HTTPException(400, str(error)) from error
+
+
+@router.get("/relevance/{namespace}/{context_id}")
+async def relevance_projection(
+    namespace: str, context_id: str,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    from ..integration.feedback_service import projection
+    db = _db()
+    agent = _agent(db, x_ember_agent_id, x_ember_token)
+    try:
+        return projection(db, namespace, context_id, agent.agent_id)
+    except PermissionError as error:
+        raise HTTPException(403, str(error)) from error
+    except KeyError as error:
+        raise HTTPException(404, str(error)) from error
+
+
+@router.post("/relevance/{namespace}/{context_id}/recall")
+async def candidate_recall_route(
+    namespace: str, context_id: str, body: dict,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    from ..integration.feedback_service import candidate_recall
+    db = _db()
+    agent = _agent(db, x_ember_agent_id, x_ember_token)
+    try:
+        import time
+        from ..integration.usefulness_service import record_request
+        from .session_gate import current_session_id
+        started = time.monotonic()
+        result = candidate_recall(db, namespace, context_id, agent.agent_id, body)
+        record_request(db, namespace, agent.agent_id, "ember_candidate_recall",
+                       {**body, "context_id": context_id, "session_id": current_session_id()}, result, started)
+        return result
+    except PermissionError as error:
+        raise HTTPException(403, str(error)) from error
+    except KeyError as error:
+        raise HTTPException(404, str(error)) from error
+    except ValueError as error:
+        raise HTTPException(400, str(error)) from error

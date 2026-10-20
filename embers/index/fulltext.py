@@ -1,3 +1,4 @@
+from embers._native import atomic_replace as _quota_atomic_replace
 """
 Ember's Diaries — Full-Text Search Index
 Inverted index for keyword search across record data.
@@ -86,7 +87,7 @@ class FullTextIndex:
                 "avg_doc_length": self._avg_doc_length,
             }
             index_file = self._path / "inverted.json"
-            index_file.write_bytes(encode_index(data))
+            _quota_atomic_replace(str(index_file), encode_index(data))
 
     # ── Index operations ──────────────────────────────────────────────────────
 

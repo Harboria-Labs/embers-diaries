@@ -31,6 +31,8 @@ try:
         atomic_write_new as _atomic_write_new,
         recover_record_transactions as _recover_record_transactions,
         write_record_transaction as _write_record_transaction,
+        configure_store_quota as _configure_store_quota,
+        store_byte_usage as _store_byte_usage,
     )
     STORE_LOCK_BACKEND = "rust-pyo3"
 except ImportError:
@@ -77,6 +79,14 @@ except ImportError:
     _recover_record_transactions = None
     _write_record_transaction = None
 
+try:
+    from embers._native import source_epoch_protocol_version as _source_epoch_version
+    NATIVE_SOURCE_EPOCH = _source_epoch_version() >= 1
+except ImportError:
+    # The installed extension may predate this source change. Keep its writes
+    # safe through the Python storage wrapper without replacing that binary.
+    NATIVE_SOURCE_EPOCH = False
+
 
 class _StoreTransactionLock:
     """Reentrant thread lock plus one Rust-owned inter-process file lock."""
@@ -122,7 +132,7 @@ class PhysicalStore:
     _shared_locks_guard = threading.RLock()
 
     def __init__(self, store_path: str | Path, *, max_store_bytes: int = 0,
-                 max_record_bytes: int = 0):
+                 max_record_bytes: int = 0, max_total_bytes: int = 0):
         self.root = Path(store_path)
         self.max_store_bytes = max_store_bytes
         self.max_record_bytes = max_record_bytes
@@ -139,6 +149,12 @@ class PhysicalStore:
             self._lock = self._shared_locks.setdefault(
                 key, _StoreTransactionLock(self.root / ".ember.lock"))
         with self._lock:
+            if type(max_total_bytes) is not int or max_total_bytes < 0:
+                raise ValueError("max_total_bytes must be a nonnegative integer")
+            if max_total_bytes:
+                if STORE_LOCK_BACKEND != "rust-pyo3":
+                    raise RuntimeError("total-store quota requires native storage")
+                _configure_store_quota(str(self.root), max_total_bytes)
             self._setup()
             self.wal = WriteAheadLog(self.root)
             self._recover()
@@ -157,19 +173,29 @@ class PhysicalStore:
                 "engine":     "ember_diaries",
                 "record_count": 0,
             })
+        epoch_file = self.meta_dir / "source_epoch.json"
+        if not epoch_file.exists():
+            _atomic_replace(str(epoch_file), b'{"epoch":0}')
 
     def _recover(self):
         """Replay any uncommitted WAL entries on startup."""
+        # A recovery commit is a source change too. Invalidate candidates
+        # before invoking native recovery so a crash during replay cannot
+        # leave a new record at the old indexed epoch.
+        pending = self.wal.recover()
+        if pending and not (NATIVE_SOURCE_EPOCH and
+                            _recover_record_transactions is not None):
+            self.begin_index_change()
         if _recover_record_transactions is not None:
             report = json.loads(bytes(_recover_record_transactions(
                 str(self.root), datetime.now(timezone.utc).isoformat())))
             recovered = report.get("recovered", [])
             if recovered:
                 print(f"[EmberStore] Recovered {len(recovered)} uncommitted WAL entries.")
-            for error in report.get("failed", []):
-                print(f"[EmberStore] Recovery failed: {error}")
+            if report.get("failed"):
+                raise RuntimeError("Native WAL recovery failed: " +
+                                   "; ".join(report["failed"]))
             return
-        pending = self.wal.recover()
         if pending:
             print(f"[EmberStore] Recovering {len(pending)} uncommitted WAL entries...")
             for entry in pending:
@@ -179,7 +205,8 @@ class PhysicalStore:
                         self._write_record_file(record)
                         self.wal.commit(entry["wal_id"])
                     except Exception as e:
-                        print(f"[EmberStore] Recovery failed for {entry.get('record_id')}: {e}")
+                        raise RuntimeError(
+                            f"WAL recovery failed for {entry.get('record_id')}: {e}") from e
 
     # ── Write ─────────────────────────────────────────────────────────────────
 
@@ -192,16 +219,24 @@ class PhysicalStore:
             record_dict = record.to_dict()
             raw = encode(record_dict)
             self._check_write_limits(len(raw))
+            # Publish the invalidation before the native WAL transaction.  If
+            # the transaction is interrupted, the epoch can be ahead, never
+            # falsely equal to an index missing an acknowledged record.
+            if not (NATIVE_SOURCE_EPOCH and _write_record_transaction is not None):
+                self.begin_index_change()
 
             if _write_record_transaction is not None:
                 now = datetime.now(timezone.utc).isoformat()
+                from ..storage.format import encode_index
+                meta = self._read_meta()
+                meta["record_count"] = meta.get("record_count", 0) + 1
+                meta["last_write"] = now
                 _write_record_transaction(
                     str(self.root), str(uuid.uuid4()), now,
                     datetime.now(timezone.utc).isoformat(), record.id,
                     json.dumps(record_dict, ensure_ascii=False,
                                separators=(",", ":")).encode("utf-8"),
-                    raw)
-                self._increment_record_count()
+                    raw, encode_index(meta))
                 return record.id
 
             # Step 1: Log to WAL (PENDING)
@@ -217,6 +252,39 @@ class PhysicalStore:
             self._increment_record_count()
 
             return record.id
+
+    def index_epoch(self) -> int:
+        """Conservative source-change epoch; missing metadata fails closed."""
+        path = self.meta_dir / "source_epoch.json"
+        data = json.loads(path.read_bytes())
+        epoch = data.get("epoch")
+        if type(epoch) is not int or epoch < 0:
+            raise ValueError("Invalid source index epoch")
+        return epoch
+
+    def begin_index_change(self) -> int:
+        """Invalidate derived candidates before a record or visibility sidecar changes.
+
+        Callers hold the shared store lock. The native atomic replacement is
+        durable before the source mutation; an abandoned epoch only causes a
+        conservative rebuild.
+        """
+        with self._lock:
+            epoch = self.index_epoch() + 1
+            _atomic_replace(str(self.meta_dir / "source_epoch.json"),
+                            json.dumps({"epoch": epoch}).encode("ascii"))
+            return epoch
+
+    def read_strict(self, record_id: str) -> EmberRecord:
+        """Read a known physical record for index certification, failing closed."""
+        path = self.records_dir / f"{record_id}.ember"
+        raw = path.read_bytes()
+        record = EmberRecord.from_dict(decode(raw))
+        if record.id != record_id:
+            raise ValueError(f"Record identity mismatch for {record_id}")
+        if record.content_hash is not None:
+            record.verify_integrity()
+        return record
 
     @property
     def lock(self):
@@ -295,6 +363,16 @@ class PhysicalStore:
         meta["record_count"] = meta.get("record_count", 0) + 1
         meta["last_write"] = datetime.now(timezone.utc).isoformat()
         self._write_meta(meta)
+
+    def byte_usage(self) -> dict:
+        if STORE_LOCK_BACKEND != "rust-pyo3":
+            raise RuntimeError("native storage usage unavailable")
+        with self._lock:
+            used, limit = _store_byte_usage(str(self.root))
+            return {"managed_logical_bytes": used, "max_total_bytes": limit,
+                    "remaining_bytes": None if limit is None else max(0, limit - used),
+                    "unit": "bytes", "includes": "all files below store root",
+                    "excludes": "filesystem allocation overhead, RAM and external paths"}
 
     def stats(self) -> dict:
         meta = self._read_meta()

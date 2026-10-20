@@ -1,0 +1,41 @@
+   Compiling pyo3-build-config v0.24.2
+   Compiling pyo3-macros-backend v0.24.2
+   Compiling pyo3-ffi v0.24.2
+   Compiling pyo3 v0.24.2
+   Compiling pyo3-macros v0.24.2
+   Compiling ember_core v0.1.0 (/workspace/scratch/03d58ddd69af/ember-reconcile/rust/ember_core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.73s
+     Running unittests src/lib.rs (rust/ember_core/target/debug/deps/_native-aec3bd1ef2e210e8)
+
+running 5 tests
+test tests::atomic_new_file_never_overwrites_an_existing_record ... ok
+test tests::atomic_replace_publishes_complete_new_contents ... ok
+test tests::recovery_and_checkpoint_preserve_only_uncommitted_frames ... ok
+test tests::durable_append_frames_each_payload_once ... ok
+test tests::rust_encodes_pending_and_commit_envelopes ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/research_domain.rs (rust/ember_core/target/debug/deps/research_domain-b9c0a54f7e3f43ba)
+
+running 16 tests
+test canonical_truth_preserves_precise_conflict_overlay ... ok
+test context_truth_invariants ... ok
+test ella_dependency_min_strength_and_conflict_firewall ... ok
+test ella_native_state_reducer_validates_persisted_lifecycle ... ok
+test ella_same_request_identity_is_hard_dependency ... ok
+test ella_rejects_arbitrary_numeric_strength_and_source_type_has_no_weight ... ok
+test ella_mixed_polarity_unit_is_unresolved_and_no_evidence_is_distinct ... ok
+test ella_same_request_text_different_sources_stays_separate ... ok
+test ella_opposing_threshold_confirmation_is_evidence_dispute ... ok
+test ella_unknown_origin_is_not_soft_dependency_or_lineage_coverage ... ok
+test unresolved_unused_group_direction_merge_split ... ok
+test repeated_cycles_relaxation_and_config_rejection ... ok
+test strong_cue_recovery_24000 ... ok
+test boundary_grid_60480 ... ok
+test duplicate_retry_12000_and_correction_12000 ... ok
+test randomized_120000_bounded_monotone_neutral_zero has been running for over 60 seconds
+test randomized_120000_bounded_monotone_neutral_zero ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 68.97s
+

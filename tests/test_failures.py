@@ -173,8 +173,8 @@ class TestFailurePromotion:
         assert memory.data["lesson"] == "Streaming parsers are required for dataset Y."
         assert memory.data["kind"] == "failure"
         assert memory.data["cause"] == "Parser exceeds memory limit."
-        # It went through the real pipeline, so it carries epistemic status (§12).
-        assert db.memory_status(result.memory_id) == MemoryStatus.VERIFIED
+        # Promotion is admission only; without ELLA assessment it remains provisional.
+        assert db.memory_status(result.memory_id) == MemoryStatus.PROVISIONAL
         # And is derived from the failure record it came from.
         assert fid in memory.derived_from
 

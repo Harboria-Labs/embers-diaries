@@ -1,0 +1,1160 @@
+{
+  "healthy_idle": {
+    "seconds": 0,
+    "initial": {
+      "transport": "SSE",
+      "connected": true,
+      "connection_state": "LIVE",
+      "stream_id": "2560ed342a294bc9b5338e10efa78438",
+      "last_received_event_id": null,
+      "reconnect_count": 0,
+      "snapshot_gets": 1,
+      "fallback_count": 0,
+      "pushed_events": 0,
+      "last_pushed": null,
+      "last_snapshot": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7fX0",
+      "last_disconnect_reason": null,
+      "last_http_status": 200,
+      "last_sse_status": 200,
+      "grant_expires_at": 1790667090.1407104,
+      "stream_attempts": 1,
+      "last_byte_at": "2026-09-29T07:16:30.627Z"
+    },
+    "after": {
+      "transport": "SSE",
+      "connected": true,
+      "connection_state": "LIVE",
+      "stream_id": "2560ed342a294bc9b5338e10efa78438",
+      "last_received_event_id": null,
+      "reconnect_count": 0,
+      "snapshot_gets": 1,
+      "fallback_count": 0,
+      "pushed_events": 0,
+      "last_pushed": null,
+      "last_snapshot": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7fX0",
+      "last_disconnect_reason": null,
+      "last_http_status": 200,
+      "last_sse_status": 200,
+      "grant_expires_at": 1790667090.1407104,
+      "stream_attempts": 1,
+      "last_byte_at": "2026-09-29T07:16:30.627Z"
+    },
+    "sse_network_requests": 1,
+    "memory_unchanged": true
+  },
+  "events_burst": {
+    "count": 30,
+    "ordered_per_namespace": true,
+    "duplicates": 0,
+    "cross_agent_and_namespace_leaks": false
+  },
+  "interruption": {
+    "replayed_ids": [
+      "usefulness-776501a63e0e5383bc3029fc98382c3f-000000000007",
+      "usefulness-776501a63e0e5383bc3029fc98382c3f-000000000008",
+      "usefulness-776501a63e0e5383bc3029fc98382c3f-000000000009"
+    ],
+    "resume_cursor": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjI1fX0",
+    "snapshots": 1,
+    "same_page": true
+  },
+  "delayed_heartbeat": {
+    "seconds": 12.5,
+    "client_aborts": 0
+  },
+  "restart": {
+    "same_page": true,
+    "replayed_id": "usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000026",
+    "snapshot_gets": 1
+  },
+  "fallback": {
+    "failure_threshold": 3,
+    "poll_interval_seconds": 5,
+    "snapshots_in_window": 3,
+    "recovered": true,
+    "healthy_snapshot_growth": 0
+  },
+  "final_counters": {
+    "transport": "SSE",
+    "connected": true,
+    "connection_state": "LIVE",
+    "stream_id": "fce3487b08dd4b66903b31284456f786",
+    "last_received_event_id": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI2fX0",
+    "reconnect_count": 6,
+    "snapshot_gets": 5,
+    "fallback_count": 2,
+    "pushed_events": 34,
+    "last_pushed": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI2fX0",
+    "last_snapshot": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjEwLCJCIjoyNn19",
+    "last_disconnect_reason": "EventSource network error (HTTP status not exposed by browser)",
+    "last_http_status": 200,
+    "last_sse_status": 200,
+    "grant_expires_at": 1790667090.1407104,
+    "stream_attempts": 7,
+    "last_byte_at": "2026-09-29T07:17:59.834Z"
+  },
+  "revoked": {
+    "terminal": "ACCESS EXPIRED",
+    "retry_growth": 0,
+    "memory_unchanged": true
+  },
+  "expired": {
+    "terminal": "ACCESS EXPIRED",
+    "retry_growth": 0,
+    "memory_unchanged": true
+  },
+  "result": "PASS",
+  "raw_sse_headers": [
+    {
+      "Transfer-Encoding": "chunked",
+      "x-ember-stream-id": "2560ed342a294bc9b5338e10efa78438",
+      "cache-control": "no-store, no-cache, no-transform",
+      "x-accel-buffering": "no",
+      "content-encoding": "identity",
+      "Date": "Tue, 29 Sep 2026 07:16:30 GMT, Tue, 29 Sep 2026 07:16:30 GMT",
+      "x-ember-observation-protocol": "ember-agent-observer.v1",
+      "content-type": "text/event-stream; charset=utf-8",
+      "vary": "Origin",
+      "Server": "BaseHTTP/0.6 Python/3.12.14, uvicorn"
+    },
+    {
+      "Transfer-Encoding": "chunked",
+      "x-ember-stream-id": "4d694569cb644c87a2775b7d3b79f447",
+      "cache-control": "no-store, no-cache, no-transform",
+      "x-accel-buffering": "no",
+      "content-encoding": "identity",
+      "Date": "Tue, 29 Sep 2026 07:16:33 GMT, Tue, 29 Sep 2026 07:16:33 GMT",
+      "x-ember-observation-protocol": "ember-agent-observer.v1",
+      "content-type": "text/event-stream; charset=utf-8",
+      "vary": "Origin",
+      "Server": "BaseHTTP/0.6 Python/3.12.14, uvicorn"
+    },
+    {
+      "Transfer-Encoding": "chunked",
+      "x-ember-stream-id": "9fb4579192ee4131b047668ed529f12e",
+      "cache-control": "no-store, no-cache, no-transform",
+      "x-accel-buffering": "no",
+      "content-encoding": "identity",
+      "Date": "Tue, 29 Sep 2026 07:17:03 GMT, Tue, 29 Sep 2026 07:17:03 GMT",
+      "x-ember-observation-protocol": "ember-agent-observer.v1",
+      "content-type": "text/event-stream; charset=utf-8",
+      "vary": "Origin",
+      "Server": "BaseHTTP/0.6 Python/3.12.14, uvicorn"
+    },
+    {
+      "Date": "Tue, 29 Sep 2026 07:17:20 GMT",
+      "Server": "BaseHTTP/0.6 Python/3.12.14",
+      "Content-Length": "0"
+    },
+    {
+      "Date": "Tue, 29 Sep 2026 07:17:22 GMT",
+      "Server": "BaseHTTP/0.6 Python/3.12.14",
+      "Content-Length": "0"
+    },
+    {
+      "Date": "Tue, 29 Sep 2026 07:17:32 GMT",
+      "Server": "BaseHTTP/0.6 Python/3.12.14",
+      "Content-Length": "0"
+    },
+    {
+      "Transfer-Encoding": "chunked",
+      "x-ember-stream-id": "fce3487b08dd4b66903b31284456f786",
+      "cache-control": "no-store, no-cache, no-transform",
+      "x-accel-buffering": "no",
+      "content-encoding": "identity",
+      "Date": "Tue, 29 Sep 2026 07:17:42 GMT, Tue, 29 Sep 2026 07:17:41 GMT",
+      "x-ember-observation-protocol": "ember-agent-observer.v1",
+      "content-type": "text/event-stream; charset=utf-8",
+      "vary": "Origin",
+      "Server": "BaseHTTP/0.6 Python/3.12.14, uvicorn"
+    },
+    {
+      "Transfer-Encoding": "chunked",
+      "x-ember-stream-id": "2c341a9e7fad4a0e80ca403934929000",
+      "cache-control": "no-store, no-cache, no-transform",
+      "x-accel-buffering": "no",
+      "content-encoding": "identity",
+      "Date": "Tue, 29 Sep 2026 07:18:11 GMT, Tue, 29 Sep 2026 07:18:10 GMT",
+      "x-ember-observation-protocol": "ember-agent-observer.v1",
+      "content-type": "text/event-stream; charset=utf-8",
+      "vary": "Origin",
+      "Server": "BaseHTTP/0.6 Python/3.12.14, uvicorn"
+    }
+  ],
+  "raw_browser_sse": [
+    {
+      "eventName": "ready",
+      "eventId": "",
+      "data": "{\"transport\":\"SSE\",\"protocol\":\"ember-agent-observer.v1\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"stream_id\":\"2560ed342a294bc9b5338e10efa78438\",\"expires_at\":1790667090.1407104,\"remaining_seconds\":899.5559685230255}",
+      "timestamp": 2329.696583
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2560ed342a294bc9b5338e10efa78438\"}",
+      "timestamp": 2329.697192
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjF9fQ",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"A\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001\",\"revision\":1,\"timestamp\":1790666190.656334,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190653449892\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\",\"namespace\":\"A\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:report\",\"experience_id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":false,\"report_count\":1,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjF9fQ\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.73054
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjJ9fQ",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"A\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000002\",\"revision\":2,\"timestamp\":1790666190.661569,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190660235352\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\",\"namespace\":\"A\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000002:report\",\"experience_id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":2,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjJ9fQ\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.745182
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjN9fQ",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"A\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000003\",\"revision\":3,\"timestamp\":1790666190.6671028,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190665781994\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\",\"namespace\":\"A\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000003:report\",\"experience_id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":3,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjN9fQ\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.74579
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjR9fQ",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"A\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000004\",\"revision\":4,\"timestamp\":1790666190.6728706,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190671301706\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\",\"namespace\":\"A\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000004:report\",\"experience_id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":4,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjR9fQ\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.748582
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjV9fQ",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"A\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000005\",\"revision\":5,\"timestamp\":1790666190.6795413,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190678214177\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\",\"namespace\":\"A\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000005:report\",\"experience_id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":5,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjV9fQ\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.754805
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjF9fQ",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001\",\"revision\":1,\"timestamp\":1790666190.6861458,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190684633445\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":false,\"report_count\":1,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjF9fQ\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.763466
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjJ9fQ",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000002\",\"revision\":2,\"timestamp\":1790666190.6948342,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190692919197\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000002:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":2,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjJ9fQ\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.771192
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjN9fQ",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000003\",\"revision\":3,\"timestamp\":1790666190.7027388,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190700934932\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000003:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":3,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjN9fQ\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.779573
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjR9fQ",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000004\",\"revision\":4,\"timestamp\":1790666190.7109537,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190709321716\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000004:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":4,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjR9fQ\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.820357
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjV9fQ",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000005\",\"revision\":5,\"timestamp\":1790666190.7196488,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190717921306\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000005:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":5,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjV9fQ\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.820979
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjZ9fQ",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000006\",\"revision\":6,\"timestamp\":1790666190.7291126,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190727492331\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000006:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":6,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjZ9fQ\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.821601
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjd9fQ",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000007\",\"revision\":7,\"timestamp\":1790666190.7378957,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190736416785\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000007:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":7,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjd9fQ\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.822126
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjh9fQ",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000008\",\"revision\":8,\"timestamp\":1790666190.747722,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190746045857\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000008:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":8,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjh9fQ\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.82885
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjl9fQ",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000009\",\"revision\":9,\"timestamp\":1790666190.7604084,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190758423397\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000009:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":9,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjl9fQ\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.839414
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjEwfX0",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000010\",\"revision\":10,\"timestamp\":1790666190.7705712,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190769144151\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000010:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":10,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjEwfX0\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.850424
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjExfX0",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000011\",\"revision\":11,\"timestamp\":1790666190.7816384,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190780049842\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000011:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":11,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjExfX0\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.861647
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjEyfX0",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000012\",\"revision\":12,\"timestamp\":1790666190.7927303,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190791296378\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000012:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":12,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjEyfX0\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.904468
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjEzfX0",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000013\",\"revision\":13,\"timestamp\":1790666190.8049836,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190802852346\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000013:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":13,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjEzfX0\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.90516
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjE0fX0",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000014\",\"revision\":14,\"timestamp\":1790666190.8175607,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190815809710\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000014:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":14,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjE0fX0\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.905818
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjE1fX0",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000015\",\"revision\":15,\"timestamp\":1790666190.830459,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190828207716\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000015:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":15,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjE1fX0\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.912486
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjE2fX0",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000016\",\"revision\":16,\"timestamp\":1790666190.8438299,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190842146837\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000016:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":16,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjE2fX0\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.925742
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjE3fX0",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000017\",\"revision\":17,\"timestamp\":1790666190.8578556,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190855452196\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000017:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":17,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjE3fX0\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.940375
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjE4fX0",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000018\",\"revision\":18,\"timestamp\":1790666190.8716533,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190869860428\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000018:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":18,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjE4fX0\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.988376
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjE5fX0",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000019\",\"revision\":19,\"timestamp\":1790666190.8859038,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190884087497\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000019:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":19,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjE5fX0\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.989148
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjIwfX0",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000020\",\"revision\":20,\"timestamp\":1790666190.900321,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190898587508\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000020:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":20,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjIwfX0\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2329.989804
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjIxfX0",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000021\",\"revision\":21,\"timestamp\":1790666190.9156597,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190913881024\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000021:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":21,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjIxfX0\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2330.000401
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjIyfX0",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000022\",\"revision\":22,\"timestamp\":1790666190.9317894,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190929968979\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000022:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":22,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjIyfX0\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2330.016658
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjIzfX0",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000023\",\"revision\":23,\"timestamp\":1790666190.9482276,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190946189659\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000023:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":23,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjIzfX0\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2330.060326
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjI0fX0",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000024\",\"revision\":24,\"timestamp\":1790666190.9644248,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190962465046\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000024:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":24,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjI0fX0\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2330.060907
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjI1fX0",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000025\",\"revision\":25,\"timestamp\":1790666190.9812,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666190978765441\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000025:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":25,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjI1fX0\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2330.067104
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"2560ed342a294bc9b5338e10efa78438\"}",
+      "timestamp": 2330.113899
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"2560ed342a294bc9b5338e10efa78438\"}",
+      "timestamp": 2330.13178
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjUsIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"2560ed342a294bc9b5338e10efa78438\"}",
+      "timestamp": 2331.145564
+    },
+    {
+      "eventName": "ready",
+      "eventId": "",
+      "data": "{\"transport\":\"SSE\",\"protocol\":\"ember-agent-observer.v1\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"stream_id\":\"4d694569cb644c87a2775b7d3b79f447\",\"expires_at\":1790667090.1407104,\"remaining_seconds\":896.5512776374817}",
+      "timestamp": 2332.661334
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"A\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000007\",\"revision\":7,\"timestamp\":1790666192.5751908,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666192571011131\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\",\"namespace\":\"A\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000007:report\",\"experience_id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":6,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}},{\"namespace\":\"A\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000008\",\"revision\":8,\"timestamp\":1790666192.5932074,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666192591449234\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\",\"namespace\":\"A\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000008:report\",\"experience_id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":7,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}},{\"namespace\":\"A\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000009\",\"revision\":9,\"timestamp\":1790666192.5974693,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666192596117141\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"8c841ca8-6eb1-4bff-b590-f7212ffb1c8b\",\"namespace\":\"A\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000009:report\",\"experience_id\":\"usefulness-776501a63e0e5383bc3029fc98382c3f-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":8,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2332.674942
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2333.690036
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2334.704424
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2335.720108
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2336.73859
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2337.75931
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2338.777112
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2339.795273
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2340.810333
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2341.826004
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2342.842167
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2343.857341
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2344.873929
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2345.887875
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2346.90271
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2347.932754
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2360.7294
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2360.729493
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2360.729502
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2360.729509
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2360.729516
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2360.729527
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2360.729533
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2360.729538
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2360.729553
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2360.72963
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2360.729642
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2360.729649
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI1fX0",
+      "data": "{\"stream_id\": \"4d694569cb644c87a2775b7d3b79f447\"}",
+      "timestamp": 2361.150098
+    },
+    {
+      "eventName": "ready",
+      "eventId": "",
+      "data": "{\"transport\":\"SSE\",\"protocol\":\"ember-agent-observer.v1\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"stream_id\":\"9fb4579192ee4131b047668ed529f12e\",\"expires_at\":1790667090.1407104,\"remaining_seconds\":866.346417427063}",
+      "timestamp": 2362.866122
+    },
+    {
+      "eventName": "observer",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI2fX0",
+      "data": "{\"protocol\":\"ember-agent-observer.v1\",\"observer_id\":\"18909716e3c703ef1336bf3e829ca27dd8e8ae1cead53db680ab1154b775e002\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"events\":[{\"namespace\":\"B\",\"session\":null,\"context\":\"transport\",\"contexts\":[\"transport\"],\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"event_type\":\"UNUSED\",\"event_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000026\",\"revision\":26,\"timestamp\":1790666223.5312047,\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"request_id\":\"1790666223509570847\",\"action\":\"report\",\"affected_experience_ids\":[\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\"],\"experiences\":[{\"id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null},\"resolution_status\":\"accepted\",\"outcome\":\"UNUSED\",\"active\":true}],\"changes\":[{\"before\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"after\":{\"metric\":\"U\",\"value\":0.5,\"N_eff\":0.0,\"context\":\"transport\",\"target\":{\"kind\":\"memory\",\"memory_ids\":[\"33aee84d-fd0f-4065-8253-cda510f6872a\"],\"relation\":null}},\"modulation\":{\"query_basis\":\"last recorded Q; prospective effect only; activation unchanged\",\"before\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null},\"after\":{\"B\":0.0,\"alpha\":0.25,\"multiplier\":1.0,\"Q\":null,\"Q_prime\":null}}}],\"memories\":[{\"id\":\"33aee84d-fd0f-4065-8253-cda510f6872a\",\"namespace\":\"B\",\"preview\":\"Fictional transport fixture\",\"subject\":null,\"primary_context\":\"transport\",\"verify_status\":\"hypothesis\"}],\"dynamics\":[],\"report_state\":{\"report_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000026:report\",\"experience_id\":\"usefulness-2aa87a45731a5b04a2c52cc2ab8cc21c-000000000001:experience\",\"resolution_status\":\"accepted\",\"duplicate_report\":true,\"report_count\":26,\"effective_mass_changed\":false},\"model_version\":\"ember-fur-activation-v1\",\"configuration_revision\":0,\"actual_H\":{},\"heat_source\":null,\"query\":null,\"returned_ids\":[],\"candidate_ids\":[],\"budget\":null,\"pipeline\":{\"query\":\"NOT OBSERVED\",\"context\":\"OBSERVED\",\"retrieval\":\"NOT OBSERVED\",\"direct_memory\":\"NOT OBSERVED\",\"LADC_reactivation\":\"NOT OBSERVED\",\"pair_expansion\":\"NOT OBSERVED\",\"returned_memory\":\"NOT OBSERVED\",\"agent_use\":\"NOT OBSERVED\",\"feedback\":\"OBSERVED\",\"evidence\":\"OBSERVED\",\"U_W_update\":\"OBSERVED\"}}],\"cursor\":\"eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI2fX0\",\"more\":false,\"limits\":{\"events\":20,\"namespaces\":128,\"event_bytes\":32768,\"page_bytes\":262144},\"scope\":\"agent-activity:read\",\"span_sessions\":true}",
+      "timestamp": 2362.883474
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI2fX0",
+      "data": "{\"stream_id\": \"9fb4579192ee4131b047668ed529f12e\"}",
+      "timestamp": 2363.899628
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI2fX0",
+      "data": "{\"stream_id\": \"9fb4579192ee4131b047668ed529f12e\"}",
+      "timestamp": 2364.915278
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI2fX0",
+      "data": "{\"stream_id\": \"9fb4579192ee4131b047668ed529f12e\"}",
+      "timestamp": 2365.933555
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI2fX0",
+      "data": "{\"stream_id\": \"9fb4579192ee4131b047668ed529f12e\"}",
+      "timestamp": 2366.95149
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI2fX0",
+      "data": "{\"stream_id\": \"9fb4579192ee4131b047668ed529f12e\"}",
+      "timestamp": 2367.967334
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI2fX0",
+      "data": "{\"stream_id\": \"9fb4579192ee4131b047668ed529f12e\"}",
+      "timestamp": 2368.983833
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI2fX0",
+      "data": "{\"stream_id\": \"9fb4579192ee4131b047668ed529f12e\"}",
+      "timestamp": 2369.998962
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI2fX0",
+      "data": "{\"stream_id\": \"9fb4579192ee4131b047668ed529f12e\"}",
+      "timestamp": 2371.014208
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI2fX0",
+      "data": "{\"stream_id\": \"9fb4579192ee4131b047668ed529f12e\"}",
+      "timestamp": 2372.033904
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI2fX0",
+      "data": "{\"stream_id\": \"9fb4579192ee4131b047668ed529f12e\"}",
+      "timestamp": 2373.048298
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI2fX0",
+      "data": "{\"stream_id\": \"9fb4579192ee4131b047668ed529f12e\"}",
+      "timestamp": 2374.06423
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI2fX0",
+      "data": "{\"stream_id\": \"9fb4579192ee4131b047668ed529f12e\"}",
+      "timestamp": 2375.082316
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI2fX0",
+      "data": "{\"stream_id\": \"9fb4579192ee4131b047668ed529f12e\"}",
+      "timestamp": 2376.097635
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI2fX0",
+      "data": "{\"stream_id\": \"9fb4579192ee4131b047668ed529f12e\"}",
+      "timestamp": 2377.112489
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "eyJvYnNlcnZlcl9pZCI6IjE4OTA5NzE2ZTNjNzAzZWYxMzM2YmYzZTgyOWNhMjdkZDhlOGFlMWNlYWQ1M2RiNjgwYWIxMTU0Yjc3NWUwMDIiLCJzZWVuIjp7IkEiOjksIkIiOjI2fX0",
+      "data": "{\"stream_id\": \"9fb4579192ee4131b047668ed529f12e\"}",
+      "timestamp": 2378.13009
+    },
+    {
+      "eventName": "ready",
+      "eventId": "",
+      "data": "{\"transport\":\"SSE\",\"protocol\":\"ember-agent-observer.v1\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"stream_id\":\"fce3487b08dd4b66903b31284456f786\",\"expires_at\":1790667090.1407104,\"remaining_seconds\":827.6267113685608}",
+      "timestamp": 2401.586261
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"fce3487b08dd4b66903b31284456f786\"}",
+      "timestamp": 2401.604682
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"fce3487b08dd4b66903b31284456f786\"}",
+      "timestamp": 2402.621984
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"fce3487b08dd4b66903b31284456f786\"}",
+      "timestamp": 2403.646322
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"fce3487b08dd4b66903b31284456f786\"}",
+      "timestamp": 2404.662628
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"fce3487b08dd4b66903b31284456f786\"}",
+      "timestamp": 2405.678386
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"fce3487b08dd4b66903b31284456f786\"}",
+      "timestamp": 2406.694485
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"fce3487b08dd4b66903b31284456f786\"}",
+      "timestamp": 2407.710617
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"fce3487b08dd4b66903b31284456f786\"}",
+      "timestamp": 2408.726489
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"fce3487b08dd4b66903b31284456f786\"}",
+      "timestamp": 2409.7423
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"fce3487b08dd4b66903b31284456f786\"}",
+      "timestamp": 2410.75981
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"fce3487b08dd4b66903b31284456f786\"}",
+      "timestamp": 2411.776644
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"fce3487b08dd4b66903b31284456f786\"}",
+      "timestamp": 2412.794647
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"fce3487b08dd4b66903b31284456f786\"}",
+      "timestamp": 2413.809721
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"fce3487b08dd4b66903b31284456f786\"}",
+      "timestamp": 2414.8249
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"fce3487b08dd4b66903b31284456f786\"}",
+      "timestamp": 2415.842655
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"fce3487b08dd4b66903b31284456f786\"}",
+      "timestamp": 2416.872443
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"fce3487b08dd4b66903b31284456f786\"}",
+      "timestamp": 2417.889604
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"fce3487b08dd4b66903b31284456f786\"}",
+      "timestamp": 2418.90414
+    },
+    {
+      "eventName": "denied",
+      "eventId": "",
+      "data": "{\"reason\":\"authorization_ended\"}",
+      "timestamp": 2419.90607
+    },
+    {
+      "eventName": "ready",
+      "eventId": "",
+      "data": "{\"transport\":\"SSE\",\"protocol\":\"ember-agent-observer.v1\",\"observed_agent_id\":\"agent-30e23844-3347-4601-9ca7-ed498b25e6be\",\"stream_id\":\"2c341a9e7fad4a0e80ca403934929000\",\"expires_at\":1790666351.8828807,\"remaining_seconds\":59.89674925804138}",
+      "timestamp": 2431.104629
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2431.104832
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2432.104671
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2433.123606
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2434.14574
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2435.1586
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2436.182149
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2437.206369
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2438.224327
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2439.238107
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2440.273022
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2441.287227
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2442.313752
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2443.331522
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2444.3479
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2445.36437
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2446.379733
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2447.396492
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2448.412862
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2449.429557
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2450.446512
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2451.461882
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2452.476714
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2453.493875
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2454.510241
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2455.52721
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2456.542679
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2457.557246
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2458.573605
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2459.590139
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2460.609504
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2461.629384
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2462.646489
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2463.660978
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2464.676654
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2465.692401
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2466.711988
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2467.728333
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2468.743883
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2469.761127
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2470.776036
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2471.791648
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2472.808366
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2473.823328
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2474.839276
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2475.867265
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2476.88209
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2477.901041
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2478.917663
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2479.934205
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2480.955884
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2481.972674
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2482.992489
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2484.010001
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2485.02696
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2486.0434
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2487.066489
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2488.081688
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2489.096781
+    },
+    {
+      "eventName": "keepalive",
+      "eventId": "",
+      "data": "{\"stream_id\": \"2c341a9e7fad4a0e80ca403934929000\"}",
+      "timestamp": 2490.11155
+    }
+  ],
+  "javascript_errors": [],
+  "unauthorized_payloads": 0
+}

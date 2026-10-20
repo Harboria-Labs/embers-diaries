@@ -11,6 +11,7 @@ from ..core.annotation import Annotation
 from ..core.types import DeprecationReason
 from ..core.errors import ConcurrentModificationError
 from ..storage.store import PhysicalStore
+from embers._native import atomic_replace as _quota_atomic_replace
 
 
 try:
@@ -41,7 +42,24 @@ class WriteEngine:
         # path, so version reads, writes, and supersession sidecars serialize
         # as one transaction within the process.
         self._lock  = store.lock
+        self._prepare_callbacks: list = []
+        self._before_write_callbacks: list = []
         self._write_callbacks: list = []  # notify index layer after writes
+
+    def register_before_write(self, fn):
+        """Refresh derived state under the store lock before a source change."""
+        self._before_write_callbacks.append(fn)
+
+    def _before_write(self):
+        for fn in self._before_write_callbacks:
+            fn()
+
+    def register_prepare_callback(self, fn):
+        self._prepare_callbacks.append(fn)
+
+    def _prepare(self, record):
+        for fn in self._prepare_callbacks:
+            fn(record)
 
     @property
     def lock(self):
@@ -57,7 +75,12 @@ class WriteEngine:
             try:
                 fn(record, operation)
             except Exception as e:
-                print(f"[WriteEngine] Callback error: {e}")
+                import warnings
+                warnings.warn(
+                    f"Record {record.id} is durable but a derived-index callback failed: {e}. "
+                    "Rebuild indexes before relying on indexed retrieval.", RuntimeWarning,
+                    stacklevel=2,
+                )
 
     # ── Primary write ─────────────────────────────────────────────────────────
 
@@ -68,12 +91,14 @@ class WriteEngine:
         Raises ValueError if a record with this ID already exists.
         """
         with self._lock:
+            self._before_write()
             record.seal()
             if self._store.exists(record.id):
                 raise ValueError(
                     f"Record {record.id} already exists. "
                     "Ember's Diaries is append-only — use update() to create a new version."
                 )
+            self._prepare(record)
             record_id = self._store.write(record)
             self._notify(record, "write")
             return record_id
@@ -211,6 +236,7 @@ class WriteEngine:
             new_record.seal()
 
             # Write the new record first
+            self._prepare(new_record)
             self._store.write(new_record)
 
             # Now mark old record as superseded
@@ -227,6 +253,9 @@ class WriteEngine:
         Record that old_id has been superseded by new_id.
         We write a sidecar file rather than modifying the original.
         """
+        from ..storage.store import NATIVE_SOURCE_EPOCH
+        if not (NATIVE_SOURCE_EPOCH and _write_supersession is not None):
+            self._store.begin_index_change()
         timestamp = datetime.now(timezone.utc).isoformat()
         if _write_supersession is not None:
             _write_supersession(str(self._store.root), old_id, new_id, timestamp)
@@ -284,6 +313,7 @@ class WriteEngine:
         without a second read. Cheap, lock-protected read-modify-write of a
         single small sidecar file -- not a new EmberRecord version."""
         with self._lock:
+            self._before_write()
             dir_ = self._store.root / "access"
             dir_.mkdir(exist_ok=True)
             sidecar = dir_ / f"{record_id}.access"
@@ -293,7 +323,7 @@ class WriteEngine:
                 count = decode_index(sidecar.read_bytes()).get("access_count", 0)
             count += 1
             now = datetime.now(timezone.utc)
-            sidecar.write_bytes(encode_index({
+            _quota_atomic_replace(str(sidecar), encode_index({
                 "record_id":     record_id,
                 "access_count":  count,
                 "last_accessed": now.isoformat(),
@@ -323,6 +353,7 @@ class WriteEngine:
         Returns True if successful.
         """
         with self._lock:
+            self._before_write()
             record = self._store.read(record_id)
             if record is None:
                 raise KeyError(f"Record {record_id} not found.")
@@ -334,7 +365,8 @@ class WriteEngine:
             dep_dir.mkdir(exist_ok=True)
             sidecar = dep_dir / f"{record_id}.deprecated"
             from ..storage.format import encode_index
-            sidecar.write_bytes(encode_index({
+            self._store.begin_index_change()
+            _quota_atomic_replace(str(sidecar), encode_index({
                 "record_id":  record_id,
                 "reason":     reason.value,
                 "note":       note,
@@ -370,9 +402,9 @@ class WriteEngine:
             # Append to per-record annotation file
             ann_file = ann_dir / f"{record_id}.annotations.jsonl"
             from ..storage.format import encode_index
-            with open(ann_file, "ab") as f:
-                line = encode_index(annotation.to_dict()) + b"\n"
-                f.write(line)
+            line = encode_index(annotation.to_dict()) + b"\n"
+            existing = ann_file.read_bytes() if ann_file.exists() else b""
+            _quota_atomic_replace(str(ann_file), existing + line)
 
             # Notify — pass a stub record for the callback
             record = self._store.read(record_id)

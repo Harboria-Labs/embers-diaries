@@ -11,6 +11,7 @@ Usage:
 """
 
 import sys
+import uuid
 from pathlib import Path
 from datetime import datetime
 
@@ -91,6 +92,7 @@ class EmberDB:
                  enforce_attribution: bool = False,
                  max_store_bytes: int = 0,
                  max_record_bytes: int = 0,
+                 max_total_bytes: int = 0,
                  runtime_config=None):
         self._path = Path(store_path)
         self._runtime_config = runtime_config
@@ -103,6 +105,7 @@ class EmberDB:
             self._path,
             max_store_bytes=max_store_bytes,
             max_record_bytes=max_record_bytes,
+            max_total_bytes=max_total_bytes,
         )
         self._writer = WriteEngine(self._store)
 
@@ -111,6 +114,11 @@ class EmberDB:
         # to the unindexed store.all_ids() scan.
         self._master_index = MasterIndex(self._path)
         self._reader = ReadEngine(self._store, self._writer, self._master_index)
+        def epistemic_projection(record):
+            if record.record_type not in self._DURABLE_MEMORY_TYPES:return None
+            from .cognitive.epistemic import EpistemicLedger
+            with self._writer.lock:return EpistemicLedger(self,record.namespace).project(record.id)
+        self._reader._epistemic_provider = epistemic_projection
         self._graph_index = GraphIndex(self._path)
         self._timeline_index = TimelineIndex(self._path)
         self._vector_index = VectorIndex(self._path)
@@ -132,10 +140,13 @@ class EmberDB:
         self._promotion = PromotionEngine(self, promotion_mode, promotion_policy)
 
         # Register write callbacks to keep indexes updated
+        self._writer.register_before_write(self._ensure_master_index_current)
         self._writer.register_callback(self._on_write)
 
-        # Rebuild indexes from existing records if needed
+        # Certify legacy and persisted candidates against physical source once
+        # on open. Routine reads use the source epoch, not directory scans.
         self._rebuild_indexes_if_needed()
+        self._master_index._health_check = self._ensure_master_index_current
 
         _safe_print(f"🔥 Ember's Diaries connected → {self._path}")
         stats = self._store.stats()
@@ -148,6 +159,7 @@ class EmberDB:
                 enforce_attribution: bool = False,
                 max_store_bytes: int = 0,
                 max_record_bytes: int = 0,
+                 max_total_bytes: int = 0,
                 runtime_config=None) -> "EmberDB":
         """Connect to (or create) an Ember's Diaries store.
 
@@ -161,20 +173,63 @@ class EmberDB:
                    enforce_attribution=enforce_attribution,
                    max_store_bytes=max_store_bytes,
                    max_record_bytes=max_record_bytes,
+            max_total_bytes=max_total_bytes,
                    runtime_config=runtime_config)
 
     def _rebuild_indexes_if_needed(self):
-        """On startup, rebuild indexes from store if they're empty."""
-        store_count = self._store.record_count()
-        index_count = self._master_index.record_count()
-        if store_count > 0 and index_count == 0:
-            # stderr, not stdout — see _safe_print: stdout may be a protocol
-            # channel (MCP stdio), and rebuild chatter there breaks the client.
-            _safe_print(f"   Rebuilding indexes for {store_count} records...")
-            for rid in self._store.all_ids():
-                record = self._store.read(rid)
-                if record:
-                    self._index_record(record)
+        """Certify a fresh MasterIndex from immutable source at initialization."""
+        with self._store.lock:
+            self._reconcile_master_index()
+
+    def _reconcile_master_index(self):
+        """Explicit source-backed recovery; never used on healthy queries."""
+        from .storage.format import decode_index
+        records = {}
+        children = {}
+        for rid in self._store.all_ids():
+            record = self._store.read_strict(rid)
+            records[rid] = record
+            if record.supersedes:
+                children.setdefault(record.supersedes, []).append(rid)
+        for parent, descendants in children.items():
+            if parent not in records:
+                raise ValueError(f"Missing supersession parent {parent}")
+            sidecar = self._writer.get_superseded_by(parent)
+            if sidecar is None:
+                if len(descendants) != 1:
+                    raise ValueError(f"Ambiguous supersession for {parent}")
+                self._writer._mark_superseded(parent, descendants[0])
+            elif sidecar not in descendants:
+                raise ValueError(f"Inconsistent supersession for {parent}")
+        for sidecar in (self._store.root / "supersessions").glob("*.superseded"):
+            if sidecar.stem not in children:
+                raise ValueError(f"Orphan supersession sidecar {sidecar.name}")
+        deprecated = set()
+        for sidecar in (self._store.root / "deprecations").glob("*.deprecated"):
+            data = decode_index(sidecar.read_bytes())
+            if sidecar.stem not in records or data.get("record_id") != sidecar.stem:
+                raise ValueError(f"Inconsistent deprecation sidecar {sidecar.name}")
+            deprecated.add(sidecar.stem)
+        self._master_index.reset()
+        for record in records.values():
+            self._index_record(record)
+        for parent in children:
+            child = self._writer.get_superseded_by(parent)
+            self._master_index.mark_superseded(parent, child)
+        for rid in deprecated:
+            self._master_index.mark_deprecated(rid)
+        self._master_index.persist(self._store.index_epoch())
+
+    def _ensure_master_index_current(self):
+        """Validate one small epoch marker under the existing shared lock."""
+        with self._store.lock:
+            epoch = self._store.index_epoch()
+            if self._master_index.indexed_epoch == epoch:
+                return
+            # Another handle's persisted snapshot is derived metadata, not a
+            # proof that its callbacks completed. Reconcile from source when
+            # behind; routine equal-epoch reads never enumerate files.
+            self._reconcile_master_index()
 
     def _on_write(self, record: EmberRecord, operation: str):
         """Callback after every write — keeps indexes in sync."""
@@ -185,6 +240,7 @@ class EmberDB:
                 # transaction. Marking it after writer.update() returned left
                 # a window where concurrent readers saw an incomplete chain.
                 self._master_index.mark_superseded(record.supersedes, record.id)
+            self._master_index.persist(self._store.index_epoch())
 
     def _index_record(self, record: EmberRecord):
         """Add a record to all relevant indexes."""
@@ -202,19 +258,34 @@ class EmberDB:
             record.id, record.namespace, record.created_at.isoformat())
 
         # Full-text index
-        self._fulltext_index.add(
-            record.id, record.data, record.namespace,
-            extra_text=" ".join(record.tags))
+        if record.retrieval_candidate:
+            self._fulltext_index.add(
+                record.id, record.data, record.namespace,
+                extra_text=" ".join(record.tags))
 
         # Vector index (if record has embedding)
-        if record.embedding:
+        if record.embedding and record.retrieval_candidate:
             self._vector_index.add(record.id, record.embedding, record.namespace)
+
+        # A master-index rebuild can run while the durable graph already has
+        # these edges. Keep reindexing idempotent by persisted edge identity.
+        if record.connections or record.derived_from:
+            existing = {
+                (edge['target'], edge['edge_type'], edge['edge_id'])
+                for edge in self._graph_index.get_edges(record.id, direction='outgoing')
+            }
+        else:
+            existing = set()
 
         # Graph index (if record has connections)
         for edge in record.connections:
+            identity = (edge.target_id, edge.edge_type.value, edge.edge_id)
+            if identity in existing:
+                continue
             self._graph_index.add_edge(
                 record.id, edge.target_id,
                 edge.edge_type.value, edge.weight, edge.edge_id)
+            existing.add(identity)
 
         # Causal-derivation edges (Features #2/#3): make each record's
         # `derived_from` provenance a first-class edge in the graph, so
@@ -223,13 +294,22 @@ class EmberDB:
         # edge points from the new record to its source, matching the
         # backward-in-time convention of `supersedes`. The edge_id is
         # deterministic per (child, source) so the link is identifiable; edges
-        # are created once per write (rebuild only runs against an empty graph).
+        # are created once per write or recovered if missing during rebuild.
         for target_id in record.derived_from:
+            edge_id = f"df:{record.id}:{target_id}"
+            identity = (target_id, EdgeType.DERIVED_FROM.value, edge_id)
+            if identity in existing:
+                continue
             self._graph_index.add_edge(
                 record.id, target_id, EdgeType.DERIVED_FROM.value,
-                edge_id=f"df:{record.id}:{target_id}", label="derived_from")
+                edge_id=edge_id, label="derived_from")
+            existing.add(identity)
 
     # ── Write ─────────────────────────────────────────────────────────────────
+
+    def storage_usage(self) -> dict:
+        """Logical bytes under the store root, not RAM or allocated blocks."""
+        return self._store.byte_usage()
 
     def write(self, record: EmberRecord) -> str:
         """
@@ -339,10 +419,13 @@ class EmberDB:
         Mark a record as deprecated. It remains in the store forever.
         Returns True if successful.
         """
-        result = self._writer.deprecate(record_id, reason, note, written_by)
-        if result:
-            self._master_index.mark_deprecated(record_id)
-        return result
+        with self._store.lock:
+            self._ensure_master_index_current()
+            result = self._writer.deprecate(record_id, reason, note, written_by)
+            if result:
+                self._master_index.mark_deprecated(record_id)
+                self._master_index.persist(self._store.index_epoch())
+            return result
 
     # ── Read ──────────────────────────────────────────────────────────────────
 
@@ -757,6 +840,13 @@ class EmberDB:
                      detected_by: str = "system",
                      conflict_type: ConflictType = ConflictType.SEMANTIC,
                      note: str = "") -> str:
+        with self._store.lock:
+            return self._map_conflict_locked(memory_a, memory_b, detected_by,
+                                             conflict_type, note)
+
+    def _map_conflict_locked(self, memory_a: str, memory_b: str,
+                             detected_by: str, conflict_type: ConflictType,
+                             note: str) -> str:
         """Map a SEMANTIC contradiction between two existing memories (§7).
 
         Records a CONFLICT record (status OPEN) AND draws a symmetric
@@ -810,6 +900,7 @@ class EmberDB:
         # Idempotency: is this exact pair already mapped and still live?
         existing = self._find_live_conflict(conflict.pair_fingerprint())
         if existing is not None:
+            self._ensure_conflict_graph_edge(memory_a, memory_b)
             return existing.conflict_id
 
         record = EmberRecord(
@@ -826,9 +917,16 @@ class EmberDB:
 
         # Map the contradiction on the graph too (symmetric), so the existing
         # conflicts() view and the promotion engine's conflict gate see it.
-        self.link(memory_a, memory_b, EdgeType.CONTRADICTS.value,
-                  label="contradicts")
+        self._ensure_conflict_graph_edge(memory_a, memory_b)
         return cid
+
+    def _ensure_conflict_graph_edge(self, memory_a: str, memory_b: str):
+        """Repair a missing mapping edge on an idempotent map retry."""
+        kind = EdgeType.CONTRADICTS.value
+        forward = self._graph_index.connected(memory_a, kind)
+        reverse = self._graph_index.connected(memory_b, kind)
+        if memory_b not in forward and memory_a not in reverse:
+            self.link(memory_a, memory_b, kind, label="contradicts")
 
     def get_conflict(self, conflict_id: str,
                      caller: str | None = None) -> Conflict | None:
@@ -874,26 +972,33 @@ class EmberDB:
 
         Resolves each conflict lineage to its CURRENT version so status is
         accurate, and de-duplicates superseded copies of the same conflict."""
-        out, seen = [], set()
-        namespaces = ([namespace] if namespace is not None
-                      else self._all_namespaces())
-        for ns in namespaces:
-            if caller is not None and not self._ns_manager.check_read(ns, caller):
-                if namespace is not None:
-                    self._ns_manager.require_read(ns, caller)
-                continue
-            for rec in self._reader.get_namespace(ns, include_deprecated=True,
-                                                  limit=None):
-                if rec.record_type != RecordType.CONFLICT:
+        with self._store.lock:
+            if namespace is not None and caller is not None:
+                self._ns_manager.require_read(namespace, caller)
+            out, seen = [], set()
+            candidates = self._master_index.get_type_ids(
+                RecordType.CONFLICT.value, namespace)
+            for rid in candidates:
+                meta = self._master_index.get_meta(rid)
+                ns = meta["namespace"]
+                if caller is not None and not self._ns_manager.check_read(ns, caller):
                     continue
-                current = self._reader.get_current(rec.id) or rec
+                rec = self._reader.get(
+                    rid, include_deprecated=True, include_superseded=True)
+                if rec is None:
+                    raise ValueError(f"Indexed conflict record {rid} is unreadable or missing")
+                if rec.record_type != RecordType.CONFLICT or rec.namespace != ns:
+                    raise ValueError(f"Indexed conflict metadata differs from source for {rid}")
+                current = self._reader.get_current(rid)
+                if current is None or current.record_type != RecordType.CONFLICT:
+                    raise ValueError(f"Conflict lineage for {rid} has no valid head")
                 if current.id in seen:
                     continue
                 seen.add(current.id)
                 c = self._conflict_from_record(current)
                 if status is None or c.status == status:
                     out.append(c)
-        return out
+            return out
 
     def conflicts_for(self, memory_id: str,
                      include_closed: bool = False,
@@ -930,6 +1035,14 @@ class EmberDB:
                                resolution: str = "",
                                changed_by: str = "system",
                                winner_id: str | None = None) -> tuple[str, str]:
+        with self._store.lock:
+            return self._update_conflict_status_locked(
+                conflict_id, status, resolution, changed_by, winner_id)
+
+    def _update_conflict_status_locked(self, conflict_id: str,
+                                       status: ConflictStatus,
+                                       resolution: str, changed_by: str,
+                                       winner_id: str | None) -> tuple[str, str]:
         """Advance a conflict's lifecycle — as a NEW version (append-only, §7).
 
         A transition (open → investigating → resolved | accepted_both |
@@ -957,7 +1070,8 @@ class EmberDB:
         return self.update(
             head.id, payload, written_by=changed_by,
             agent_id=changed_by,
-            creation_reason=f"conflict → {status.value}")
+            creation_reason=f"conflict → {status.value}",
+            expected_hash=head.content_hash)
 
     def resolve_conflict(self, conflict_id: str, resolution: str,
                          changed_by: str = "system") -> tuple[str, str]:
@@ -1318,6 +1432,21 @@ class EmberDB:
     # reject() supersedes it with a REJECTED copy. Nothing is ever deleted, so a
     # rejected proposal stays permanently distinguishable from a committed one.
 
+    def _normalize_new_evidence_origin(self, ev: Evidence) -> None:
+        """Give new unsealed evidence an explicit origin identity.
+
+        A pre-sealed hash-version-1 Evidence object is a legacy compatibility
+        artifact. Its signed payload cannot be extended with origin without
+        changing its content hash, so it remains byte-for-byte intact. ELLA
+        projects a missing legacy origin as UNKNOWN; current REST/MCP/new
+        unsealed DB submissions persist origin="unknown" explicitly.
+        """
+        if ev.origin is not None or ev.content_hash is not None:
+            return
+        ev.origin = "unknown"
+        ev.origin_confidence = "UNKNOWN"
+        if ev.hash_version < 2:
+            ev.hash_version = 2
     def propose(self, proposal: MemoryProposal) -> str:
         """Record a memory proposal (a discovery awaiting validation, §4).
 
@@ -1325,6 +1454,8 @@ class EmberDB:
         durable memory. Its evidence is sealed too, so each piece keeps the
         identity/hash it will carry if the proposal is promoted. Returns the
         proposal record id (== proposal.proposal_id)."""
+        for ev in proposal.evidence:
+            self._normalize_new_evidence_origin(ev)
         proposal.seal_evidence()
         proposal.status = ProposalStatus.PENDING
         record = EmberRecord(
@@ -1381,6 +1512,15 @@ class EmberDB:
                 status: "MemoryStatus | None" = None,
                 promotion_method: "PromotionMethod | None" = None,
                 ) -> tuple[str, str]:
+        with self._store.lock:
+            return self._promote_locked(
+                proposal_id, validated_by, status, promotion_method)
+
+    def _promote_locked(self, proposal_id: str,
+                        validated_by: str,
+                        status: "MemoryStatus | None",
+                        promotion_method: "PromotionMethod | None",
+                        ) -> tuple[str, str]:
         """Validate a proposal into a durable memory (§4 validation step).
 
         Writes a NEW durable memory (record_type NODE) carrying the discovery as
@@ -1392,24 +1532,21 @@ class EmberDB:
         touching it. The proposal record is then superseded by a PROMOTED copy
         that records which memory it became.
 
-        EPISTEMIC STATE (spec §12). A promoted memory does NOT assert "this is
-        true" — only "this met the criteria to enter durable memory". So it
-        carries two explicit fields, stored under reserved `_status` /
-        `_promotion_method` keys INSIDE the memory's data (hence inside the
-        content hash and versioned — a status change is a new version):
-          • status           VERIFIED (default) / PROVISIONAL / DISPUTED
-          • promotion_method HOW it was admitted — HUMAN by default, because a
-                             bare promote() call is an explicit caller decision;
-                             the Promotion Engine passes AUTOMATIC / CONSENSUS.
-        Backwards-compat: the keys are added only when set, and read back with a
-        VERIFIED / HUMAN default, so pre-existing promoted memories hash and read
-        exactly as before (§15).
+        ELLA BOUNDARY. Promotion is admission only. New durable memories carry a
+        legacy-compatible reserved `_status=provisional` marker plus their
+        `_promotion_method`, both versioned inside the record hash. The marker is
+        not canonical truth and cannot make the memory VERIFIED. Canonical
+        epistemic state is projected separately by ELLA from accepted evidence
+        assessments. The optional `status` argument remains only to reject old
+        callers that try to set truth during promotion.
 
         Returns (memory_id, proposal_id). Raises if the proposal does not exist
         or is not currently pending.
         """
         from .core.types import MemoryStatus, PromotionMethod
-        status = status or MemoryStatus.VERIFIED
+        if status is not None:
+            raise ValueError('Promotion is admission only; use ember_epistemic_feedback for truth evidence')
+        status = MemoryStatus.PROVISIONAL
         promotion_method = promotion_method or PromotionMethod.HUMAN
 
         proposal = self.get_proposal(proposal_id)
@@ -1419,9 +1556,14 @@ class EmberDB:
             raise ValueError(
                 f"Proposal {proposal_id} is {proposal.status.value}, "
                 "only a pending proposal can be promoted.")
+        self.require_namespace_access(proposal.namespace, validated_by, "write")
+        conflict_issues = self._promotion.conflict_hold_reasons(proposal, validated_by)
+        if conflict_issues:
+            raise ValueError("conflict or derivation review required: " + "; ".join(conflict_issues))
 
         # 1. The durable memory — the discovery, now first-class.
         memory = EmberRecord(
+            id=str(uuid.uuid5(uuid.NAMESPACE_URL, f"ember:promotion:{proposal_id}")),
             namespace=proposal.namespace,
             record_type=RecordType.NODE,
             data=self._with_status(proposal.discovery, status, promotion_method),
@@ -1440,7 +1582,18 @@ class EmberDB:
             decay_rate=0.01,
             tags=[t for t in proposal.tags if t != "proposal"],
         )
-        memory_id = self._writer.write(memory)
+        existing = self._reader.get(
+            memory.id, include_deprecated=True, include_superseded=True)
+        if existing is None:
+            memory_id = self._writer.write(memory)
+        else:
+            if (existing.record_type != RecordType.NODE
+                    or existing.namespace != memory.namespace
+                    or existing.data != memory.data
+                    or existing.derived_from != memory.derived_from
+                    or existing.agent_id != memory.agent_id):
+                raise ValueError("promotion recovery record differs from proposal")
+            memory_id = existing.id
 
         # 2. Each piece of evidence → its own EVIDENCE record + SUPPORTS edge.
         for ev in proposal.evidence:
@@ -1450,12 +1603,21 @@ class EmberDB:
         payload = proposal.to_record_payload()
         payload["status"] = ProposalStatus.PROMOTED.value
         payload["promoted_to"] = memory_id
-        self.update(proposal_id, payload, written_by=validated_by,
-                    creation_reason="proposal promoted to durable memory")
+        head = self._reader.get_current(proposal_id)
+        if head is None or head.record_type != RecordType.PROPOSAL:
+            raise ValueError("proposal head changed during promotion")
+        self.update(head.id, payload, written_by=validated_by,
+                    creation_reason="proposal promoted to durable memory",
+                    expected_hash=head.content_hash)
         return memory_id, proposal_id
 
     def reject(self, proposal_id: str, reason: str = "",
                rejected_by: str = "system") -> str:
+        with self._store.lock:
+            return self._reject_locked(proposal_id, reason, rejected_by)
+
+    def _reject_locked(self, proposal_id: str, reason: str,
+                       rejected_by: str) -> str:
         """Reject a proposal (§16 → Promotion: rejected proposals remain
         distinguishable from committed memories).
 
@@ -1469,11 +1631,16 @@ class EmberDB:
             raise ValueError(
                 f"Proposal {proposal_id} is {proposal.status.value}, "
                 "only a pending proposal can be rejected.")
+        self.require_namespace_access(proposal.namespace, rejected_by, "write")
         payload = proposal.to_record_payload()
         payload["status"] = ProposalStatus.REJECTED.value
         payload["rejection_reason"] = reason
-        new_id, _ = self.update(proposal_id, payload, written_by=rejected_by,
-                                creation_reason=f"proposal rejected: {reason}")
+        head = self._reader.get_current(proposal_id)
+        if head is None or head.record_type != RecordType.PROPOSAL:
+            raise ValueError("proposal head changed during rejection")
+        new_id, _ = self.update(head.id, payload, written_by=rejected_by,
+                                creation_reason=f"proposal rejected: {reason}",
+                                expected_hash=head.content_hash)
         return new_id
 
     # ── Promotion Engine (§10–§12) — configurable routing to durable memory ────
@@ -1495,16 +1662,17 @@ class EmberDB:
         memory_id when promoted)."""
         return self._promotion.submit(proposal_id, validated_by=validated_by)
 
-    def promotion_route(self, proposal_id: str) -> "PromotionDecision":
+    def promotion_route(self, proposal_id: str,
+                        actor_id: str | None = None) -> "PromotionDecision":
         """Dry-run: what WOULD the Promotion Engine do with this proposal? Returns
         the decision without writing anything."""
-        return self._promotion.route(proposal_id)
+        return self._promotion.route(proposal_id, actor_id=actor_id)
 
-    # ── Epistemic status of a durable memory (§12) ─────────────────────────────
+    # ── Legacy status compatibility for durable memory (§12) ─────────────────
 
     @staticmethod
     def _with_status(discovery, status, promotion_method) -> dict:
-        """Fold the memory's epistemic status + promotion method into its data.
+        """Fold the legacy admission marker + promotion method into stored data.
 
         The discovery is normally a dict; we add reserved `_status` /
         `_promotion_method` keys alongside it. A non-dict discovery (str, list,
@@ -1521,12 +1689,25 @@ class EmberDB:
             return merged
         return {"value": discovery, **meta}
 
-    def memory_status(self, memory_id: str) -> "MemoryStatus":
-        """The current epistemic status of a durable memory.
+    def memory_status(self, memory_id: str):
+        """Compatibility enum projected from canonical ELLA public state; use the dedicated epistemic state API for full diagnostics."""
+        from .core.domain import explicit_truth
+        from .core.types import MemoryStatus
+        rec = self._reader.get_current(memory_id) or self._reader.get(memory_id, True, True)
+        if rec is None: raise KeyError(memory_id)
+        value = explicit_truth(rec, any(c.status.value in ('open','investigating') for c in self.conflicts_for(rec.id)))['status']
+        if value == 'superseded': return MemoryStatus.SUPERSEDED
+        if value == 'verified': return MemoryStatus.VERIFIED
+        if value == 'disfavored': return MemoryStatus.DISFAVORED
+        if value in ('disputed','contested','incorrect'): return MemoryStatus.DISPUTED
+        return MemoryStatus.PROVISIONAL
 
-        Reads the CURRENT version (status changes are new versions). Defaults to
-        VERIFIED when the key is absent, so a memory written before this feature
-        — or by a plain db.write() — reads as VERIFIED without any migration."""
+    def legacy_memory_status(self, memory_id: str) -> "MemoryStatus":
+        """Read the historical `_status` compatibility marker only.
+
+        This is NOT ELLA truth. It intentionally preserves the old default of
+        VERIFIED when the marker is absent so legacy callers/data remain
+        readable without silently rewriting historical records."""
         from .core.types import MemoryStatus
         rec = self._reader.get_current(memory_id) or self._reader.get(
             memory_id, include_deprecated=True, include_superseded=True)
@@ -1552,13 +1733,12 @@ class EmberDB:
     def set_status(self, memory_id: str, status: "MemoryStatus",
                    changed_by: str = "system",
                    reason: str | None = None) -> tuple[str, str]:
-        """Change a memory's epistemic status — as a NEW version (append-only).
+        """Write a legacy `_status` marker as a new memory version.
 
-        A status transition (e.g. VERIFIED → DISPUTED when conflicting evidence
-        appears) never overwrites: it supersedes the memory with a new version
-        carrying the new `_status`, so the history verified→disputed is fully
-        preserved and auditable. The promotion_method is carried forward
-        unchanged. Returns (new_id, old_id)."""
+        Kept for backwards compatibility only. This does not change canonical
+        ELLA state or create epistemic evidence. Because it creates a new exact
+        memory version, that version begins with its own ELLA projection unless
+        evidence is explicitly carried forward and reassessed."""
         from .core.types import MemoryStatus, PromotionMethod
         rec = self._reader.get_current(memory_id)
         if rec is None:
@@ -1618,8 +1798,10 @@ class EmberDB:
     def attach_evidence(self, memory_id: str, ev: Evidence) -> str:
         """Attach a new piece of evidence to an EXISTING durable memory.
 
-        This is the multi-agent confirmation path: any agent can add independent
-        evidence to a memory over time WITHOUT modifying (superseding) it —
+        This is the multi-agent evidence path: any agent can add an evidence
+        record over time WITHOUT modifying (superseding) the memory. Attachment
+        does not claim epistemic independence; ELLA resolves detectable
+        dependence and claim-specific assessment separately —
         append a new EVIDENCE record with a SUPPORTS edge. Append-only, so the
         memory's hash is untouched and its confirmation trail only grows.
         Returns the evidence record id.
@@ -1644,6 +1826,7 @@ class EmberDB:
                 f"memory (record_type NODE or DOCUMENT). If this is a pending "
                 f"PROPOSAL, pass evidence inline to propose() instead: "
                 f"evidence attached here would not affect its promotion gate.")
+        self._normalize_new_evidence_origin(ev)
         return self._write_evidence_record(ev, memory_id)
 
     def evidence_for(self, memory_id: str) -> list[EmberRecord]:
@@ -1744,14 +1927,19 @@ class EmberDB:
 
     def link(self, from_id: str, to_id: str,
              edge_type: str = "relates_to",
-             weight: float = 1.0, label: str = "") -> bool:
-        """Create a graph edge between two records."""
+             weight: float = 1.0, label: str = "", **kwargs) -> bool:
+        """Create a graph edge; primary_context is optional, explicit edge metadata."""
+        if set(kwargs) - {'primary_context'}:
+            raise TypeError('unsupported link fields')
+        if 'primary_context' in kwargs:
+            from .core.primary_context import validate_context
+            validate_context(kwargs['primary_context'])
         if not self.exists(from_id) or not self.exists(to_id):
             return False
         import uuid
         self._graph_index.add_edge(
             from_id, to_id, edge_type, weight,
-            edge_id=str(uuid.uuid4()), label=label)
+            edge_id=str(uuid.uuid4()), label=label, metadata=kwargs)
         return True
 
     def neighbors(self, record_id: str, depth: int = 1,
@@ -1833,7 +2021,9 @@ class EmberDB:
 
     def checkpoint(self):
         """Persist all indexes and compact the WAL."""
-        self._master_index.persist()
+        with self._store.lock:
+            self._ensure_master_index_current()
+            self._master_index.persist(self._store.index_epoch())
         self._graph_index.persist()
         self._timeline_index.persist()
         self._vector_index.persist()

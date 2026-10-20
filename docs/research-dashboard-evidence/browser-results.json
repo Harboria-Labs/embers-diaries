@@ -1,0 +1,59 @@
+{
+  "results": [
+    {
+      "surface": "visualizer",
+      "empty_single_dense": true,
+      "inspector_matrix_flow": true,
+      "motion_readonly": true,
+      "screen_fit": true
+    },
+    {
+      "surface": "observer",
+      "empty_single_dense": true,
+      "inspector_matrix_flow": true,
+      "motion_readonly": true,
+      "screen_fit": true
+    }
+  ],
+  "multi_namespace": true,
+  "errors": [],
+  "requests": [
+    [
+      "GET",
+      "http://ember.test/visualizer"
+    ],
+    [
+      "GET",
+      "http://ember.test/v1/observer/transport.js?v=b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0"
+    ],
+    [
+      "GET",
+      "http://ember.test/health"
+    ],
+    [
+      "GET",
+      "http://ember.test/observer"
+    ],
+    [
+      "GET",
+      "http://ember.test/v1/observer/transport.js?v=b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0"
+    ],
+    [
+      "GET",
+      "http://ember.test/health"
+    ],
+    [
+      "GET",
+      "http://ember.test/status"
+    ],
+    [
+      "GET",
+      "http://ember.test/health"
+    ],
+    [
+      "GET",
+      "http://ember.test/v1/observer/build"
+    ]
+  ],
+  "server_started": false
+}

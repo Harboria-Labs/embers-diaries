@@ -292,3 +292,70 @@ pytest tests/ -v
 MIT
 
 Built by 0xticketguy / Harboria Labs.
+
+### Consolidated Rust research model
+
+The current experimental path is `ember-fur-activation-v1`: feedback → accepted
+experiences → usefulness U → query modulation Q′ → bounded activation. Rust owns
+the equations and deterministic domain decisions. W remains evidence only.
+
+Use the **same normal server** (`uvicorn embers.api:app`). The MCP tools are
+`ember_research_recall`, `ember_research_settings`, and `ember_research_configure`.
+The Settings editor is at `/research/settings`. Research Observer continues to use SSE.
+Rebuild the native extension when updating this branch; there is no Python math fallback.
+Ordinary text recall remains compatible and does not silently become the new experiment.
+
+See [equations, proofs, defaults and boundaries](docs/consolidated-research-model.md),
+[release results and usage](docs/consolidated-release-report.md), and
+[recorded browser/network evidence](docs/consolidated-browser-proof.json).
+
+### Historical contextual memory (Candidate 04)
+
+This older bias-learning experiment is superseded on the consolidated path.
+Its normal-server registration now requires `EMBER_ENABLE_LEGACY_CANDIDATE04=1`.
+Its historical journals are not automatically converted to FUR/activation state.
+
+
+See [the live-test guide](docs/feedback-candidate-04.md) for the normal-server test setup,
+feedback equations, guarantees and limitations.
+
+- **Memory record:** a structured, versioned object with identity, content,
+  provenance, evidence, epistemic status, retrieval state and history; some
+  state is stored in linked records rather than rewriting the original.
+- **Relevance:** usefulness for a declared task context; it does not imply truth.
+- **LADC:** bounded transfer between active and latent activation capacity.
+- **Pairing:** a learned directional, typed relationship between memory versions.
+- **Outcome:** the underlying experience receiving credit, not each repeated report.
+- **Attention budget:** a limit on rendered context tokens, separate from storage.
+- **SPRT:** adjacent statistical verification research, not relevance reinforcement.
+
+[Primary-context Contract 01](docs/primary-context-contract-01.md) adds optional
+agent-supplied context to write/recall and retrieval context to feedback. It is
+observable metadata, with no inferred context, hard context filter or new score.
+
+Candidate 04 now initializes during **normal server startup** on the test branch.
+Use `python -m uvicorn embers.api:app --port 9200`; a second server is unnecessary.
+See the live-test guide for the private test-agent credentials and encoding defaults.
+
+[Context orientation Contract 02](docs/context-orientation-contract-02.md) adds
+`ember_orient`: rough clues return a bounded subject/context map with representative
+memories and explicit field/relationship signals. The agent chooses the context.
+
+[Evidence-derived usefulness and live visualizer](docs/usefulness-feedback-visualizer.md)
+adds `ember_usefulness_update`, `ember_usefulness_state` and `/visualizer` on that
+same normal server. Reports are grouped into experiences; corrections recompute
+contextual U and directional W. These values remain separate from heat, retrieval
+ranking and truth. The visualizer is an authorized read-only view.
+
+[Live SSE observation](docs/usefulness-sse.md) pushes committed events to the
+visualizer with revision-based recovery, in-place updates, visible connection
+status and read-only authenticated fallback.
+
+[Memory observatory and agent-created viewing links](docs/memory-observatory.md)
+adds full-screen network, 3D orbit, context bubbles, heatmaps and token inspection
+to the same `/visualizer`. Agents can call `ember_visualizer_access` to issue a
+temporary read-only code/link without sharing their login token.
+
+[Research Observer Mode](docs/research-observer-mode.md) adds `ember_visualize`: an
+agent can issue a read-only link following its own activity across namespaces and
+sessions. The researcher enters no namespace; ordinary Namespace View remains.
