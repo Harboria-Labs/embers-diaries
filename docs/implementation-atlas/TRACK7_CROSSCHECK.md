@@ -44,3 +44,26 @@ Promotion status outcomes beyond OPEN/INVESTIGATING, audit authority/retention, 
 ## Batch 4 reconciliation — 2026-10-17
 
 The original V1 answers above remain historical. Current local candidate `EpistemicLedger.load()` still replays all sealed events as source truth, while normal `read/project/apply` use a bounded process projection after a verified replay. Batch 1 source epochs detect supported cross-process writes; the known head and new events are strictly verified and reduced with unchanged native semantics; Batch 3 audit marker changes force replay. Agent-accessible memory-version history is still separate from ELLA's assessment journal. Old-event out-of-band tampering with unchanged epoch/head is detected by independent audit or explicit replay, not on every healthy warm request. See `15_BATCH4_IMPLEMENTATION_EVIDENCE.md`.
+
+
+## Track 7 finalization — 2026-10-19
+
+Inspected current Candidate 04 from `aec1a46ddfd76fe296c4a0190300654aa5608546`.
+All four existing batches are retained. Final validation found and corrected a
+Batch 2 compatibility defect: FAILURE derivations must remain eligible for the
+existing evidence-gated failure-to-lesson pipeline. Internal RAW/PROPOSAL/EVIDENCE
+sources remain rejected; namespace/conflict/admission checks remain. Corrected one
+API test's cached-store isolation; no API authorization or research math changes.
+The earlier dated implementation/status rows remain historical evidence.
+
+Source, exact validation results, native binary identity, new regression cases,
+CPU measurements and operational limits are recorded in
+[finalization evidence](../../track7_atlas_design_20261015/17_FINALIZATION_EVIDENCE.md).
+Fingerprint CPU was measured at 1k/10k/100k metadata rows; it is not constant total
+query cost. Production scale, real power loss, deployed mixed-version writers,
+live-agent operation and immediate historical-journal tamper detection are not
+certified. This is isolated implementation/regression closure, not deployment.
+
+Final resumed run, 2026-10-20: **896 Python tests passed, no failures/skips;
+16 Rust tests passed, no failures/ignored tests**. One Python dependency warning.
+Raw outputs are retained with the finalization evidence.

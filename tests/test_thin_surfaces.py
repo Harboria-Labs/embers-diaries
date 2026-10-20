@@ -1,8 +1,5 @@
 """Enums available after bind; REST matches MCP for feedback/lifecycle."""
 
-import os
-import tempfile
-
 import pytest
 
 import embers
@@ -14,12 +11,18 @@ def test_feedback_enums_are_real():
     assert getattr(EdgeType, "FEEDBACK_ON").value == "feedback_on"
 
 
-def test_v1_feedback_and_lifecycle():
+def test_v1_feedback_and_lifecycle(tmp_path, monkeypatch):
     pytest.importorskip("fastapi")
-    os.environ["EMBER_STORE"] = tempfile.mkdtemp(prefix="embers_thin_")
     from tests.test_v1_promotion import ASGIClient
-    from embers.api import app
-    client = ASGIClient(app)
+    import embers.api as api
+    import embers.api.v1 as v1
+    # Isolate both API caches: preceding tests may replace the store while
+    # leaving a protocol bound to their old store. Restore globals on teardown.
+    monkeypatch.setattr(api, "_db", embers.EmberDB.connect(tmp_path / "thin"))
+    for module in (api, v1):
+        monkeypatch.setattr(module, "_protocol", None)
+        monkeypatch.setattr(module, "_registry", None)
+    client = ASGIClient(api.app)
     reg = client.post("/v1/agents/register",
                       json={"name": "thin", "provider": "local", "model": "t"})
     assert reg.status_code == 200, reg.text

@@ -85,3 +85,26 @@ one dependency warning. New assertions explicitly distinguish synthetic fixtures
 from execution receipts. Runtime source unchanged; no deployment/browser proof,
 no Track 7 work. Full source boundary, command and evidence grades:
 [final capture validation](../../paper/lobby_v2_final_capture_validation.md).
+
+
+## Track 7 finalization — 2026-10-19
+
+Inspected current Candidate 04 from `aec1a46ddfd76fe296c4a0190300654aa5608546`.
+All four existing batches are retained. Final validation found and corrected a
+Batch 2 compatibility defect: FAILURE derivations must remain eligible for the
+existing evidence-gated failure-to-lesson pipeline. Internal RAW/PROPOSAL/EVIDENCE
+sources remain rejected; namespace/conflict/admission checks remain. Corrected one
+API test's cached-store isolation; no API authorization or research math changes.
+The earlier dated implementation/status rows remain historical evidence.
+
+Source, exact validation results, native binary identity, new regression cases,
+CPU measurements and operational limits are recorded in
+[finalization evidence](../../track7_atlas_design_20261015/17_FINALIZATION_EVIDENCE.md).
+Fingerprint CPU was measured at 1k/10k/100k metadata rows; it is not constant total
+query cost. Production scale, real power loss, deployed mixed-version writers,
+live-agent operation and immediate historical-journal tamper detection are not
+certified. This is isolated implementation/regression closure, not deployment.
+
+Final resumed run, 2026-10-20: **896 Python tests passed, no failures/skips;
+16 Rust tests passed, no failures/ignored tests**. One Python dependency warning.
+Raw outputs are retained with the finalization evidence.

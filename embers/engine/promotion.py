@@ -326,13 +326,17 @@ class PromotionEngine:
 
     def conflict_hold_reasons(self, proposal, actor_id=None) -> list[str]:
         """Evaluate current mapped conflict heads and unmapped graph hints."""
-        from ..core.types import ConflictStatus
+        from ..core.types import ConflictStatus, RecordType
 
         issues = []
         for src_id in proposal.derivation:
             source = self._db._reader.get(
                 src_id, include_deprecated=True, include_superseded=True)
-            if source is None or source.record_type not in self._db._DURABLE_MEMORY_TYPES:
+            # Failure-to-lesson promotion already derives from a FAILURE record.
+            # Accept that source without making failures durable memories or
+            # bypassing the ordinary evidence, namespace and conflict gates.
+            valid_source_types = self._db._DURABLE_MEMORY_TYPES | {RecordType.FAILURE}
+            if source is None or source.record_type not in valid_source_types:
                 issues.append(f"missing or invalid derivation {src_id}; review required")
                 continue
             if source.namespace != proposal.namespace:

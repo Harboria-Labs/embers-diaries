@@ -319,3 +319,27 @@ def test_process_resolution_and_submit_never_admit_loser(tmp_path):
         "submit": False, "resolved": True}
     reopened = EmberDB.connect(path)
     assert reopened.get_proposal(pid).status.value == "pending"
+
+
+@pytest.mark.parametrize("record_type,allowed", [
+    (RecordType.FAILURE, True), (RecordType.RAW, False),
+    (RecordType.PROPOSAL, False), (RecordType.EVIDENCE, False),
+])
+def test_derivation_types_preserve_failure_promotion_without_admitting_internal_records(
+        tmp_path, record_type, allowed):
+    db = _db(tmp_path)
+    source = db.write(EmberRecord(namespace="batch2", record_type=record_type,
+                                 data={"claim": "source"}))
+    assert db.submit(_proposal(db, source)).promoted is allowed
+
+
+def test_failure_derivation_retains_namespace_and_graph_conflict_gates(tmp_path):
+    db = _db(tmp_path)
+    source = db.write(EmberRecord(namespace="batch2", record_type=RecordType.FAILURE,
+                                 data={"claim": "failure"}))
+    peer = db.write(EmberRecord(namespace="batch2", data={"claim": "alternative"}))
+    db._graph_index.add_edge(source, peer, "contradicts")
+    assert not db.submit(_proposal(db, source)).promoted
+    foreign = db.write(EmberRecord(namespace="other", record_type=RecordType.FAILURE,
+                                  data={"claim": "foreign failure"}))
+    assert not db.submit(_proposal(db, foreign)).promoted
