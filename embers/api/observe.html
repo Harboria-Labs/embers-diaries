@@ -1,0 +1,72 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Ember · Observation</title>
+<style>
+:root{color-scheme:dark;--bg:#0a1024;--panel:#121c34;--line:#2a3b58;--mint:#7cebd2;--text:#e7edff;--muted:#9bafce;--header:#15243c}
+:root[data-theme=light]{color-scheme:light;--bg:#f3f2eb;--panel:#fffefa;--line:#d5d6cc;--mint:#3f6f62;--text:#22251f;--muted:#5c6158;--header:#f7f6ef}
+*{box-sizing:border-box}html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,sans-serif;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+header{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:10px 18px;background:var(--header);border-bottom:1px solid var(--line)}
+.brand{flex:1 1 240px;min-width:0}
+h1{font-size:18px;font-weight:600;letter-spacing:.2px;margin:0}h1 span{color:var(--muted);font-weight:500}
+.brand p{margin:2px 0 0;font-size:13px;line-height:1.4}
+.build{margin:2px 0 0;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tabs{display:flex;gap:8px;align-items:center;flex:0 1 auto}
+button{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:8px;min-height:44px;padding:8px 14px;cursor:pointer;touch-action:manipulation}
+button[aria-selected=true]{background:#23483f;border-color:#4a8479;color:var(--mint)}
+:root[data-theme=light] button[aria-selected=true]{background:#e5f3ee;border-color:#8fbfb0;color:#1d4a3e}
+.panels{position:relative;flex:1;min-height:0}iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg)}
+iframe[hidden]{display:none}.muted{color:var(--muted)}.mono{font-family:ui-monospace,monospace}
+#gate{margin:0;padding:10px 16px;background:#3a2a22;color:#ffc38c}#gate[hidden]{display:none}
+#themeToggle{flex:0 0 auto}
+header .ember-health{min-height:44px;padding:6px 8px}
+@media(max-width:800px){
+header{padding:10px 12px 8px}
+.brand p{font-size:14px}
+.build{display:none}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0;width:auto;overflow:visible;padding:8px 8px calc(8px + env(safe-area-inset-bottom));background:var(--panel);border-top:1px solid var(--line)}
+nav.tabs button{width:100%;min-height:44px;padding:8px 6px;font-size:13px;line-height:1.2;white-space:normal}
+.panels{margin-bottom:calc(64px + env(safe-area-inset-bottom))}
+iframe{inset:0;width:100%;height:100%}
+}
+@media(min-width:1100px){header{padding:12px 28px}h1{font-size:20px}.tabs{gap:10px}}
+</style></head><body>
+<header><div class="brand"><h1>EMBER <span>/ Observation</span></h1><p class="muted">One read-only window: agent memory, namespace search and filters, and server status.</p><p class="build mono muted">__OBSERVER_BUILD_LABEL__</p></div>
+<nav class="tabs" aria-label="Observation sections"><button id="tab-agent" type="button" data-tab="agent" aria-selected="true">Agent memory</button><button id="tab-namespace" type="button" data-tab="namespace" aria-selected="false">Namespace View</button><button id="tab-status" type="button" data-tab="status" aria-selected="false">Status</button></nav>
+<button id="themeToggle" type="button" aria-label="Toggle light or dark theme">Light theme</button></header>
+<p id="gate" hidden role="alert"><span id="gateError"></span></p>
+<div class="panels"><iframe id="panel-agent" title="Agent memory" hidden></iframe><iframe id="panel-namespace" title="Namespace View" hidden></iframe><iframe id="panel-status" title="Server status" hidden></iframe></div>
+<script>window.emberObserverBuild=__OBSERVER_BUILD_JSON__;</script>
+<script src="__OBSERVER_ASSET_URL__" integrity="__OBSERVER_ASSET_INTEGRITY__"></script>
+<script>
+const $=id=>document.getElementById(id);
+const NGROK={'ngrok-skip-browser-warning':'true','Content-Type':'application/json'};
+function show(tab){for(const name of ['agent','namespace','status']){const on=name===tab;$('panel-'+name).hidden=!on;$('tab-'+name).setAttribute('aria-selected',on?'true':'false')}const url=new URL(location.href);url.searchParams.set('tab',tab);history.replaceState(null,'',url.pathname+'?'+url.searchParams.toString())}
+async function exchange(url,code,tab){const response=await fetch(url,{method:'POST',headers:NGROK,credentials:'same-origin',cache:'no-store',body:JSON.stringify({code})});if(!response.ok){$('gate').hidden=false;$('gateError').textContent=response.status===429?'Too many attempts. Wait a minute and try again.':'This code is invalid, expired, or revoked.';return false}$('gate').hidden=true;show(tab);return true}
+function fragment(){return new URLSearchParams(location.hash.slice(1))}
+async function consumeObserverLink(){const q=fragment();const raw=q.get('code')||'';const code=q.get('observe')||(/^[0-9a-f]{48}$/i.test(raw)?raw.toLowerCase():null);if(!code)return false;history.replaceState(null,'',location.pathname+location.search);return exchange('/v1/observer/exchange',code,'agent')}
+async function consumeViewLink(){const q=fragment();const raw=q.get('code')||'';if(q.has('observe')||/^[0-9a-f]{48}$/i.test(raw))return false;const code=q.get('view')||q.get('code');if(!code)return false;history.replaceState(null,'',location.pathname+location.search);return exchange('/v1/visualizer-access/exchange',code,'namespace')}
+function paintTheme(mode){document.documentElement.dataset.theme=mode;$('themeToggle').textContent=mode==='light'?'Dark theme':'Light theme';for(const frame of document.querySelectorAll('iframe')){try{if(frame.contentDocument)frame.contentDocument.documentElement.dataset.theme=mode}catch(error){}}}
+function rememberedTheme(){try{const saved=localStorage.getItem('ember-view-theme');if(saved==='light'||saved==='dark')return saved}catch(error){}return matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}
+function arm(){for(const [name,src] of [['agent','/observe/agent'],['namespace','/observe/namespace'],['status','/status']]){const frame=$('panel-'+name);frame.addEventListener('load',()=>paintTheme(document.documentElement.dataset.theme||'dark'));if(!frame.getAttribute('src'))frame.src=src}}
+async function boot(){
+const params=new URLSearchParams(location.search);
+let tab=['agent','namespace','status'].includes(params.get('tab'))?params.get('tab'):null;
+const observerHit=await consumeObserverLink();
+const viewHit=!observerHit&&await consumeViewLink();
+if(observerHit)tab='agent';
+if(viewHit)tab='namespace';
+if(!tab){
+tab='agent';
+try {
+const response=await fetch('/v1/observe/session',{method:'GET',credentials:'same-origin',cache:'no-store',headers:{'ngrok-skip-browser-warning':'true'}});
+if(response.ok){const data=await response.json();if(data.observer)tab='agent';else if(data.visualizer)tab='namespace'}
+} catch (error) {}
+}
+show(tab);
+arm();
+}
+document.querySelector('.tabs').onclick=event=>{const button=event.target.closest('[data-tab]');if(button)show(button.dataset.tab)};
+$('themeToggle').onclick=()=>{const next=document.documentElement.dataset.theme==='light'?'dark':'light';try{localStorage.setItem('ember-view-theme',next)}catch(error){}paintTheme(next)};
+window.addEventListener('storage',event=>{if(event.key==='ember-view-theme'&&(event.newValue==='light'||event.newValue==='dark'))paintTheme(event.newValue)});
+paintTheme(rememberedTheme());
+boot();
+</script>__RESEARCH_DASHBOARD__</body></html>

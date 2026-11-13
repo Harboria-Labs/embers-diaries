@@ -131,7 +131,8 @@ def test_http_mcp_grant_tool_is_discoverable(rig,client,monkeypatch):
                    'namespace':'experiment','server_url':'https://example.test/mcp'}})
     assert not output['isError']
     grant=json.loads(output['content'][0]['text'])
-    assert grant['viewer_url'].startswith('https://example.test/visualizer#view=EMBER-')
+    assert grant['viewer_url'].startswith('https://example.test/observe#code=EMBER-')
+    assert grant['visualization_url']==grant['viewer_url']
     assert token not in json.dumps(grant)
     assert client.post('/v1/visualizer-access/exchange',json={'code':grant['code']}).status_code==200
 

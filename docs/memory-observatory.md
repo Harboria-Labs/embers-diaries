@@ -19,10 +19,13 @@ The tool uses the agent's existing authentication. It returns a `code`,
 `viewer_url`. `EMBER_PUBLIC_URL` can supply the origin instead. It never guesses
 the public hostname. Without an origin, the code and relative path still work.
 
-Open the link, or open `/visualizer` and enter the code. No namespace, agent ID,
-or agent login token needs to be copied into the viewer. Advanced credential
+Open the link, or open `/observe` and enter the code on the Namespace View
+section. The same page also holds agent-memory observation and server status.
+No namespace, agent ID, or agent login token needs to be copied into the viewer.
+One exchange keeps a session until the grant expires. Advanced credential
 access remains available for compatibility. Both stdio and HTTP MCP expose the
-tool; HTTP clients can also use `POST /v1/visualizer-access`.
+tool; HTTP clients can also use `POST /v1/visualizer-access`. `/visualizer`
+redirects to `/observe`.
 
 Codes default to 15 minutes and permit 60–3600 seconds. They grant read access
 to one namespace, including its bounded memory previews and evidence. Treat a

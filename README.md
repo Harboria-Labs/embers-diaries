@@ -352,10 +352,19 @@ visualizer with revision-based recovery, in-place updates, visible connection
 status and read-only authenticated fallback.
 
 [Memory observatory and agent-created viewing links](docs/memory-observatory.md)
-adds full-screen network, 3D orbit, context bubbles, heatmaps and token inspection
-to the same `/visualizer`. Agents can call `ember_visualizer_access` to issue a
-temporary read-only code/link without sharing their login token.
+adds full-screen network, 3D orbit, context bubbles, heatmaps and token inspection.
+Agents can call `ember_visualizer_access` to issue a temporary read-only code
+without sharing their login token.
 
 [Research Observer Mode](docs/research-observer-mode.md) adds `ember_visualize`: an
 agent can issue a read-only link following its own activity across namespaces and
-sessions. The researcher enters no namespace; ordinary Namespace View remains.
+sessions. The researcher enters no namespace.
+
+`ember_visualize` and `ember_visualizer_access` both return one observation link,
+`/observe`. That page keeps every surface: agent memory, the namespace observatory
+(search, filters, network, orbit, bubbles, heatmap, tokens, and research views),
+and server status. Entering the code once, or opening the link, sets an HttpOnly
+session cookie (Secure behind HTTPS, including `X-Forwarded-Proto`, SameSite=Lax)
+that lasts until that grant expires. Refreshing, switching sections, or coming
+back does not ask again. After expiry or revocation, the page asks for a new code.
+`/observer` and `/visualizer` redirect to `/observe`. The page is built for phones and desktops: a sticky header, 44px targets, a bottom section bar on small screens, and panels that stack or scroll instead of spilling sideways.

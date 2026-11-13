@@ -26,9 +26,12 @@ and code. The response includes `visualization_url` when the origin is available
 `observer_id`, `observed_agent_id`, `authorized_observer`, `scope`, `expires_at`,
 `span_sessions`, `viewer_path` and the secret observation code.
 
-The agent shares the link/code with the intended researcher. Opening it removes
-the secret fragment from browser history and exchanges it for an HttpOnly,
-SameSite=Strict cookie (Secure under HTTPS). It contains no agent login token.
+The agent shares the link/code with the intended researcher. The link opens the
+unified `/observe` page. Opening it removes the secret fragment from browser
+history and exchanges it for an opaque HttpOnly session cookie (SameSite=Lax,
+Secure when `X-Forwarded-Proto` or the request is HTTPS). The cookie is not the
+code. It stays valid until this grant expires, including refresh and navigation,
+and revocation deletes it. It contains no agent login token.
 
 To revoke, the same agent calls:
 
@@ -74,8 +77,8 @@ currently read. Permission is checked on the server every time data is collected
 | `POST /v1/observer/exchange` | Read-only code lookup and cookie exchange; no Ember writes |
 | `GET /v1/observer/events` | Authorized bounded initial/catch-up page |
 | `GET /v1/observer/stream` | Authorized resumable SSE, protocol `ember-agent-observer.v1` |
-| `/visualizer?mode=observer` | Human research observer interface |
-| `/visualizer` | Existing Namespace View, unchanged semantics |
+| `/observe` | Unified observation page (agent memory, namespace view, status) |
+| `/observer`, `/visualizer` | Redirect to `/observe` |
 
 ## Journal and stream semantics
 

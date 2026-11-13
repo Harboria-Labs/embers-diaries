@@ -48,6 +48,20 @@ def authorized_view(request, agent_id, token, namespace):
             session=db.get_session(browser['session'])
             if session is None or session.agent_id!=actor or session.status.value!='active':raise HTTPException(403,'Browser session ended')
         return db,actor
+    from ..integration.observation_session import NS_COOKIE, resolve
+    from ..integration.visualizer_access import verify_id
+    token = request.cookies.get(NS_COOKIE)
+    if token:
+        db = _get_db()
+        try:
+            sess = resolve(db, token)
+            if sess.get('kind') != 'visualizer':
+                raise PermissionError('Observation session does not grant namespace view')
+            data = verify_id(db, sess['grant_id'], namespace)
+        except PermissionError as error:
+            raise HTTPException(403, str(error)) from error
+        request.state.view_grant = data
+        return db, data['actor']
     code = request.cookies.get('ember_view')
     if not code:
         raise HTTPException(401, 'Enter an agent-created viewing code')
@@ -56,6 +70,7 @@ def authorized_view(request, agent_id, token, namespace):
         data = verify(db, code, namespace)
     except PermissionError as error:
         raise HTTPException(403, str(error)) from error
+    request.state.view_grant = data
     return db, data['actor']
 
 
@@ -70,6 +85,7 @@ async def create_access(body: dict, request: Request, x_ember_agent_id: str | No
         if body.get('action','create') != 'create': raise ValueError('Unsupported action')
         result=issue(db, body['namespace'], actor, ttl_seconds=body.get('ttl_seconds',900), session_id=current_session_id())
         result['viewer_url']=str(request.base_url).rstrip('/')+result['viewer_path']
+        result['visualization_url']=result['viewer_url']
         return JSONResponse(result,headers={'Cache-Control':'no-store'})
     except PermissionError as error: raise HTTPException(403,str(error)) from error
     except (KeyError,ValueError,TypeError) as error: raise HTTPException(400,str(error)) from error
@@ -78,16 +94,26 @@ async def create_access(body: dict, request: Request, x_ember_agent_id: str | No
 @router.post('/v1/visualizer-access/exchange')
 async def exchange_view(body: dict, request: Request):
     from . import _get_db
-    from ..integration.visualizer_access import verify, normalize
+    from ..integration.visualizer_access import verify, grant_id
+    from ..integration.observation_session import (
+        NS_COOKIE, AttemptLimited, begin_attempt, clear_failures, cookie_kwargs, issue, note_failure)
     try:
-        code=normalize(body.get('code'))
-        data=verify(_get_db(),code)
-    except PermissionError as error: raise HTTPException(403,str(error)) from error
-    import time
+        key=begin_attempt(request)
+    except AttemptLimited as error:
+        raise HTTPException(429, 'Too many access code attempts. Wait and try again.') from error
+    try:
+        code=body.get('code') if isinstance(body, dict) else None
+        data=verify(_get_db(), code)
+    except PermissionError as error:
+        if note_failure(key):
+            raise HTTPException(429, 'Too many access code attempts. Wait and try again.') from error
+        raise HTTPException(403, str(error)) from error
+    clear_failures(key)
+    db=_get_db()
+    token=issue(db, kind='visualizer', grant_id=grant_id(code), expires_at=data['expires_at'], namespace=data['namespace'])
     response=JSONResponse({'namespace':data['namespace'],'expires_at':data['expires_at'],'scope':'visualizer:read'},headers={'Cache-Control':'no-store'})
-    response.delete_cookie('ember_view_auth',path='/v1')
-    response.set_cookie('ember_view',code,max_age=max(0,int(data['expires_at']-time.time())),httponly=True,
-                        secure=request.url.scheme=='https',samesite='strict',path='/v1')
+    response.delete_cookie('ember_view_auth', path='/v1', httponly=True, samesite='lax')
+    response.set_cookie(NS_COOKIE, token, **cookie_kwargs(request, data['expires_at']))
     return response
 
 
@@ -106,15 +132,16 @@ async def exchange_browser_auth(body:dict,request:Request,x_ember_agent_id:str|N
           'session':current_session_id(),'expires_at':time.time()+900}
     value=base64.urlsafe_b64encode(json.dumps(data).encode()).decode()
     response=JSONResponse({'namespace':namespace,'expires_at':data['expires_at']},headers={'Cache-Control':'no-store'})
+    from ..integration.observation_session import cookie_secure
     response.delete_cookie('ember_view',path='/v1')
-    response.set_cookie('ember_view_auth',value,max_age=900,httponly=True,secure=request.url.scheme=='https',samesite='strict',path='/v1')
+    response.set_cookie('ember_view_auth',value,max_age=900,httponly=True,secure=cookie_secure(request),samesite='lax',path='/v1')
     return response
 
 
 @router.get('/v1/visualizer-status/{namespace:path}')
 async def view_status(namespace:str,request:Request):
     db,_=authorized_view(request,None,None,namespace)
-    data=browser_auth(request,namespace)
+    data=browser_auth(request,namespace) or getattr(request.state, 'view_grant', None)
     if not data:
         from ..integration.visualizer_access import verify
         try:data=verify(db,request.cookies.get('ember_view'),namespace)
@@ -167,9 +194,19 @@ async def live(namespace: str, request: Request, after: int = Query(default=0, g
     browser=browser_auth(request,namespace) if not (x_ember_agent_id or x_ember_token or session) else None
     if browser:
         x_ember_agent_id=browser.get('agent_id');x_ember_token=browser.get('token');session=browser.get('session')
-    viewer_code = request.cookies.get('ember_view') if not (x_ember_agent_id or x_ember_token or session) else None
+    from ..integration.observation_session import NS_COOKIE
+    observe_token = request.cookies.get(NS_COOKIE) if not (x_ember_agent_id or x_ember_token or session or browser) else None
+    viewer_code = request.cookies.get('ember_view') if not (x_ember_agent_id or x_ember_token or session or browser or observe_token) else None
     def authorize():
         if browser:browser_auth(request,namespace)
+        if observe_token:
+            from ..integration.observation_session import resolve
+            from ..integration.visualizer_access import verify_id
+            sess=resolve(db, observe_token)
+            if sess.get('kind')!='visualizer':
+                raise PermissionError('Observation session does not grant namespace view')
+            verify_id(db, sess['grant_id'], namespace)
+            return
         if viewer_code:
             from ..integration.visualizer_access import verify
             verify(db,viewer_code,namespace)
@@ -198,13 +235,17 @@ async def live(namespace: str, request: Request, after: int = Query(default=0, g
             authorize()
             from ..integration.observation_stream import frame
             expiry=browser['expires_at'] if browser else None
+            if observe_token:
+                from ..integration.visualizer_access import verify_id
+                from ..integration.observation_session import resolve
+                expiry=verify_id(db, resolve(db, observe_token)['grant_id'], namespace)['expires_at']
             if viewer_code:
                 from ..integration.visualizer_access import verify
                 expiry=verify(db,viewer_code,namespace)['expires_at']
             yield frame('ready', {'transport':'SSE','protocol':'ember-observation.v2','namespace':namespace,'stream_id':stream_id,'expires_at':expiry,'remaining_seconds':max(0,expiry-time.time()) if expiry else None})
             async with aclosing(stream(db, namespace, actor, cursor, authorize, request.is_disconnected)) as source:
                 async for chunk in source:
-                    for secret in (x_ember_token, session, viewer_code):
+                    for secret in (x_ember_token, session, viewer_code, observe_token):
                         if secret:
                             chunk = chunk.replace(json.dumps(secret, ensure_ascii=False)[1:-1], '[REDACTED]')
                     yield chunk
@@ -229,16 +270,44 @@ async def view(namespace: str, request: Request, after: int = Query(default=0, g
     except ValueError as error: raise HTTPException(400,str(error)) from error
 
 
-@router.get('/visualizer', response_class=HTMLResponse)
-async def visualizer(mode: str | None = None):
+def _page(content, *, framed=False):
     # Public shell contains no memory data. Every data request authenticates.
-    script_sources="'self' 'unsafe-inline'"
-    from .observer_build import render, headers
-    content=render(namespace=mode!='observer');build_headers=headers()
+    from .observer_build import headers
+    ancestors = "'self'" if framed else "'none'"
+    frame_src = " frame-src 'self';" if not framed else ''
     return HTMLResponse(content, headers={
-        **build_headers, 'Referrer-Policy':'no-referrer', 'Content-Security-Policy': f"default-src 'self'; script-src {script_sources}; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'"})
+        **headers(), 'Referrer-Policy':'no-referrer',
+        'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:;" + frame_src + f" frame-ancestors {ancestors}"})
 
 
-@router.get('/observer', response_class=HTMLResponse)
+def _redirect(tab):
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse('/observe?tab='+tab, status_code=307, headers={'Cache-Control':'no-store', 'Referrer-Policy':'no-referrer'})
+
+
+@router.get('/observe', response_class=HTMLResponse)
+async def observe_page():
+    from .observer_build import render_shell
+    return _page(render_shell(), framed=False)
+
+
+@router.get('/observe/agent', response_class=HTMLResponse)
+async def observe_agent():
+    from .observer_build import render
+    return _page(render(namespace=False), framed=True)
+
+
+@router.get('/observe/namespace', response_class=HTMLResponse)
+async def observe_namespace():
+    from .observer_build import render
+    return _page(render(namespace=True), framed=True)
+
+
+@router.get('/visualizer')
+async def visualizer(mode: str | None = None):
+    return _redirect('agent' if mode=='observer' else 'namespace')
+
+
+@router.get('/observer')
 async def observer_alias():
-    return await visualizer(mode='observer')
+    return _redirect('agent')

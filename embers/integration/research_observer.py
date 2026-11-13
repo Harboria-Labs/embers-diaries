@@ -93,11 +93,17 @@ def issue(db, actor, *, ttl_seconds=3600, namespaces=None, session_id=None, span
     return {'code':code,'observer_id':observer_id,'authorized_observer':data['authorized_observer'],
             'observed_agent_id':actor,'scope':data['scope'],'span_sessions':span_sessions,'expires_at':data['expires_at'],
             'lobby_scope_id':lobby_scope_id,
-            'viewer_path':'/visualizer?mode=observer#observe='+code}
+            'viewer_path':'/observe#code='+code}
 
 
 def verify(db, code):
-    path=_directory(db)/(_id(code)+'.json')
+    return verify_id(db, _id(code))
+
+
+def verify_id(db, observer_id):
+    if not isinstance(observer_id,str) or len(observer_id)!=64 or any(c not in '0123456789abcdef' for c in observer_id):
+        raise PermissionError('Observer capability unavailable')
+    path=_directory(db)/(observer_id+'.json')
     try:data=json.loads(path.read_text())
     except (OSError,ValueError):raise PermissionError('Observer capability unavailable') from None
     if data.get('revoked') or data['expires_at']<=time.time():raise PermissionError('Observer capability expired or revoked')
@@ -107,6 +113,12 @@ def verify(db, code):
     return data
 
 
+def _recheck(db, grant):
+    if not isinstance(grant, dict) or not isinstance(grant.get('observer_id'), str):
+        raise PermissionError('Observer capability unavailable')
+    return verify_id(db, grant['observer_id'])
+
+
 def revoke(db, observer_id, actor):
     if not isinstance(observer_id,str) or len(observer_id)!=64 or any(c not in '0123456789abcdef' for c in observer_id):raise PermissionError('Invalid observer ID')
     path=_directory(db)/(observer_id+'.json')
@@ -114,6 +126,8 @@ def revoke(db, observer_id, actor):
     except (OSError,ValueError):raise PermissionError('Observer capability unavailable') from None
     if data['observed_agent_id']!=actor:raise PermissionError('Only the observed agent may revoke this capability')
     data['revoked']=True;_save(path,data)
+    from .observation_session import invalidate_grant
+    invalidate_grant(db, observer_id)
     return {'observer_id':observer_id,'revoked':True}
 
 
@@ -198,7 +212,11 @@ def _encode(seen,grant):
 
 
 def page(db,code,cursor=None,filters=None,limit=20):
-    grant=verify(db,code);seen=_cursor(cursor,grant);filters=filters or {}
+    return page_grant(db, verify(db, code), cursor, filters, limit)
+
+
+def page_grant(db, grant, cursor=None, filters=None, limit=20):
+    grant=_recheck(db, grant);seen=_cursor(cursor,grant);filters=filters or {}
     if set(filters)-{'namespace','session','context','memory','event_type'} or any(not isinstance(v,str) or len(v)>512 for v in filters.values()):raise ValueError('Invalid observer filters')
     if type(limit) is not int or not 1<=limit<=50:raise ValueError('limit must be 1..50')
     buckets={}
@@ -218,7 +236,7 @@ def page(db,code,cursor=None,filters=None,limit=20):
             if any((v not in meta['memory_ids'] if k=='memory' else meta.get(k)!=v) for k,v in filters.items() if v):continue
             projected=_project(db,e);out.append(projected);size+=len(json.dumps(projected).encode())
             if size>160000:break
-        verify(db,code)
+        grant=_recheck(db, grant)
         out=[e for e in out if db.check_namespace_access(e['namespace'],grant['observed_agent_id'],'read')]
         return {'protocol':PROTOCOL,'observer_id':grant['observer_id'],'observed_agent_id':grant['observed_agent_id'],
                 'events':out,'cursor':_encode(seen,grant),'more':bool(heap),
@@ -226,8 +244,8 @@ def page(db,code,cursor=None,filters=None,limit=20):
                 'scope':grant['scope'],'span_sessions':grant['span_sessions']}
 
 
-async def stream(db,code,cursor,filters,disconnected,interval=1.,*,stream_id=None):
-    grant=verify(db,code)
+async def stream(db,code,cursor,filters,disconnected,interval=1.,*,stream_id=None,grant=None):
+    grant=verify(db,code) if grant is None else _recheck(db, grant)
     wake=asyncio.Event();listener=(asyncio.get_running_loop(),wake);stream_key=key(db,None)
     with _lock:_listeners.setdefault(stream_key,set()).add(listener)
     try:
@@ -235,9 +253,9 @@ async def stream(db,code,cursor,filters,disconnected,interval=1.,*,stream_id=Non
                              'stream_id':stream_id,'expires_at':grant['expires_at'],
                              'remaining_seconds':max(0,grant['expires_at']-time.time())})
         while not await disconnected():
-            verify(db,code);wake.clear();data=page(db,code,cursor,filters)
+            grant=_recheck(db, grant);wake.clear();data=page_grant(db,grant,cursor,filters)
             next_cursor=data['cursor']
-            verify(db,code)  # Revalidate immediately before delivery.
+            grant=_recheck(db, grant)  # Revalidate immediately before delivery.
             if data['events'] or next_cursor!=cursor:
                 # ID is a namespace-vector checkpoint, never a fabricated global revision.
                 yield frame('observer',data,next_cursor)

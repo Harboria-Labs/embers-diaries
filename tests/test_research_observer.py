@@ -153,7 +153,8 @@ def test_bounded_pages_and_mcp_discovery(env,monkeypatch):
     result=rpc('tools/call',{'name':'ember_visualize','arguments':{'agent_id':agent,'token':token,'server_url':'https://example.test'}})
     assert not result['isError']
     grant=json.loads(result['content'][0]['text'])
-    assert grant['visualization_url'].startswith('https://example.test/visualizer?mode=observer#observe=')
+    assert grant['visualization_url'].startswith('https://example.test/observe#code=')
+    assert grant['viewer_url']==grant['visualization_url']
     for i in range(8):event(env,'A' if i%2 else 'B')
     data=ro.page(db,grant['code'],limit=3)
     assert len(data['events'])==3 and data['more']

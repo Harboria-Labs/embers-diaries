@@ -1,7 +1,7 @@
 /* Public read-only availability probes only. Never opens streams or reads memory. */
 (() => {
 'use strict';
-const endpoints=[['API','/health'],['Observer build','/v1/observer/build'],['Observer page','/observer'],['Namespace page','/visualizer'],['Research settings page','/research/settings'],['Status page','/status'],['Transport asset','/v1/observer/transport.js']];
+const endpoints=[['API','/health'],['Observer build','/v1/observer/build'],['Observation','/observe'],['Agent memory','/observe/agent'],['Namespace view','/observe/namespace'],['Research settings page','/research/settings'],['Status page','/status'],['Transport asset','/v1/observer/transport.js']];
 const full=!!document.getElementById('endpointStatus'),targets=full?endpoints:endpoints.slice(0,1);
 const style=document.createElement('style');style.textContent='.ember-health{display:inline-flex;align-items:center;gap:8px;font:12px system-ui;color:inherit;text-decoration:none}.health-dot{width:10px;height:10px;border-radius:50%;background:#929a9e;flex-shrink:0}.ember-health[data-health=green] .health-dot{background:#50b985}.ember-health[data-health=yellow] .health-dot{background:#d6b653}.ember-health[data-health=red] .health-dot{background:#e87878}.health-row{display:grid;grid-template-columns:minmax(130px,1fr) 1fr;gap:10px;padding:14px 0;border-bottom:1px solid var(--line,#383b3e)}.health-row small{grid-column:1/-1;overflow-wrap:anywhere}';document.head.append(style);
 const badge=document.createElement('a');badge.href='/status';badge.className='ember-health';badge.dataset.health='unknown';badge.setAttribute('aria-live','polite');badge.innerHTML='<span class="health-dot" aria-hidden="true"></span><span>API · checking</span>';document.querySelector('header').append(badge);
