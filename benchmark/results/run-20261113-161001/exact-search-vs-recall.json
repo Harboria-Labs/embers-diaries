@@ -1,0 +1,43 @@
+{
+  "ts": "2026-11-13T16:49:50.333+01:00",
+  "wat": "2026-11-13 16:49:50 WAT",
+  "n": 200,
+  "recall@1": 0.3,
+  "recall@10": 0.3,
+  "search@1": 1.0,
+  "search@10": 1.0,
+  "recall_latency": {
+    "n": 200,
+    "min": 548.349,
+    "max": 855.852,
+    "mean": 673.1990700000001,
+    "p50": 672.687,
+    "p95": 776.437,
+    "p99": 821.436
+  },
+  "search_latency": {
+    "n": 200,
+    "min": 58.061,
+    "max": 142.023,
+    "mean": 66.61007,
+    "p50": 64.943,
+    "p95": 77.636,
+    "p99": 99.57
+  },
+  "search_hits_recall_misses@10": 140,
+  "note": "Same 200 exact-token queries. search() is GET /v1/memory/search with the TOK* code only. recall() is POST /v1/memory/recall with the full natural-language question including that code.",
+  "people": {
+    "n": 140,
+    "search@1": 1.0,
+    "search@10": 1.0,
+    "recall@1": 0.0,
+    "recall@10": 0.0
+  },
+  "filler": {
+    "n": 60,
+    "search@1": 1.0,
+    "search@10": 1.0,
+    "recall@1": 1.0,
+    "recall@10": 1.0
+  }
+}

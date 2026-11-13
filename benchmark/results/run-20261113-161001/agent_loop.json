@@ -1,0 +1,32 @@
+{
+  "label": "simulated Grok-style workflow, not Grok itself",
+  "steps": [
+    {
+      "step": "orient",
+      "ok": true,
+      "latency_ms": 192.195
+    },
+    {
+      "step": "recall",
+      "ok": true,
+      "latency_ms": 315.59,
+      "n": 5
+    },
+    {
+      "step": "write",
+      "ok": true,
+      "latency_ms": 242.421,
+      "ids": [
+        "c5f06106-52a7-4098-8ec7-902dfc99c3db"
+      ]
+    },
+    {
+      "step": "feedback",
+      "ok": false,
+      "latency_ms": 3.468
+    }
+  ],
+  "wall_ms": 753.7883280001552,
+  "all_ok": false,
+  "what_would_be_needed_to_benchmark_grok_directly": "Grok's own session traces or consented tool-call logs, plus a durable MCP access-log that attributes calls to agent-bd98fca7-0c95-45df-a55f-063e41bc6831 with per-request latency. This run used passive WAL + uvicorn logs only, and did not open Grok's Observer with a code until Samuel issued one."
+}
