@@ -1,0 +1,467 @@
+{
+  "namespace": "bench-2026-11-13-20261113-161001-features",
+  "tests": [
+    {
+      "name": "write_conflict_a",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 204.92,
+      "ids": [
+        "610cffe2-519b-43f7-92e4-79728602bc4a"
+      ],
+      "body_keys": [
+        "id",
+        "agent_id"
+      ],
+      "id": "610cffe2-519b-43f7-92e4-79728602bc4a"
+    },
+    {
+      "name": "write_conflict_b",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 210.709,
+      "ids": [
+        "097d1487-dcf8-4249-a148-8bdda3720145"
+      ],
+      "body_keys": [
+        "id",
+        "agent_id"
+      ],
+      "id": "097d1487-dcf8-4249-a148-8bdda3720145"
+    },
+    {
+      "name": "conflict_map",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 92.252,
+      "body_keys": [
+        "conflict_id",
+        "record_id",
+        "conflict"
+      ],
+      "record_id": "8257380f-79d1-45d7-8219-c8271ced844b",
+      "conflict_id": "8257380f-79d1-45d7-8219-c8271ced844b"
+    },
+    {
+      "name": "conflicts_open",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 17.579,
+      "count": 1,
+      "body_keys": [
+        "namespace",
+        "count",
+        "conflicts"
+      ]
+    },
+    {
+      "name": "conflict_resolve",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 58.735,
+      "body_keys": [
+        "conflict_id",
+        "record_id",
+        "superseded_record_id",
+        "status",
+        "conflict"
+      ],
+      "record_id": "18158d79-e77c-4356-b436-7d287fe9c614",
+      "conflict_id": "8257380f-79d1-45d7-8219-c8271ced844b"
+    },
+    {
+      "name": "orient",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 187.035,
+      "body_keys": [
+        "method",
+        "clues",
+        "hints",
+        "namespace",
+        "enabled_signals",
+        "bounds",
+        "coverage",
+        "candidate_ids",
+        "territory",
+        "returned_ids",
+        "diagnostics",
+        "decision",
+        "response_bytes"
+      ]
+    },
+    {
+      "name": "search",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 80.923,
+      "body_keys": [
+        "query",
+        "results"
+      ]
+    },
+    {
+      "name": "query",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 38.07,
+      "count": 5,
+      "body_keys": [
+        "count",
+        "records"
+      ]
+    },
+    {
+      "name": "recall_before_feedback",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 268.234,
+      "ranked_head": [
+        "097d1487-dcf8-4249-a148-8bdda3720145",
+        "610cffe2-519b-43f7-92e4-79728602bc4a",
+        "18158d79-e77c-4356-b436-7d287fe9c614"
+      ],
+      "body_keys": [
+        "query",
+        "memories"
+      ]
+    },
+    {
+      "name": "feedback_useful",
+      "ok": false,
+      "status": 400,
+      "latency_ms": 3.634,
+      "body_keys": [
+        "detail"
+      ]
+    },
+    {
+      "name": "list_feedback",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 2.271,
+      "body_keys": [
+        "feedback"
+      ]
+    },
+    {
+      "name": "recall_after_feedback",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 298.311,
+      "ranked_head": [
+        "610cffe2-519b-43f7-92e4-79728602bc4a",
+        "097d1487-dcf8-4249-a148-8bdda3720145",
+        "18158d79-e77c-4356-b436-7d287fe9c614"
+      ],
+      "order_changed": true,
+      "same_top1": false,
+      "body_keys": [
+        "query",
+        "memories"
+      ]
+    },
+    {
+      "name": "feedback_irrelevant",
+      "ok": false,
+      "status": 400,
+      "latency_ms": 3.395,
+      "body_keys": [
+        "detail"
+      ]
+    },
+    {
+      "name": "lifecycle",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 23.963,
+      "body_keys": [
+        "state",
+        "effective_confidence",
+        "access_count",
+        "has_open_conflict"
+      ]
+    },
+    {
+      "name": "graph",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 64.088,
+      "body_keys": [
+        "record_id",
+        "depth",
+        "neighbors"
+      ],
+      "record_id": "610cffe2-519b-43f7-92e4-79728602bc4a"
+    },
+    {
+      "name": "session_lobby",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 61.361,
+      "body_keys": [
+        "session_id",
+        "agent_id"
+      ],
+      "session_id": "96d2740b-6389-468c-b5c7-524363c5487a"
+    },
+    {
+      "name": "lobby_publish",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 3.069,
+      "body_keys": [
+        "post_id",
+        "board_id",
+        "session_id",
+        "agent_id",
+        "room",
+        "type",
+        "body",
+        "approach",
+        "corroborations",
+        "promoted_to",
+        "created_at"
+      ],
+      "session_id": "96d2740b-6389-468c-b5c7-524363c5487a"
+    },
+    {
+      "name": "lobby_status",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 2.323,
+      "body_keys": [
+        "session_id",
+        "board",
+        "board_id",
+        "task",
+        "namespace",
+        "room",
+        "status",
+        "posts"
+      ],
+      "session_id": "96d2740b-6389-468c-b5c7-524363c5487a"
+    },
+    {
+      "name": "lobby_v2_scope",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 17.541,
+      "body_keys": [
+        "scope_id",
+        "task",
+        "namespace",
+        "room"
+      ],
+      "scope_id": "d5cc55ab-6fe3-465f-956e-e6b714be11dd"
+    },
+    {
+      "name": "lobby_v2_submit",
+      "ok": false,
+      "status": 400,
+      "latency_ms": 2.59,
+      "body_keys": [
+        "detail"
+      ]
+    },
+    {
+      "name": "lobby_v2_list",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 5.772,
+      "body_keys": [
+        "items"
+      ]
+    },
+    {
+      "name": "propose",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 111.155,
+      "body_keys": [
+        "proposal_id",
+        "agent_id"
+      ],
+      "proposal_id": "f262410e-d197-4e0f-ab62-a61735571e6f"
+    },
+    {
+      "name": "list_proposals",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 4.591,
+      "body_keys": [
+        "proposals"
+      ]
+    },
+    {
+      "name": "report_failure",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 112.372,
+      "body_keys": [
+        "failure_id",
+        "agent_id"
+      ],
+      "failure_id": "0aad9ab3-27f1-4014-878e-54b3c889860e"
+    },
+    {
+      "name": "list_failures",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 8270.414,
+      "body_keys": [
+        "failures"
+      ]
+    },
+    {
+      "name": "epistemic_state",
+      "ok": false,
+      "status": 422,
+      "latency_ms": 5.074,
+      "body_keys": [
+        "detail"
+      ]
+    },
+    {
+      "name": "pair_relationship",
+      "ok": false,
+      "status": 400,
+      "latency_ms": 2.862,
+      "body_keys": [
+        "detail"
+      ]
+    },
+    {
+      "name": "mcp_ember_visualize",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 190.999,
+      "has_code": true,
+      "has_path": true,
+      "body_keys": [
+        "jsonrpc",
+        "id",
+        "result"
+      ],
+      "id": 62
+    },
+    {
+      "name": "mcp_ember_visualizer_access",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 65.897,
+      "has_path": true,
+      "body_keys": [
+        "jsonrpc",
+        "id",
+        "result"
+      ],
+      "id": 63
+    },
+    {
+      "name": "rest_observer_access",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 193.996,
+      "has_path": true,
+      "body_keys": [
+        "code",
+        "observer_id",
+        "authorized_observer",
+        "observed_agent_id",
+        "scope",
+        "span_sessions",
+        "expires_at",
+        "lobby_scope_id",
+        "viewer_path",
+        "visualization_url"
+      ]
+    },
+    {
+      "name": "rest_visualizer_access",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 65.024,
+      "has_path": true,
+      "body_keys": [
+        "code",
+        "grant_id",
+        "namespace",
+        "expires_at",
+        "scope",
+        "viewer_path",
+        "note",
+        "viewer_url"
+      ]
+    },
+    {
+      "name": "integrity_audit",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 7867.95,
+      "body_keys": [
+        "run_id",
+        "namespaces",
+        "initiator",
+        "started_at",
+        "heartbeat_at",
+        "completed_at",
+        "status",
+        "certified",
+        "source_generation_start",
+        "source_generation_end",
+        "records_examined",
+        "finding_counts",
+        "findings",
+        "findings_truncated",
+        "recovery"
+      ],
+      "run_id": "defc3046-c83b-4154-a09e-a7ce7a113b55"
+    },
+    {
+      "name": "integrity_audit_status",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 3.923,
+      "body_keys": [
+        "run_id",
+        "namespaces",
+        "initiator",
+        "started_at",
+        "heartbeat_at",
+        "completed_at",
+        "status",
+        "certified",
+        "source_generation_start",
+        "source_generation_end",
+        "records_examined",
+        "finding_counts",
+        "findings",
+        "findings_truncated",
+        "recovery"
+      ],
+      "run_id": "defc3046-c83b-4154-a09e-a7ce7a113b55"
+    },
+    {
+      "name": "get_session",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 3.115,
+      "body_keys": [
+        "session_id",
+        "agent_id",
+        "started_at",
+        "ended_at",
+        "task",
+        "status",
+        "summary",
+        "discoveries",
+        "failures",
+        "memory_writes",
+        "namespace",
+        "tags"
+      ],
+      "session_id": "96d2740b-6389-468c-b5c7-524363c5487a"
+    }
+  ]
+}

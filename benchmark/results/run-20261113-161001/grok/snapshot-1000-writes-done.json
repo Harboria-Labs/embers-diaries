@@ -1,0 +1,100 @@
+{
+  "tag": "at-1000-writes-done",
+  "ts": "2026-11-13T16:11:08.598+01:00",
+  "wat": "2026-11-13 16:11:08 WAT",
+  "wal": {
+    "exists": true,
+    "bytes": 24342273,
+    "lines": 4546,
+    "grok": {
+      "agent_id": "agent-bd98fca7-0c95-45df-a55f-063e41bc6831",
+      "registered_name": "grok-demo-agent",
+      "ops": {
+        "write": 178
+      },
+      "namespaces": {
+        "_ember_agents": 1,
+        "memories": 177
+      },
+      "record_types": {
+        "document": 87,
+        "session": 87,
+        "raw": 4
+      },
+      "n_events": 178,
+      "first_ts_utc": "2026-11-13T12:36:14.499171+00:00",
+      "last_ts_utc": "2026-11-13T15:03:47.305518+00:00",
+      "first_ts_wat": "2026-11-13 13:36:14 WAT",
+      "last_ts_wat": "2026-11-13 16:03:47 WAT"
+    }
+  },
+  "logs": [
+    {
+      "path": "/tmp/uvicorn.log",
+      "exists": true,
+      "bytes": 13984,
+      "mtime_wat": "2026-11-13 16:11:08 WAT",
+      "lines": 188,
+      "paths": {
+        "GET /health": 82,
+        "POST /mcp": 13,
+        "GET /": 1,
+        "GET /openapi.json": 2,
+        "GET /status": 1,
+        "GET /namespaces": 2,
+        "GET /mcp": 1,
+        "GET /visualizer": 15,
+        "GET /v1/observer/transport.js": 15,
+        "POST /v1/observer/exchange": 1,
+        "GET /v1/observer/events": 1,
+        "GET /favicon.ico": 1,
+        "GET /v1/observer/stream": 1,
+        "POST /v1/visualizer-access/exchange": 1,
+        "GET /v1/visualizer/memories": 2,
+        "GET /v1/visualizer-stream/memories": 1,
+        "POST /v1/agents/register": 1,
+        "POST /v1/sessions": 1,
+        "POST /v1/memory/write": 20,
+        "POST /v1/memory/write-batch": 10
+      },
+      "statuses": {
+        "200": 164,
+        "202": 4,
+        "404": 2,
+        "401": 1,
+        "405": 1
+      },
+      "has_timing": false
+    },
+    {
+      "path": "/tmp/embers-uvicorn.log",
+      "exists": true,
+      "bytes": 23752,
+      "mtime_wat": "2026-11-13 15:01:32 WAT",
+      "lines": 397,
+      "paths": {
+        "GET /health": 46,
+        "GET /mcp": 3,
+        "POST /mcp": 305,
+        "POST /": 6,
+        "GET /": 3,
+        "GET /observer": 2,
+        "GET /v1/observer/transport.js": 4,
+        "GET /visualizer": 3,
+        "POST /v1/observer/exchange": 2,
+        "GET /v1/observer/events": 2,
+        "GET /v1/observer/stream": 2,
+        "GET /status": 1,
+        "OPTIONS /health": 1
+      },
+      "statuses": {
+        "200": 269,
+        "404": 9,
+        "405": 1,
+        "202": 100,
+        "400": 1
+      },
+      "has_timing": false
+    }
+  ]
+}
