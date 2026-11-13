@@ -103,7 +103,16 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=list(_get_config().api.cors_origins),
     allow_methods=["*"],
-    allow_headers=["*"],
+    # "*" echoes whatever the browser asks to send. The ngrok header is named
+    # as well so a later tightening of this list does not drop the free-tier
+    # interstitial bypass used by the status page and observer.
+    allow_headers=[
+        "*",
+        "ngrok-skip-browser-warning",
+        "X-Ember-Agent-Id",
+        "X-Ember-Token",
+        "X-Ember-Session-Id",
+    ],
 )
 
 

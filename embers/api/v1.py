@@ -103,15 +103,8 @@ async def register_agent(body: dict):
     }
 
 
-@router.post("/memory/write")
-async def memory_write(
-    body: dict,
-    x_ember_agent_id: str | None = Header(default=None),
-    x_ember_token: str | None = Header(default=None),
-):
-    from . import _get_db
-    db = _get_db()
-    agent = require_agent(db, x_ember_agent_id, x_ember_token)
+def _prepare_memory(db, agent, body):
+    """Validate one write body and build the record. Does not persist it."""
     content = body.get("content")
     if content is None:
         raise HTTPException(400, "content required")
@@ -130,7 +123,7 @@ async def memory_write(
                 raise ValueError("conflicting primary contexts")
     except ValueError as error:
         raise HTTPException(400, str(error)) from error
-    rid = protocol.remember(
+    return protocol.build_memory(
         content,
         primary_context=body.get("primary_context"),
         tags=body.get("tags"),
@@ -144,9 +137,71 @@ async def memory_write(
         memory_type=body.get("memory_type", "unscoped"),
         room=body.get("room", "unscoped"),
     )
-    if body.get("session_id") and db.get_session(body["session_id"]):
+
+
+def _commit_memory(db, agent, body, *, session_log: bool = True) -> dict:
+    """The single-write path used by POST /v1/memory/write and each batch item."""
+    record = _prepare_memory(db, agent, body)
+    rid = _proto(db).commit_built(record)
+    if session_log and body.get("session_id") and db.get_session(body["session_id"]):
         db.record_memory_write(body["session_id"], rid, changed_by=agent.agent_id)
     return {"id": rid, "agent_id": agent.agent_id}
+
+
+@router.post("/memory/write")
+async def memory_write(
+    body: dict,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    from . import _get_db
+    db = _get_db()
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    return _commit_memory(db, agent, body)
+
+
+@router.post("/memory/write-batch")
+async def memory_write_batch(
+    body: dict,
+    x_ember_agent_id: str | None = Header(default=None),
+    x_ember_token: str | None = Header(default=None),
+):
+    """Best-effort or atomic batch. Each record matches POST /v1/memory/write."""
+    from . import _get_config, _get_db
+    from ..integration.batch_write import BatchLimitError, run_write_batch
+    db = _get_db()
+    agent = require_agent(db, x_ember_agent_id, x_ember_token)
+    limit = _get_config().storage.max_write_batch
+    records = body.get("records")
+    atomic = body.get("atomic", False)
+
+    def write_item(item):
+        return _commit_memory(db, agent, item, session_log=False)
+
+    def measure_item(item, extra):
+        record = _prepare_memory(db, agent, item)
+        size = db.precheck_write(record, extra_bytes=extra)
+        return {"record": record, "size": size}
+
+    def commit_measured(measured):
+        rid = _proto(db).commit_built(measured["record"])
+        return {"id": rid, "agent_id": agent.agent_id}
+
+    def after_commit(item, result):
+        if item.get("session_id") and db.get_session(item["session_id"]):
+            db.record_memory_write(
+                item["session_id"], result["id"], changed_by=agent.agent_id)
+
+    try:
+        return run_write_batch(
+            db, records, atomic=atomic, limit=limit,
+            write_item=write_item, measure_item=measure_item,
+            commit_measured=commit_measured, after_commit=after_commit,
+            replay=db.write)
+    except BatchLimitError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    except TypeError as exc:
+        raise HTTPException(400, str(exc)) from exc
 
 
 @router.post("/memory/recall")

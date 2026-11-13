@@ -27,7 +27,7 @@ LOBBY_STYLE += '''<style>body.lobby-active #researchDashboard,body.lobby-active>
 TEMPLATE = (ROOT / 'observer.html').read_text(encoding='utf-8')
 TRANSPORT_SHA256 = hashlib.sha256(TRANSPORT).hexdigest()
 BASELINE_SHA256 = '6b6d262295d56d9f71546a6b79f6eeb0f0caded00fc242c5b9cd28cf1e4274e9'
-CLIENT_VERSION = 'shared-transport-v3 / sha256:' + TRANSPORT_SHA256[:12]
+CLIENT_VERSION = 'shared-transport-v4 / sha256:' + TRANSPORT_SHA256[:12]
 ASSET_URL = '/v1/observer/transport.js?v=' + TRANSPORT_SHA256
 _files = ('observer_build.py', 'observer_routes.py', 'usefulness_routes.py',
           'status_monitor.js', 'server_status.html', 'research_dashboard.js', 'research_dashboard.css', 'lobby_observer.js', 'observer.html', 'visualizer.html', 'visualizer_theme.css', 'observer_transport.js', '../integration/research_observer.py')

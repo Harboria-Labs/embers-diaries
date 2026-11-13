@@ -11,6 +11,7 @@ import json
 import argparse
 import os
 import sys
+from contextvars import ContextVar
 from typing import Any
 
 from ..core.evidence import Evidence
@@ -37,6 +38,9 @@ from .tools import TOOLS
 
 PROTOCOL = "2025-06-18"
 SUPPORTED_PROTOCOLS = ("2025-06-18", "2025-03-26", "2024-11-05")
+# The room/kind wrapper reads the item currently being written inside a batch.
+batch_item_args: ContextVar[dict | None] = ContextVar(
+    "ember_batch_item_args", default=None)
 
 
 def _text(obj: Any) -> dict:
@@ -129,6 +133,146 @@ class EmberMCP:
         bind(identity.agent_id,args.get('session_id'),args.get('request_id'))
         return identity
 
+    def _remember_kwargs(self, args: dict, agent) -> dict:
+        return {
+            "namespace": args.get("namespace"),
+            "written_by": agent.agent_id,
+            "agent_id": agent.agent_id,
+            "session_id": args.get("session_id"),
+            "creation_reason": args.get("creation_reason"),
+            "tags": args.get("tags"),
+            "primary_context": args.get("primary_context"),
+            "memory_type": args.get("memory_type", "unscoped"),
+            "room": args.get("room", "unscoped"),
+        }
+
+    def _write_one(self, args: dict, *, session_log: bool = True) -> dict:
+        """One durable memory. ``ember_write`` and each batch item use this."""
+        agent = self._auth(args)
+        namespace = args.get("namespace") or self.protocol.namespace
+        self.db.require_namespace_access(namespace, agent.agent_id, "write")
+        content = args["content"]
+        subject = args.get("subject")
+        if subject is not None:
+            content = {"content": content, "subject": subject}
+        token = batch_item_args.set(args)
+        try:
+            rid = self.protocol.remember(
+                content, **self._remember_kwargs(args, agent))
+        finally:
+            batch_item_args.reset(token)
+        if session_log and args.get("session_id") and self.db.get_session(args["session_id"]):
+            self.db.record_memory_write(
+                args["session_id"], rid, changed_by=agent.agent_id)
+        possible_conflicts = []
+        if self.db.check_namespace_access(namespace, agent.agent_id, "read"):
+            possible_conflicts = list(
+                getattr(self.protocol, "_last_conflict_hints", []) or [])
+        return {
+            "id": rid,
+            "agent_id": agent.agent_id,
+            "possible_conflicts": possible_conflicts,
+        }
+
+    def _measure_one(self, args: dict, extra_bytes: int) -> dict:
+        agent = self._auth(args)
+        namespace = args.get("namespace") or self.protocol.namespace
+        self.db.require_namespace_access(namespace, agent.agent_id, "write")
+        content = args["content"]
+        subject = args.get("subject")
+        if subject is not None:
+            content = {"content": content, "subject": subject}
+        token = batch_item_args.set(args)
+        try:
+            record = self.protocol.build_memory(
+                content, **self._remember_kwargs(args, agent))
+        finally:
+            batch_item_args.reset(token)
+        size = self.db.precheck_write(record, extra_bytes=extra_bytes)
+        return {"record": record, "size": size, "namespace": namespace, "agent": agent}
+
+    def _commit_measured(self, measured: dict) -> dict:
+        agent = measured["agent"]
+        namespace = measured["namespace"]
+        rid = self.protocol.commit_built(measured["record"])
+        possible_conflicts = []
+        if self.db.check_namespace_access(namespace, agent.agent_id, "read"):
+            possible_conflicts = list(
+                getattr(self.protocol, "_last_conflict_hints", []) or [])
+        return {
+            "id": rid,
+            "agent_id": agent.agent_id,
+            "possible_conflicts": possible_conflicts,
+        }
+
+    def _batch_probe(self, args: dict) -> dict:
+        probe = {
+            key: args.get(key)
+            for key in ("agent_id", "token", "session_id", "request_id")
+            if args.get(key)
+        }
+        if probe.get("session_id") or (probe.get("agent_id") and probe.get("token")) or os.environ.get("EMBER_AGENT_ID"):
+            return probe
+        records = args.get("records")
+        if isinstance(records, list):
+            for item in records:
+                if not isinstance(item, dict):
+                    continue
+                if item.get("session_id") or (item.get("agent_id") and item.get("token")):
+                    for key in ("agent_id", "token", "session_id", "request_id"):
+                        if item.get(key) and key not in probe:
+                            probe[key] = item[key]
+                    break
+        return probe
+
+    def _merge_batch_item(self, base: dict, item: dict) -> dict:
+        merged = dict(item)
+        for key in ("agent_id", "token", "session_id", "request_id"):
+            if not merged.get(key) and base.get(key):
+                merged[key] = base[key]
+        return merged
+
+    def _write_batch(self, args: dict) -> dict:
+        from ..integration.batch_write import BatchLimitError, run_write_batch
+        try:
+            self._auth(self._batch_probe(args))
+        except PermissionError as exc:
+            return _err(str(exc))
+        base = self._batch_probe(args)
+        limit = self.config.storage.max_write_batch
+
+        def write_item(item):
+            return self._write_one(self._merge_batch_item(base, item), session_log=False)
+
+        def measure_item(item, extra):
+            return self._measure_one(self._merge_batch_item(base, item), extra)
+
+        def after_commit(item, result):
+            merged = self._merge_batch_item(base, item)
+            if merged.get("session_id") and self.db.get_session(merged["session_id"]):
+                self.db.record_memory_write(
+                    merged["session_id"], result["id"], changed_by=result["agent_id"])
+
+        def replay(record):
+            self.db.write(record)
+            self.protocol._check_conflicts(record)
+            hints = []
+            if record.agent_id and self.db.check_namespace_access(
+                    record.namespace, record.agent_id, "read"):
+                hints = list(getattr(self.protocol, "_last_conflict_hints", []) or [])
+            return {"possible_conflicts": hints}
+
+        try:
+            summary = run_write_batch(
+                self.db, args.get("records"),
+                atomic=args.get("atomic", False), limit=limit,
+                write_item=write_item, measure_item=measure_item,
+                commit_measured=self._commit_measured,
+                after_commit=after_commit, replay=replay)
+        except (BatchLimitError, TypeError, ValueError) as exc:
+            return _err(str(exc))
+        return _text(summary)
+
     def call_tool(self, name: str, args: dict | None) -> dict:
         args = args or {}
         from ..integration.write_observation import context
@@ -167,37 +311,10 @@ class EmberMCP:
             })
 
         if name == "ember_write":
-            agent = self._auth(args)
-            namespace = args.get("namespace") or self.protocol.namespace
-            self.db.require_namespace_access(
-                namespace, agent.agent_id, "write")
-            content = args["content"]
-            subject = args.get("subject")
-            if subject is not None:
-                content = {"content": content, "subject": subject}
-            rid = self.protocol.remember(
-                content,
-                namespace=args.get("namespace"),
-                written_by=agent.agent_id,
-                agent_id=agent.agent_id,
-                session_id=args.get("session_id"),
-                creation_reason=args.get("creation_reason"),
-                tags=args.get("tags"),
-                primary_context=args.get("primary_context"),
-            )
-            if args.get("session_id") and self.db.get_session(args["session_id"]):
-                self.db.record_memory_write(
-                    args["session_id"], rid, changed_by=agent.agent_id)
-            possible_conflicts = []
-            if self.db.check_namespace_access(
-                    namespace, agent.agent_id, "read"):
-                possible_conflicts = (
-                    getattr(self.protocol, "_last_conflict_hints", []) or [])
-            return _text({
-                "id": rid,
-                "agent_id": agent.agent_id,
-                "possible_conflicts": possible_conflicts,
-            })
+            return _text(self._write_one(args))
+
+        if name == "ember_write_batch":
+            return self._write_batch(args)
 
         if name == "ember_update":
             agent = self._auth(args)

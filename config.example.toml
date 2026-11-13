@@ -6,6 +6,8 @@ path = "./ember_store"
 # Quotas count encoded immutable record files. Zero means unlimited.
 max_store_bytes = 0
 max_record_bytes = 0
+# Maximum records accepted by ember_write_batch and POST /v1/memory/write-batch.
+max_write_batch = 100
 
 [maintenance]
 # Zero disables scheduled maintenance.

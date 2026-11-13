@@ -24,7 +24,10 @@ DEFAULT_CONFIG_PATH = Path("config.toml")
 DEFAULT_STORAGE_PATH = Path("./ember_store")
 
 _SUPPORTED_KEYS = {
-    "storage": {"path", "max_store_bytes", "max_record_bytes", "max_total_bytes"},
+    "storage": {
+        "path", "max_store_bytes", "max_record_bytes", "max_total_bytes",
+        "max_write_batch",
+    },
     "maintenance": {"interval_seconds", "namespaces"},
     "api": {"rest_enabled", "mcp_enabled", "host", "port", "cors_origins", "control_path"},
     "lobby": {
@@ -57,6 +60,7 @@ _ENV_KEYS = {
     "EMBER_STORAGE_MAX_STORE_BYTES": "storage.max_store_bytes",
     "EMBER_STORAGE_MAX_RECORD_BYTES": "storage.max_record_bytes",
     "EMBER_STORAGE_MAX_TOTAL_BYTES": "storage.max_total_bytes",
+    "EMBER_STORAGE_MAX_WRITE_BATCH": "storage.max_write_batch",
     "EMBER_MAINTENANCE_INTERVAL_SECONDS": "maintenance.interval_seconds",
     "EMBER_MAINTENANCE_NAMESPACES": "maintenance.namespaces",
     "EMBER_API_REST_ENABLED": "api.rest_enabled",
@@ -109,6 +113,7 @@ class StorageConfig:
     max_store_bytes: int = 0       # 0 = unlimited
     max_record_bytes: int = 0      # 0 = unlimited
     max_total_bytes: int = 0       # 0 inherits a persisted cap, or is unlimited for new stores
+    max_write_batch: int = 100     # maximum records in one ember_write_batch call
 
 
 @dataclass(frozen=True)
@@ -394,6 +399,9 @@ def load_config(
             max_store_bytes=_integer(storage.get("max_store_bytes", 0), "storage.max_store_bytes"),
             max_record_bytes=_integer(storage.get("max_record_bytes", 0), "storage.max_record_bytes"),
             max_total_bytes=_integer(storage.get("max_total_bytes", 0), "storage.max_total_bytes"),
+            max_write_batch=_integer(
+                storage.get("max_write_batch", 100), "storage.max_write_batch",
+                minimum=1, maximum=10000),
         ),
         maintenance=MaintenanceConfig(
             interval_seconds=_integer(maintenance.get("interval_seconds", 0), "maintenance.interval_seconds"),

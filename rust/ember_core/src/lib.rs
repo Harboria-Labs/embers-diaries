@@ -296,6 +296,30 @@ fn durable_append(path: &Path, line: &[u8]) -> io::Result<()> {
     file.sync_all()
 }
 
+/// Append every frame, then fsync once. Callers must already have admitted the
+/// summed growth. A line must stay one JSON object so recovery can split on
+/// newlines after a crash.
+fn durable_append_frames(path: &Path, lines: &[Vec<u8>]) -> io::Result<()> {
+    if lines.is_empty() {
+        return Ok(());
+    }
+    let mut framed = Vec::new();
+    for line in lines {
+        if line.contains(&b'\n') || line.contains(&b'\r') {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "WAL line contains a newline",
+            ));
+        }
+        framed.extend_from_slice(line);
+        framed.push(b'\n');
+    }
+    let mut file = OpenOptions::new().create(true).append(true).open(path)?;
+    file.write_all(&framed)?;
+    file.flush()?;
+    file.sync_all()
+}
+
 #[derive(Serialize)]
 struct PendingWalEntry<'a> {
     wal_id: &'a str,
@@ -697,6 +721,103 @@ fn write_record_transaction(
         &root.join("records").join(format!("{record_id}.ember")), record_bytes)?;
     durable_append(&root.join("wal.jsonl"), &commit)?;
     if let Some(bytes) = meta_bytes {
+        atomic_replace_file(&root.join("meta").join("store.json"), bytes)?;
+    }
+    Ok(created)
+}
+
+/// One source epoch, one pending fsync, one commit fsync, and one metadata
+/// replace for many records. Record files are still synced individually so a
+/// commit line never acknowledges bytes that are not durable. Admission is the
+/// sum of the single-write peaks, with the metadata file counted once. Failure
+/// before any record file exists writes nothing the caller must keep; a crash
+/// after the pending fsync recovers through `recover_record_transactions`.
+#[pyfunction]
+#[pyo3(signature = (root, wal_ids, pending_timestamp, commit_timestamp, record_ids, data_jsons, record_bytes, meta_bytes=None))]
+fn write_record_batch(
+    root: &str,
+    wal_ids: Vec<String>,
+    pending_timestamp: &str,
+    commit_timestamp: &str,
+    record_ids: Vec<String>,
+    data_jsons: Vec<Vec<u8>>,
+    record_bytes: Vec<Vec<u8>>,
+    meta_bytes: Option<Vec<u8>>,
+) -> PyResult<Vec<bool>> {
+    let count = record_ids.len();
+    if wal_ids.len() != count || data_jsons.len() != count || record_bytes.len() != count {
+        return Err(PyValueError::new_err(
+            "write_record_batch arguments must have equal lengths",
+        ));
+    }
+    if count == 0 {
+        return Ok(Vec::new());
+    }
+    let root = Path::new(root);
+    let mut pending_lines = Vec::with_capacity(count);
+    let mut commit_lines = Vec::with_capacity(count);
+    let mut peak = meta_bytes.as_ref().map_or(0u64, |bytes| bytes.len() as u64);
+    let mut seen = HashSet::new();
+    for index in 0..count {
+        if !seen.insert(record_ids[index].clone()) {
+            return Err(PyValueError::new_err(
+                "write_record_batch record ids must be unique",
+            ));
+        }
+        let data: Value = serde_json::from_slice(&data_jsons[index]).map_err(|error| {
+            PyValueError::new_err(format!("invalid record WAL data: {error}"))
+        })?;
+        if matches!(data["record_type"].as_str(), Some("node" | "document")) {
+            if let Some(context) = data["data"].get("primary_context") {
+                domain::context(context).map_err(PyValueError::new_err)?;
+            }
+        }
+        let pending = serde_json::to_vec(&PendingWalEntry {
+            wal_id: &wal_ids[index],
+            operation: "write",
+            record_id: &record_ids[index],
+            data,
+            status: "PENDING",
+            timestamp: pending_timestamp,
+        })
+        .map_err(|error| PyValueError::new_err(error.to_string()))?;
+        let commit = serde_json::to_vec(&CommittedWalEntry {
+            wal_id: &wal_ids[index],
+            status: "COMMITTED",
+            timestamp: commit_timestamp,
+        })
+        .map_err(|error| PyValueError::new_err(error.to_string()))?;
+        let item = [
+            pending.len() as u64,
+            (commit.len() as u64).max(quota::commit_reserve(&wal_ids[index])),
+            2,
+            record_bytes[index].len() as u64,
+        ]
+        .into_iter()
+        .try_fold(0u64, |total, value| total.checked_add(value))
+        .ok_or_else(|| PyValueError::new_err("transaction byte count overflow"))?;
+        peak = peak
+            .checked_add(item)
+            .ok_or_else(|| PyValueError::new_err("transaction byte count overflow"))?;
+        pending_lines.push(pending);
+        commit_lines.push(commit);
+    }
+    // Admit the whole peak before the epoch moves. A refusal here leaves the
+    // store unchanged so the caller can retry a smaller prefix.
+    let _capacity = quota::admit(&root.join("wal.jsonl"), peak)?;
+    advance_source_epoch(root)?;
+    durable_append_frames(&root.join("wal.jsonl"), &pending_lines)?;
+    let mut created = Vec::with_capacity(count);
+    for index in 0..count {
+        created.push(atomic_write_new_file(
+            &root
+                .join("records")
+                .join(format!("{}.ember", record_ids[index])),
+            &record_bytes[index],
+        )?);
+    }
+    durable_append_frames(&root.join("wal.jsonl"), &commit_lines)?;
+    if let Some(bytes) = meta_bytes.as_deref() {
         atomic_replace_file(&root.join("meta").join("store.json"), bytes)?;
     }
     Ok(created)
@@ -1200,6 +1321,7 @@ fn _native(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(validate_session_activity, module)?)?;
     module.add_function(wrap_pyfunction!(validate_conflict_transition, module)?)?;
     module.add_function(wrap_pyfunction!(write_record_transaction, module)?)?;
+    module.add_function(wrap_pyfunction!(write_record_batch, module)?)?;
     module.add_function(wrap_pyfunction!(recover_record_transactions, module)?)?;
     module.add_class::<StoreFileLock>()?;
     module.add("BACKEND", "rust-pyo3")?;

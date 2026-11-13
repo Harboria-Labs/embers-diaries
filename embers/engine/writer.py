@@ -10,7 +10,7 @@ from ..core.record import EmberRecord
 from ..core.annotation import Annotation
 from ..core.types import DeprecationReason
 from ..core.errors import ConcurrentModificationError
-from ..storage.store import PhysicalStore
+from ..storage.store import PhysicalStore, current_write_group
 from embers._native import atomic_replace as _quota_atomic_replace
 
 
@@ -45,6 +45,9 @@ class WriteEngine:
         self._prepare_callbacks: list = []
         self._before_write_callbacks: list = []
         self._write_callbacks: list = []  # notify index layer after writes
+        # Callbacks marked after_durability wait until a grouped commit fsyncs.
+        # None means this thread is not inside EmberDB.grouped_writes.
+        self._batch_notify_queue: list | None = None
 
     def register_before_write(self, fn):
         """Refresh derived state under the store lock before a source change."""
@@ -71,9 +74,17 @@ class WriteEngine:
         self._write_callbacks.append(fn)
 
     def _notify(self, record: EmberRecord, operation: str):
+        group = current_write_group()
+        queue = self._batch_notify_queue
         for fn in self._write_callbacks:
             try:
-                fn(record, operation)
+                # Index updates stay immediate so later items in the batch can
+                # see earlier ones. Observation waits until the WAL commit fsync.
+                if (group is not None and queue is not None
+                        and getattr(fn, "after_durability", False)):
+                    queue.append((fn, record, operation))
+                else:
+                    fn(record, operation)
             except Exception as e:
                 import warnings
                 warnings.warn(

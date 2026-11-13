@@ -44,14 +44,26 @@ one. The fix below removes ambiguity and tests every entry URL.
 
 Both view shells now load the same fingerprinted resource:
 
-`/v1/observer/transport.js?v=b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0`
+`/v1/observer/transport.js?v=9771843068bdc4ad9b638245e335ce02ffec5c367fa67d9736914134f272c57b`
 
 Source file: `embers/api/observer_transport.js`, class `EmberObserverTransport`.
-Version: `shared-transport-v3`. Both pages use browser SRI and no-cache/no-store
-headers. There is one EventSource owner, reconnect timer, liveness timer,
+Version: `shared-transport-v4`. Both pages use browser SRI and no-cache/no-store
+headers. There is one live-stream owner, reconnect timer, liveness timer,
 authorization-expiry handler and explicit fallback state machine. No second
 transport implementation was added. The old namespace fetch/body-reader loop
 was removed.
+
+`shared-transport-v4` transport SHA-256 is
+`9771843068bdc4ad9b638245e335ce02ffec5c367fa67d9736914134f272c57b`.
+It reads the live stream with `EmberFetchEventSource`
+(`fetch` plus a small SSE parser) instead of `EventSource`. A free ngrok
+tunnel returns an HTML interstitial unless the request sends
+`ngrok-skip-browser-warning: true`, and `EventSource` cannot set headers.
+The reader is closed only when the transport owner calls `close()`. A healthy
+body is not aborted on a short timer; the existing 45 second liveness timer
+still treats a silent stream as dead. Lobby SSE uses the same class when the
+transport script has loaded, and falls back to `EventSource` in tests that
+stub that constructor. Snapshot and exchange requests send the same header.
 
 The scope configuration selects the authorized REST/SSE paths and validates the
 handshake. Existing namespace messages use integer revisions and `patch` frames;
@@ -98,10 +110,7 @@ Neither keepalives nor these transport fields create Ember events.
 | `/observer` | `fc38198d371d46ea35bb5a13e68596cf26a6e1e090d0065de07665a8c8500e17` |
 | `/v1/observer/transport.js` | `b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0` |
 
-These are local after-change response hashes, not a claim that the running ngrok
-server has already installed the new commit. HTML contains the server build
-fingerprint and package metadata, so HTML hashes can vary with installation
-metadata. The normalized JavaScript hash is the stable transport comparison.
+These are local after-change response hashes from the original shared-transport change, not a claim that the running ngrok server has already installed a later commit. `shared-transport-v4` replaces the transport row; its current SHA-256 is in [One transport implementation](#one-transport-implementation). HTML contains the server build fingerprint and package metadata, so HTML hashes can vary with installation metadata. The normalized JavaScript hash is the stable transport comparison.
 The two observer URLs return byte-identical HTML. Namespace HTML differs because
 it renders a namespace graph, while its **transport asset is identical**.
 See [after headers and hashes](visualizer-surfaces-after-assets.json).

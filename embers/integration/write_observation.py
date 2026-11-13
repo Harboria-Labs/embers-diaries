@@ -119,6 +119,7 @@ def install(db):
             if not path.exists():prepare(db,record)
             deliver(db,path)
         except Exception:log.exception('Memory committed; write observation pending recovery')
+    after.after_durability = True
     db._writer.register_prepare_callback(before)
     db._writer.register_callback(after)
     recover(db)

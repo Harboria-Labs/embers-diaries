@@ -7,7 +7,8 @@ Existing Candidate 04 equations are unchanged.
 ## Fields
 
 - `primary_context`: optional nonempty string or null on `remember` / `ember_write`
-  / POST `/v1/memory/write`; stored at `record.data.primary_context`.
+  / POST `/v1/memory/write`, and on each record of `ember_write_batch` /
+  POST `/v1/memory/write-batch`; stored at `record.data.primary_context`.
 - `primary_context`: the same optional, separately supplied field on `recall` /
   `ember_recall` / POST `/v1/memory/recall`.
 - `inspect_context`: optional boolean on recall. Use true to inspect query-only

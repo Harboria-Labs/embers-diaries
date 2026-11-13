@@ -1,4 +1,75 @@
-/* Observer transport only. No memory/model operations. One owner, one EventSource. */
+/* Observer transport only. No memory/model operations. One owner, one live stream.
+
+   EventSource cannot set request headers. A free ngrok tunnel answers those
+   requests with an HTML interstitial unless ngrok-skip-browser-warning is
+   present, so the live stream is fetch() with that header and a small SSE
+   parser. close() aborts the body only when this owner stops the stream.
+   There is no short idle abort of a healthy body; the 45s liveness timer
+   below still decides when a quiet stream is dead. */
+const NGROK_SKIP = {'ngrok-skip-browser-warning':'true'};
+class EmberFetchEventSource {
+  constructor(url) {
+    this.url = url; this.listeners = {}; this.onopen = null; this.onerror = null;
+    this._closed = false; this._abort = new AbortController(); this._pump(url);
+  }
+  addEventListener(type, fn) { this.listeners[type] = fn; }
+  close() { this._closed = true; this._abort.abort(); }
+  _dispatch(type, event) { if (!this._closed && this.listeners[type]) this.listeners[type](event); }
+  _frame(frame) {
+    let event = 'message', data = [], id = '';
+    for (const line of frame.split('\n')) {
+      if (!line || line.startsWith(':')) continue;
+      const cut = line.indexOf(':');
+      const field = cut === -1 ? line : line.slice(0, cut);
+      let value = cut === -1 ? '' : line.slice(cut + 1);
+      if (value.startsWith(' ')) value = value.slice(1);
+      if (field === 'event') event = value;
+      else if (field === 'data') data.push(value);
+      else if (field === 'id') id = value;
+    }
+    if (data.length) this._dispatch(event, {data: data.join('\n'), lastEventId: id});
+  }
+  async _pump(url) {
+    let response;
+    try {
+      response = await fetch(url, {
+        headers: {...NGROK_SKIP, 'Accept':'text/event-stream', 'Cache-Control':'no-store'},
+        cache: 'no-store', credentials: 'same-origin', signal: this._abort.signal,
+      });
+    } catch (error) {
+      if (!this._closed && this.onerror) this.onerror(error);
+      return;
+    }
+    if (this._closed) return;
+    if (!response.ok || !response.body) {
+      if (this.onerror) this.onerror(Error('SSE HTTP ' + response.status));
+      return;
+    }
+    if (this.onopen) this.onopen();
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    try {
+      while (!this._closed) {
+        const {value, done} = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, {stream: true});
+        buffer = buffer.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        let split;
+        while ((split = buffer.indexOf('\n\n')) !== -1) {
+          const frame = buffer.slice(0, split);
+          buffer = buffer.slice(split + 2);
+          this._frame(frame);
+        }
+      }
+    } catch (error) {
+      if (!this._closed && this.onerror) this.onerror(error);
+      return;
+    }
+    if (!this._closed && this.onerror) this.onerror(Error('SSE stream ended'));
+  }
+}
+window.EmberFetchEventSource = EmberFetchEventSource;
 class EmberObserverTransport {
   constructor({params, snapshot, receive, onState, onDiagnostic, onNotice, onTerminal, agent, scope={}}) {
     Object.assign(this, {params, snapshot, receive, onState, onDiagnostic, onNotice, onTerminal, agent});
@@ -17,7 +88,7 @@ class EmberObserverTransport {
   async json(url){
     const c=new AbortController();this.rest.add(c);
     const timer=setTimeout(()=>c.abort('REST timeout'),10000);
-    try{const r=await fetch(url,{signal:c.signal,cache:'no-store'});if(this.stopped||c.signal.aborted)throw Error('Observer request superseded');this.stats.last_http_status=r.status;this.emit();
+    try{const r=await fetch(url,{signal:c.signal,cache:'no-store',credentials:'same-origin',headers:NGROK_SKIP});if(this.stopped||c.signal.aborted)throw Error('Observer request superseded');this.stats.last_http_status=r.status;this.emit();
       if(!r.ok){const e=Error('Observer HTTP '+r.status);e.denied=[401,403].includes(r.status);e.reset=r.status===400;throw e}
       const data=await r.json();if(this.stopped||c.signal.aborted)throw Error('Observer request superseded');return data;
     }finally{clearTimeout(timer);this.rest.delete(c)}
@@ -51,7 +122,7 @@ class EmberObserverTransport {
     clearTimeout(this.retryTimer);if(this.attempts++)this.stats.reconnect_count++;
     this.stats.stream_attempts++;this.stats.last_sse_status='CONNECTING';this.emit();
     this.state('RECONNECTING');
-    const es=new EventSource(this.scope.streamUrl());this.source=es;
+    const es=new EmberFetchEventSource(this.scope.streamUrl());this.source=es;
     let ready=false,openedAt=0;
     const current=()=>!this.stopped&&this.source===es;
     const liveness=()=>{if(ready&&performance.now()-openedAt>=15000)this.failures=0;this.stats.last_byte_at=new Date().toISOString();this.timer('idleTimer',()=>{if(current())this.lost(es,'No SSE event/keepalive for 45 seconds')},45000)};

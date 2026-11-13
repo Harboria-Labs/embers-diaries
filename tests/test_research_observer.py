@@ -249,7 +249,8 @@ def test_observer_transport_assets_and_no_healthy_body_timeout(env):
     assert '/v1/observer/transport.js' in html.text
     assert "script-src 'self'" in html.headers['content-security-policy']
     js=client.get('/v1/observer/transport.js')
-    assert js.status_code==200 and 'new EventSource(' in js.text
+    assert js.status_code==200 and 'new EmberFetchEventSource(this.scope.streamUrl())' in js.text
+    assert 'ngrok-skip-browser-warning' in js.text and 'new EventSource(' not in js.text
     assert "active.abort(),10000" not in html.text
 
 
@@ -266,11 +267,11 @@ def test_build_identity_fingerprinted_asset_integrity_and_readonly(env,monkeypat
     assert info.status_code==200
     data=info.json()
     assert data['transport_matches_baseline'] is False
-    assert data['transport_client_version'].startswith('shared-transport-v3')
+    assert data['transport_client_version'].startswith('shared-transport-v4')
     assert data['server_git_commit'] is None  # Never pretend a source fingerprint is a commit.
     html=client.get('/visualizer?mode=observer')
     assert '__OBSERVER_' not in html.text
-    assert 'Observer client: shared-transport-v3' in html.text
+    assert 'Observer client: shared-transport-v4' in html.text
     url=re.search(r'<script src="([^"]+)" integrity="([^"]+)"',html.text)
     assert url and url[1]==data['transport_asset_url']
     script=client.get(url[1])
