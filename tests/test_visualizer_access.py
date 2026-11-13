@@ -57,7 +57,7 @@ def test_all_surface_assets_share_transport_and_alias(client):
     assert pages[1].content==pages[2].content
     urls=[re.search(r'<script src="([^"]+)"',p.text)[1] for p in pages]
     assert len(set(urls))==1
-    js=client.get(urls[0]);assert 'new EventSource(this.scope.streamUrl())' in js.text
+    js=client.get(urls[0]);assert 'new EmberFetchEventSource(this.scope.streamUrl())' in js.text
     assert all('getReader()' not in p.text and 'active.abort' not in p.text for p in pages)
     assert all(p.headers['x-ember-transport-sha256']==hashlib.sha256(js.content).hexdigest() for p in pages)
     assert 'consumeViewLink' in pages[0].text and 'consumeObserverLink' in pages[1].text

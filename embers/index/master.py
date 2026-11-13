@@ -174,6 +174,36 @@ class MasterIndex:
             if supersedes:
                 self._link_version(supersedes, record_id)
 
+    def unindex_record(self, record_id: str) -> None:
+        """Drop one record from the in-memory index. Does not persist."""
+        with self._lock:
+            meta = self._records.pop(record_id, None)
+            if meta is None:
+                return
+            namespace = meta.get("namespace")
+            if namespace:
+                self._namespaces[namespace].discard(record_id)
+            for tag in meta.get("tags") or []:
+                self._tags[tag].discard(record_id)
+            written_by = meta.get("written_by")
+            if written_by:
+                self._written_by[written_by].discard(record_id)
+            agent_id = meta.get("agent_id")
+            if agent_id:
+                self._by_agent[agent_id].discard(record_id)
+            session_id = meta.get("session_id")
+            if session_id:
+                self._by_session[session_id].discard(record_id)
+            parent = self._version_parent.pop(record_id, None)
+            if parent:
+                self._version_children[parent].discard(record_id)
+            for child in list(self._version_children.pop(record_id, ())):
+                if self._version_parent.get(child) == record_id:
+                    self._version_parent.pop(child, None)
+            self._superseded.pop(record_id, None)
+            self._supersedes.pop(record_id, None)
+            self._deprecated.discard(record_id)
+
     def mark_superseded(self, old_id: str, new_id: str):
         with self._lock:
             self._superseded[old_id] = new_id

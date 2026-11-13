@@ -12,6 +12,7 @@ Usage:
 
 import sys
 import uuid
+from contextlib import contextmanager
 from pathlib import Path
 from datetime import datetime
 
@@ -240,7 +241,12 @@ class EmberDB:
                 # transaction. Marking it after writer.update() returned left
                 # a window where concurrent readers saw an incomplete chain.
                 self._master_index.mark_superseded(record.supersedes, record.id)
-            self._master_index.persist(self._store.index_epoch())
+            # A grouped commit persists once, after every record file exists
+            # and the source epoch has moved. Persisting per item would publish
+            # that epoch while siblings were still only staged.
+            from .storage.store import current_write_group
+            if current_write_group() is None:
+                self._master_index.persist(self._store.index_epoch())
 
     def _index_record(self, record: EmberRecord):
         """Add a record to all relevant indexes."""
@@ -322,6 +328,128 @@ class EmberDB:
         """
         self._check_attribution(record)
         return self._writer.write(record)
+
+    def precheck_write(self, record: EmberRecord, *, extra_bytes: int = 0) -> int:
+        """Validate and measure one record without appending the WAL.
+
+        ``extra_bytes`` is the size of siblings already accepted into the
+        same batch, so the store-wide byte cap sees the cumulative total.
+        """
+        self._check_attribution(record)
+        record.seal()
+        from .storage.format import encode
+        raw = encode(record.to_dict())
+        self._store._check_write_limits(len(raw), extra_bytes=extra_bytes)
+        return len(raw)
+
+    @contextmanager
+    def grouped_writes(self):
+        """Stage writes, then fsync the WAL and master index once.
+
+        The store lock is held across the batch so no other thread can persist
+        the new source epoch before every record file exists. Nested calls join
+        the open group and do not commit early.
+        """
+        from .core.errors import BatchQuotaExceeded
+        from .storage.store import (
+            WriteGroup, bind_write_group, current_write_group, reset_write_group,
+        )
+        if current_write_group() is not None:
+            yield current_write_group()
+            return
+        group = WriteGroup()
+        token = bind_write_group(group)
+        self._writer._batch_notify_queue = []
+        try:
+            with self._store.lock:
+                try:
+                    yield group
+                    if group.aborted:
+                        self._rollback_group(group)
+                    else:
+                        self._commit_group(group)
+                        group.committed = True
+                except BatchQuotaExceeded as exc:
+                    records = list(exc.records)
+                    message = str(exc)
+                    if not group.committed:
+                        self._rollback_group(group)
+                        # Deliver observations only for records that did become
+                        # durable (the single-transaction fallback prefix).
+                        self._run_deferred_callbacks()
+                    raise BatchQuotaExceeded(records, message) from exc
+                except Exception:
+                    if not group.committed:
+                        self._rollback_group(group)
+                    raise
+        finally:
+            self._writer._batch_notify_queue = None
+            reset_write_group(token)
+
+    def _commit_group(self, group) -> None:
+        if group.records:
+            self._store.commit_staged(group)
+            self._master_index.persist(self._store.index_epoch())
+        self._run_deferred_callbacks()
+
+    def _rollback_group(self, group) -> None:
+        removed_ids = []
+        for record in list(group.records):
+            if self._store.file_exists(record.id):
+                continue
+            removed_ids.append(record.id)
+            self._unindex_record(record)
+            self._discard_receipt(record.id)
+        queue = self._writer._batch_notify_queue
+        if queue is not None:
+            self._writer._batch_notify_queue = [
+                item for item in queue if item[1].id not in set(removed_ids)]
+        group.truncate(0)
+
+    def drop_staged_tail(self, group, length: int) -> None:
+        """Unindex and forget staged records after ``length``."""
+        removed = group.truncate(length)
+        removed_ids = {record.id for record in removed}
+        for record in removed:
+            if not self._store.file_exists(record.id):
+                self._unindex_record(record)
+                self._discard_receipt(record.id)
+        queue = self._writer._batch_notify_queue
+        if queue is not None:
+            self._writer._batch_notify_queue = [
+                item for item in queue if item[1].id not in removed_ids]
+
+    def _unindex_record(self, record: EmberRecord) -> None:
+        self._master_index.unindex_record(record.id)
+        self._timeline_index.remove(record.id, record.namespace)
+        self._fulltext_index.remove(record.id)
+        self._vector_index.remove(record.id)
+        for edge in record.connections:
+            self._graph_index.remove_edge(
+                record.id, edge.target_id, edge.edge_type.value)
+        for target_id in record.derived_from:
+            self._graph_index.remove_edge(
+                record.id, target_id, EdgeType.DERIVED_FROM.value)
+
+    def _discard_receipt(self, record_id: str) -> None:
+        try:
+            from .integration.write_observation import receipt_path
+            receipt_path(self, record_id).unlink(missing_ok=True)
+        except Exception:
+            return None
+
+    def _run_deferred_callbacks(self) -> None:
+        queue = self._writer._batch_notify_queue or []
+        self._writer._batch_notify_queue = []
+        for fn, record, operation in queue:
+            try:
+                fn(record, operation)
+            except Exception as exc:
+                import warnings
+                warnings.warn(
+                    f"Record {record.id} is durable but a deferred callback failed: {exc}. "
+                    "Rebuild indexes before relying on indexed retrieval.",
+                    RuntimeWarning, stacklevel=2)
 
     def _check_attribution(self, record: EmberRecord) -> None:
         """Feature #8 gate — raise if attribution is enforced and absent.

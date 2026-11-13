@@ -14,6 +14,7 @@ import os
 import json
 import threading
 import uuid
+from contextvars import ContextVar
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -21,7 +22,7 @@ from ..storage.format import encode, decode
 from ..engine.wal import WriteAheadLog
 from ..core.record import EmberRecord
 from ..core.integrity import RecordIntegrityError
-from ..core.errors import StorageLimitError
+from ..core.errors import BatchQuotaExceeded, StorageLimitError
 
 
 try:
@@ -34,6 +35,10 @@ try:
         configure_store_quota as _configure_store_quota,
         store_byte_usage as _store_byte_usage,
     )
+    import embers._native as _native
+    # A binary built before write_record_batch must keep the rest of the
+    # native backend. Grouped commits then fall back to one transaction each.
+    _write_record_batch = getattr(_native, "write_record_batch", None)
     STORE_LOCK_BACKEND = "rust-pyo3"
 except ImportError:
     STORE_LOCK_BACKEND = "python-process-local"
@@ -78,6 +83,7 @@ except ImportError:
 
     _recover_record_transactions = None
     _write_record_transaction = None
+    _write_record_batch = None
 
 try:
     from embers._native import source_epoch_protocol_version as _source_epoch_version
@@ -86,6 +92,51 @@ except ImportError:
     # The installed extension may predate this source change. Keep its writes
     # safe through the Python storage wrapper without replacing that binary.
     NATIVE_SOURCE_EPOCH = False
+
+
+_WRITE_GROUP: ContextVar = ContextVar("ember_write_group", default=None)
+
+
+def current_write_group():
+    """The staged write batch for this thread, if one is open."""
+    return _WRITE_GROUP.get()
+
+
+def bind_write_group(group):
+    return _WRITE_GROUP.set(group)
+
+
+def reset_write_group(token) -> None:
+    _WRITE_GROUP.reset(token)
+
+
+class WriteGroup:
+    """Records accepted into one grouped commit, not yet in the WAL."""
+
+    def __init__(self):
+        self.records: list[EmberRecord] = []
+        self.raws: list[bytes] = []
+        self.dicts: list[dict] = []
+        self.by_id: dict[str, EmberRecord] = {}
+        self.staged_bytes = 0
+        self.aborted = False
+        self.committed = False
+
+    def add(self, record: EmberRecord, raw: bytes, data: dict) -> None:
+        self.records.append(record)
+        self.raws.append(raw)
+        self.dicts.append(data)
+        self.by_id[record.id] = record
+        self.staged_bytes += len(raw)
+
+    def truncate(self, length: int) -> list[EmberRecord]:
+        removed = self.records[length:]
+        self.records = self.records[:length]
+        self.raws = self.raws[:length]
+        self.dicts = self.dicts[:length]
+        self.by_id = {record.id: record for record in self.records}
+        self.staged_bytes = sum(len(raw) for raw in self.raws)
+        return removed
 
 
 class _StoreTransactionLock:
@@ -218,7 +269,19 @@ class PhysicalStore:
         with self._lock:
             record_dict = record.to_dict()
             raw = encode(record_dict)
-            self._check_write_limits(len(raw))
+            group = current_write_group()
+            extra = group.staged_bytes if group is not None else 0
+            self._check_write_limits(len(raw), extra_bytes=extra)
+            if group is not None:
+                # Durability waits for commit_staged. Snapshot the sealed bytes
+                # now so a later in-memory read overlay cannot change them.
+                if record.id in group.by_id or self.file_exists(record.id):
+                    raise ValueError(
+                        f"Record {record.id} already exists. "
+                        "Ember's Diaries is append-only — use update() to create a new version."
+                    )
+                group.add(record, raw, record_dict)
+                return record.id
             # Publish the invalidation before the native WAL transaction.  If
             # the transaction is interrupted, the epoch can be ahead, never
             # falsely equal to an index missing an acknowledged record.
@@ -252,6 +315,67 @@ class PhysicalStore:
             self._increment_record_count()
 
             return record.id
+
+    def file_exists(self, record_id: str) -> bool:
+        """True only for a record file, not a staged batch overlay."""
+        return (self.records_dir / f"{record_id}.ember").exists()
+
+    def commit_staged(self, group: WriteGroup) -> None:
+        """Durably commit every staged record in one native transaction.
+
+        Pending WAL lines share one fsync, commit lines share one fsync, and
+        store metadata is replaced once. Record files are still synced one by
+        one so a commit line never acknowledges bytes that are not on disk.
+        When the installed extension has no batch symbol, each record uses the
+        ordinary single-write transaction instead.
+        """
+        if not group.records:
+            return
+        if _write_record_batch is None:
+            self._commit_staged_individually(group)
+            return
+        now = datetime.now(timezone.utc).isoformat()
+        wal_ids = [str(uuid.uuid4()) for _ in group.records]
+        record_ids = [record.id for record in group.records]
+        data_jsons = [
+            json.dumps(data, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+            for data in group.dicts
+        ]
+        from ..storage.format import encode_index
+        meta = self._read_meta()
+        meta["record_count"] = meta.get("record_count", 0) + len(group.records)
+        meta["last_write"] = now
+        try:
+            _write_record_batch(
+                str(self.root), wal_ids, now, now, record_ids,
+                data_jsons, list(group.raws), encode_index(meta))
+        except Exception as exc:
+            # Admission runs before the epoch moves. A quota refusal with no
+            # record files is safe to retry one record at a time. Any file
+            # that already exists stays for WAL recovery; do not rewrite it.
+            if "max_total_bytes" in str(exc) and not any(
+                    self.file_exists(record.id) for record in group.records):
+                raise BatchQuotaExceeded(group.records, str(exc)) from exc
+            raise
+
+    def _commit_staged_individually(self, group: WriteGroup) -> None:
+        """One durable transaction per staged record, used without the batch symbol.
+
+        The group context is cleared so ``write`` cannot stage the record again.
+        Callers keep deferred callbacks for records that land on disk.
+        """
+        token = bind_write_group(None)
+        pending = list(group.records)
+        try:
+            for index, record in enumerate(pending):
+                try:
+                    self.write(record)
+                except Exception as exc:
+                    if "max_total_bytes" in str(exc):
+                        raise BatchQuotaExceeded(pending[index:], str(exc)) from exc
+                    raise
+        finally:
+            reset_write_group(token)
 
     def index_epoch(self) -> int:
         """Conservative source-change epoch; missing metadata fails closed."""
@@ -300,14 +424,14 @@ class PhysicalStore:
         # present, which is the expected idempotent replay case.
         _atomic_write_new(str(record_file), raw)
 
-    def _check_write_limits(self, encoded_size: int) -> None:
+    def _check_write_limits(self, encoded_size: int, extra_bytes: int = 0) -> None:
         if self.max_record_bytes and encoded_size > self.max_record_bytes:
             raise StorageLimitError(
                 "storage.max_record_bytes", self.max_record_bytes, encoded_size)
         if self.max_store_bytes:
             current = sum(
                 path.stat().st_size for path in self.records_dir.glob("*.ember"))
-            attempted = current + encoded_size
+            attempted = current + extra_bytes + encoded_size
             if attempted > self.max_store_bytes:
                 raise StorageLimitError(
                     "storage.max_store_bytes", self.max_store_bytes, attempted)
@@ -318,6 +442,9 @@ class PhysicalStore:
         """Read a record by ID. Returns None if not found."""
         record_file = self.records_dir / f"{record_id}.ember"
         if not record_file.exists():
+            group = current_write_group()
+            if group is not None:
+                return group.by_id.get(record_id)
             return None
         try:
             raw = record_file.read_bytes()
@@ -332,7 +459,10 @@ class PhysicalStore:
             return None
 
     def exists(self, record_id: str) -> bool:
-        return (self.records_dir / f"{record_id}.ember").exists()
+        if self.file_exists(record_id):
+            return True
+        group = current_write_group()
+        return group is not None and record_id in group.by_id
 
     def all_ids(self) -> list[str]:
         """Return all record IDs in the store."""

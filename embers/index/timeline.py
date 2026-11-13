@@ -62,6 +62,16 @@ class TimelineIndex:
             # Binary insert to maintain sorted order
             bisect.insort(timeline, entry)
 
+    def remove(self, record_id: str, namespace: str | None = None) -> None:
+        """Drop one record from the in-memory timeline. Does not persist."""
+        with self._lock:
+            namespaces = [namespace] if namespace else list(self._timelines)
+            for name in namespaces:
+                timeline = self._timelines.get(name)
+                if timeline:
+                    self._timelines[name] = [
+                        entry for entry in timeline if entry[1] != record_id]
+
     # ── Queries ───────────────────────────────────────────────────────────────
 
     def range_query(self, namespace: str,

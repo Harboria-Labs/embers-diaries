@@ -57,7 +57,7 @@
     const token=epoch;loading=true;dirty=false;
     try{
       stats.snapshots++;diagnostics();
-      const response=await fetch('/v1/observer/lobby',{cache:'no-store'});
+      const response=await fetch('/v1/observer/lobby',{cache:'no-store',headers:{'ngrok-skip-browser-warning':'true'}});
       if(token!==epoch)return;
       if(response.status===401||response.status===403){ended('Lobby authorization expired, was revoked, or its session ended. Request a new authorized link.');return}
       if(!response.ok)throw Error(`Lobby snapshot HTTP ${response.status}`);
@@ -70,7 +70,7 @@
   function connect(){
     if(!active||!grant?.lobby_scope_id)return;
     closeStream();clearTimeout(retry);state('RECONNECTING');
-    const s=new EventSource('/v1/observer/lobby/stream?after='+cursor);source=s;
+    const Stream=window.EmberFetchEventSource||EventSource;const s=new Stream('/v1/observer/lobby/stream?after='+cursor);source=s;
     s.addEventListener('ready',()=>{if(source===s)state('LIVE')});
     const changed=e=>{
       if(source!==s||Number(e.lastEventId)<=cursor)return;

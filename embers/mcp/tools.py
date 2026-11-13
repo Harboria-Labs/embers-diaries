@@ -39,6 +39,54 @@ TOOLS = [
         },
     },
     {
+        "name": "ember_write_batch",
+        "description": (
+            "Write multiple durable memories in one call. Each record uses the "
+            "same fields as ember_write, including content. Authenticate once "
+            "with session_id or agent_id and token; a record may override those. "
+            "The default is best-effort: every record is attempted and results "
+            "lists index, ok, and either the new id or a structured error. "
+            "Set atomic to true to validate every record first and write nothing "
+            "if any record fails. The server rejects batches larger than "
+            "storage.max_write_batch (default 100). Per-record byte quotas match "
+            "ember_write."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "records": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "content": {"type": "string"},
+                            "subject": {"type": "string"},
+                            "namespace": {"type": "string"},
+                            "session_id": {"type": "string"},
+                            "creation_reason": {"type": "string"},
+                            "tags": {"type": "array", "items": {"type": "string"}},
+                            "agent_id": {"type": "string"},
+                            "token": {"type": "string"},
+                            "memory_type": {"type": "string"},
+                            "room": {"type": "string"},
+                        },
+                        "required": ["content"],
+                    },
+                },
+                "atomic": {
+                    "type": "boolean",
+                    "description": (
+                        "When true, validate every record and write nothing if "
+                        "any record fails. Default false (best-effort)."),
+                },
+                "session_id": {"type": "string"},
+                "agent_id": {"type": "string"},
+                "token": {"type": "string"},
+            },
+            "required": ["records"],
+        },
+    },
+    {
         "name": "ember_read",
         "description": "Read a record by id.",
         "inputSchema": {
@@ -485,11 +533,15 @@ TOOLS = [
 ]
 
 # Contract 01 metadata is separate from query text and room filters.
+_PRIMARY_CONTEXT = {
+    "type": ["string", "null"],
+    "description": "Optional exact agent-supplied primary context. No inference, merging or context filtering."}
+
 for _tool in TOOLS:
     if _tool["name"] in ("ember_write", "ember_recall"):
-        _tool["inputSchema"]["properties"]["primary_context"] = {
-            "type": ["string", "null"],
-            "description": "Optional exact agent-supplied primary context. No inference, merging or context filtering."}
+        _tool["inputSchema"]["properties"]["primary_context"] = _PRIMARY_CONTEXT
+    if _tool["name"] == "ember_write_batch":
+        _tool["inputSchema"]["properties"]["records"]["items"]["properties"]["primary_context"] = _PRIMARY_CONTEXT
     if _tool["name"] == "ember_recall":
         _tool["inputSchema"]["properties"]["inspect_context"] = {
             "type": "boolean", "description": "Return query/context, candidate/result IDs with their stored contexts, and memories. Use true to inspect unset context."}

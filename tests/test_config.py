@@ -25,6 +25,7 @@ def test_defaults_are_current_runtime_defaults(tmp_path: Path, monkeypatch):
     config = load_config(env={})
 
     assert config.storage.path == Path("ember_store")
+    assert config.storage.max_write_batch == 100
     assert config.maintenance.interval_seconds == 0
     assert config.maintenance.namespaces == ("memories",)
     assert config.maintenance.enabled is False

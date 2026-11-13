@@ -100,21 +100,21 @@ class MemoryProtocol:
         MemoryType.EPISODIC:   0.02,
     }
 
-    def remember(self, content: Any,
-                 tags: list[str] | None = None,
-                 confidence: float = 1.0,
-                 decay_rate: float | None = None,
-                 written_by: str = "llm",
-                 memory_type: str = "unscoped",
-                 room: str = "unscoped",
-                 verify_status: str = "hypothesis",
-                 namespace: str | None = None,
-                 agent_id: str | None = None,
-                 session_id: str | None = None,
-                 creation_reason: str | None = None,
-                 derived_from: list | None = None,
-                 primary_context: str | None = None) -> str:
-        """Store a new memory. Agent sets kind and room on write.
+    def build_memory(self, content: Any,
+                      tags: list[str] | None = None,
+                      confidence: float = 1.0,
+                      decay_rate: float | None = None,
+                      written_by: str = "llm",
+                      memory_type: str = "unscoped",
+                      room: str = "unscoped",
+                      verify_status: str = "hypothesis",
+                      namespace: str | None = None,
+                      agent_id: str | None = None,
+                      session_id: str | None = None,
+                      creation_reason: str | None = None,
+                      derived_from: list | None = None,
+                      primary_context: str | None = None) -> EmberRecord:
+        """Build one sealed-ready memory without writing it.
 
         Kind ≠ room. Unknown or missing labels become unscoped.
         Ember does not guess. Recall must not invent a room later.
@@ -175,10 +175,45 @@ class MemoryProtocol:
         )
 
         record.embedding = self.embeddings.embed_record(record)
+        return record
+
+    def commit_built(self, record: EmberRecord) -> str:
+        """Persist one record already built by ``build_memory``.
+
+        A batch validates with ``build_memory`` and then commits that same
+        record, so the id and encoded size cannot change between the check
+        and the write.
+        """
         record_id = self.db.write(record)
         self._check_conflicts(record)
         self._write_count += 1
         return record_id
+
+    def remember(self, content: Any,
+                 tags: list[str] | None = None,
+                 confidence: float = 1.0,
+                 decay_rate: float | None = None,
+                 written_by: str = "llm",
+                 memory_type: str = "unscoped",
+                 room: str = "unscoped",
+                 verify_status: str = "hypothesis",
+                 namespace: str | None = None,
+                 agent_id: str | None = None,
+                 session_id: str | None = None,
+                 creation_reason: str | None = None,
+                 derived_from: list | None = None,
+                 primary_context: str | None = None) -> str:
+        """Store a new memory. Agent sets kind and room on write.
+
+        Kind ≠ room. Unknown or missing labels become unscoped.
+        Ember does not guess. Recall must not invent a room later.
+        """
+        return self.commit_built(self.build_memory(
+            content, tags=tags, confidence=confidence, decay_rate=decay_rate,
+            written_by=written_by, memory_type=memory_type, room=room,
+            verify_status=verify_status, namespace=namespace, agent_id=agent_id,
+            session_id=session_id, creation_reason=creation_reason,
+            derived_from=derived_from, primary_context=primary_context))
 
     def recall(self, query: str,
                top_k: int = 10,
