@@ -133,6 +133,42 @@ def test_every_observable_commit_and_no_duplicate_retry_delivery(rig):
     asyncio.run(run())
 
 
+def test_established_stream_heartbeats_while_snapshot_blocks(rig, monkeypatch):
+    """An open Namespace View must keepalive while a snapshot waits on the write lock."""
+    import threading
+    from embers.integration import observation_stream
+    real = observation_stream.snapshot
+    calls = {'n': 0}
+    release = threading.Event()
+    entered = threading.Event()
+
+    def slow(*args, **kwargs):
+        calls['n'] += 1
+        if calls['n'] > 1:
+            entered.set()
+            assert release.wait(2)
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(observation_stream, 'snapshot', slow)
+
+    async def run():
+        report(rig)
+        gen = await connected(rig)
+        first = decode(await anext(gen))
+        assert first['events']
+        report(rig)
+        pending = asyncio.create_task(anext(gen))
+        assert await asyncio.to_thread(entered.wait, 1)
+        frame = await asyncio.wait_for(pending, 1)
+        assert frame == ': heartbeat\n\n'
+        release.set()
+        patched = decode(await asyncio.wait_for(anext(gen), 1))
+        assert patched['events']
+        await gen.aclose()
+
+    asyncio.run(run())
+
+
 def test_merge_split_policy_and_cancelled_waiter(rig):
     from test_usefulness import decision
     from embers.cognitive.usefulness import UsefulnessPolicy

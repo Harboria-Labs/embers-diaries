@@ -32,7 +32,7 @@ def test_shared_presentation_and_unchanged_transport():
         assert 'window.EmberResearchUI=' in html
         assert 'Memory Flow' in html and 'Pairing Matrix' in html
         assert 'observer/transport.js?v=' in html
-    assert observer_build.TRANSPORT_SHA256=='9771843068bdc4ad9b638245e335ce02ffec5c367fa67d9736914134f272c57b'
+    assert observer_build.TRANSPORT_SHA256=='b1a25b019e63d61a09201bae219280e0245d8831b638e4030e6da9ca5011492e'
     source=Path('embers/api/research_dashboard.js').read_text(encoding='utf-8')
     assert "fetch('/health'" not in source
     assert "STATUS_MONITOR" in Path('embers/api/observer_build.py').read_text(encoding='utf-8')

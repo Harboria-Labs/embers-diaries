@@ -66,11 +66,28 @@ class Feedback:
         if type(self.schema_version) is not int or self.schema_version not in (1, 2):
             raise ValueError("unsupported feedback schema_version")
         if self.schema_version == 1:
-            if any(x is not None for x in (
-                self.channel, self.outcome_id, self.context_id, self.context,
-                self.signal,
-            )) or self.supporting_refs:
-                raise ValueError("explicit feedback fields require schema_version=2")
+            present = [
+                name for name, value in (
+                    ("channel", self.channel),
+                    ("outcome_id", self.outcome_id),
+                    ("context_id", self.context_id),
+                    ("context", self.context),
+                    ("signal", self.signal),
+                    ("supporting_refs", self.supporting_refs or None),
+                ) if value is not None
+            ]
+            if present:
+                raise ValueError(
+                    "explicit feedback fields require schema_version=2 "
+                    f"({', '.join(present)}). "
+                    "v1 accepts outcome, usefulness, accuracy, attribution, "
+                    "note and retrieval_context. "
+                    "v2 requires schema_version=2, channel "
+                    "(relevance|correctness, not explicit), outcome_id, "
+                    "context_id and context; relevance also requires signal "
+                    "in [-1, 1]; correctness requires supporting_refs and "
+                    "forbids signal."
+                )
             return
         for name in ("memory_id", "agent_id", "outcome_id", "context_id"):
             value = getattr(self, name)

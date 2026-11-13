@@ -223,6 +223,7 @@ class ContextBuilder:
                 "is_current": record.is_current,
                 "annotations_count": len(record.annotations),
                 "supersedes": record.supersedes,
+                "content_hash": record.content_hash,
             })
             self._last_injected.append(record.id)
 

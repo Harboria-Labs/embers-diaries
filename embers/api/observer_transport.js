@@ -10,11 +10,51 @@ const NGROK_SKIP = {'ngrok-skip-browser-warning':'true'};
 class EmberFetchEventSource {
   constructor(url) {
     this.url = url; this.listeners = {}; this.onopen = null; this.onerror = null;
-    this._closed = false; this._abort = new AbortController(); this._pump(url);
+    this._closed = false; this._abort = new AbortController(); this._lastId = '';
+    this._retry = 0; this._timer = null; this._pump(url);
   }
   addEventListener(type, fn) { this.listeners[type] = fn; }
-  close() { this._closed = true; this._abort.abort(); }
+  close() { this._closed = true; clearTimeout(this._timer); this._abort.abort(); }
   _dispatch(type, event) { if (!this._closed && this.listeners[type]) this.listeners[type](event); }
+  _resumeUrl(url) {
+    if (!this._lastId) return url;
+    const q = url.indexOf('?');
+    const path = q === -1 ? url : url.slice(0, q);
+    const params = new URLSearchParams(q === -1 ? '' : url.slice(q + 1));
+    if ([...params.keys()].some(key => key.toLowerCase() === 'after')) {
+      for (const key of [...params.keys()]) if (key.toLowerCase() === 'after') params.set(key, this._lastId);
+    }
+    const qs = params.toString();
+    return qs ? path + '?' + qs : path;
+  }
+  _headers(url) {
+    const headers = {...NGROK_SKIP, 'Accept':'text/event-stream', 'Cache-Control':'no-store'};
+    let resume = this._lastId;
+    if (!resume) {
+      const q = url.indexOf('?');
+      if (q !== -1) resume = new URLSearchParams(url.slice(q + 1)).get('after') || '';
+    }
+    // The server prefers Last-Event-ID over the after query, so a dropped
+    // body resumes at the last frame instead of replaying from zero.
+    if (resume) headers['Last-Event-ID'] = resume;
+    return headers;
+  }
+  _schedule(url) {
+    if (this._closed) return;
+    const delay = Math.min(1000 * 2 ** this._retry, 8000);
+    this._retry += 1;
+    this._timer = setTimeout(() => {
+      if (this._closed) return;
+      this._abort = new AbortController();
+      this._pump(this._resumeUrl(url));
+    }, delay);
+  }
+  _fail(url, error) {
+    if (this._closed) return;
+    if (this.onerror) this.onerror(error);
+    // close() from onerror cancels this. Callers that do not close get backoff.
+    if (!this._closed) this._schedule(url);
+  }
   _frame(frame) {
     let event = 'message', data = [], id = '';
     for (const line of frame.split('\n')) {
@@ -27,24 +67,26 @@ class EmberFetchEventSource {
       else if (field === 'data') data.push(value);
       else if (field === 'id') id = value;
     }
+    if (id) this._lastId = id;
     if (data.length) this._dispatch(event, {data: data.join('\n'), lastEventId: id});
   }
   async _pump(url) {
     let response;
     try {
       response = await fetch(url, {
-        headers: {...NGROK_SKIP, 'Accept':'text/event-stream', 'Cache-Control':'no-store'},
+        headers: this._headers(url),
         cache: 'no-store', credentials: 'same-origin', signal: this._abort.signal,
       });
     } catch (error) {
-      if (!this._closed && this.onerror) this.onerror(error);
+      this._fail(url, error);
       return;
     }
     if (this._closed) return;
     if (!response.ok || !response.body) {
-      if (this.onerror) this.onerror(Error('SSE HTTP ' + response.status));
+      this._fail(url, Error('SSE HTTP ' + response.status));
       return;
     }
+    this._retry = 0;
     if (this.onopen) this.onopen();
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
@@ -63,10 +105,10 @@ class EmberFetchEventSource {
         }
       }
     } catch (error) {
-      if (!this._closed && this.onerror) this.onerror(error);
+      this._fail(url, error);
       return;
     }
-    if (!this._closed && this.onerror) this.onerror(Error('SSE stream ended'));
+    if (!this._closed) this._fail(url, Error('SSE stream ended'));
   }
 }
 window.EmberFetchEventSource = EmberFetchEventSource;
@@ -158,6 +200,12 @@ class EmberObserverTransport {
     this.closeSource();this.stats.last_disconnect_reason=reason;this.stats.last_sse_status='DISCONNECTED';this.failures++;
     this.state(this.fallback?'POLLING FALLBACK':'RECONNECTING');this.onNotice(reason);
     try{await this.authorize()}catch(e){if(this.stopped)return;if(this.endIfTerminal(e))return}
+    if(this.stopped)return;
+    // A journal gap is not fatal. Pull the missing page, then resume SSE
+    // from the cursor that snapshot confirms.
+    if(/Journal gap|Missing event page|Invalid revision|Snapshot omitted/.test(String(reason))){
+      try{await this.takeSnapshot()}catch(e){if(this.stopped)return;if(this.endIfTerminal(e))return;this.onNotice(e.message)}
+    }
     if(this.stopped)return;
     if(this.failures>=3)this.beginFallback();
     const delay=this.fallback?10000:Math.min(1000*2**(this.failures-1),8000);

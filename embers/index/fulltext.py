@@ -60,6 +60,9 @@ class FullTextIndex:
         # Total documents indexed
         self._total_docs: int = 0
         self._avg_doc_length: float = 0.0
+        # Running sum of document lengths. Recomputed once on load so add()
+        # does not walk every document.
+        self._token_total: int = 0
 
         self._load()
 
@@ -74,6 +77,7 @@ class FullTextIndex:
             self._doc_ns = data.get("doc_ns", {})
             self._total_docs = data.get("total_docs", 0)
             self._avg_doc_length = data.get("avg_doc_length", 0.0)
+            self._token_total = sum(self._doc_lengths.values())
         except Exception as e:
             print(f"[FullTextIndex] Failed to load: {e}")
 
@@ -107,20 +111,26 @@ class FullTextIndex:
             for token, count in tf.items():
                 self._inverted[token][record_id] = count
 
+            previous = self._doc_lengths.get(record_id)
             self._doc_lengths[record_id] = len(tokens)
             self._doc_ns[record_id] = namespace
+            self._token_total += len(tokens) - (previous or 0)
             self._total_docs = len(self._doc_lengths)
-            total_len = sum(self._doc_lengths.values())
-            self._avg_doc_length = total_len / self._total_docs if self._total_docs > 0 else 0
+            self._avg_doc_length = (
+                self._token_total / self._total_docs if self._total_docs else 0.0)
 
     def remove(self, record_id: str):
         """Remove a record from the full-text index."""
         with self._lock:
             for token_docs in self._inverted.values():
                 token_docs.pop(record_id, None)
-            self._doc_lengths.pop(record_id, None)
+            previous = self._doc_lengths.pop(record_id, None)
+            if previous:
+                self._token_total -= previous
             self._doc_ns.pop(record_id, None)
             self._total_docs = len(self._doc_lengths)
+            self._avg_doc_length = (
+                self._token_total / self._total_docs if self._total_docs else 0.0)
 
     # ── Search ────────────────────────────────────────────────────────────────
 
@@ -166,6 +176,44 @@ class FullTextIndex:
         # Sort by score
         ranked = sorted(scores.items(), key=lambda x: -x[1])
         return ranked[:top_k]
+
+    def rare_identifier_hits(self, query: str, namespace: str | None = None, *,
+                             max_df: int = 3, limit: int = 10) -> list[tuple[str, float]]:
+        """Documents containing a rare literal token from ``query``.
+
+        A token qualifies when it mixes letters and digits and is at least
+        four characters, and almost nobody else has it (document frequency
+        at most ``max_df``). The score is the sum of those tokens' BM25 IDF,
+        so a unique code outranks a merely uncommon one. Ordinary words and
+        years never qualify, which leaves paraphrase ranking untouched.
+        """
+        tokens = []
+        seen = set()
+        for token in _tokenize(query):
+            if token in seen:
+                continue
+            seen.add(token)
+            if (len(token) < 4 or not any(c.isalpha() for c in token)
+                    or not any(c.isdigit() for c in token)):
+                continue
+            tokens.append(token)
+        if not tokens:
+            return []
+        scores: dict[str, float] = defaultdict(float)
+        with self._lock:
+            total = self._total_docs or 1
+            for token in tokens:
+                docs = self._inverted.get(token, {})
+                if not docs or len(docs) > max_df:
+                    continue
+                df = len(docs)
+                idf = math.log((total - df + 0.5) / (df + 0.5) + 1.0)
+                for rid in docs:
+                    if namespace and self._doc_ns.get(rid) != namespace:
+                        continue
+                    scores[rid] += idf
+        ranked = sorted(scores.items(), key=lambda item: -item[1])
+        return ranked[:limit]
 
     def search_exact(self, phrase: str, namespace: str | None = None) -> list[str]:
         """
