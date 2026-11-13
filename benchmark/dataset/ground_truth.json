@@ -1,0 +1,8174 @@
+{
+  "meta": {
+    "seed": 20261113,
+    "scale": 5000,
+    "n_memories": 5000,
+    "n_queries": 715,
+    "query_types": [
+      "conflict",
+      "distractor",
+      "exact_token",
+      "multihop",
+      "near_duplicate",
+      "paraphrase",
+      "supersession",
+      "unicode"
+    ],
+    "kinds": [
+      "conflict_a",
+      "conflict_b",
+      "fact",
+      "filler",
+      "multihop",
+      "near_dup",
+      "supersede_v1",
+      "unicode"
+    ],
+    "checkpoints": [
+      1000,
+      2500,
+      5000
+    ],
+    "notes": "Deterministic fictional corpus. Unique TOK###### tokens support an exact-match ceiling. Paraphrase queries never include those tokens. Supersession queries expect the post-update city (runner must apply updates before scoring)."
+  },
+  "queries": [
+    {
+      "qid": "q-para-00000",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00000"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 0,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-00001",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00001"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1,
+      "expected_answer": "Mira Ell Chen",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00001",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00001"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1,
+      "expected_answer": "Mira Ell Chen discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-00000",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-00000"
+      ],
+      "irrelevant_uids": [
+        "m-00004"
+      ],
+      "min_index": 4,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00020",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00020"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 20,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00021",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00021"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 21,
+      "expected_answer": "Leif Pere Almeida discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00040",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00040"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 40,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-00041",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00041"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 41,
+      "expected_answer": "Elena Wren Abebe",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00041",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00041"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 41,
+      "expected_answer": "Elena Wren Abebe discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-00048",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-00048"
+      ],
+      "irrelevant_uids": [
+        "m-00052"
+      ],
+      "min_index": 52,
+      "expected_answer": "ceramicist at Diallo Timber",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00060",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00060"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 60,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00061",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00061"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 61,
+      "expected_answer": "Hugo Rin Berhe discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00080",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00080"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 80,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-00081",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00081"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 81,
+      "expected_answer": "Soren Ell Chen",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00081",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00081"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 81,
+      "expected_answer": "Soren Ell Chen discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-00096",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-00096"
+      ],
+      "irrelevant_uids": [
+        "m-00100"
+      ],
+      "min_index": 100,
+      "expected_answer": "conservator at Quay Cartography",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00100",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00100"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 100,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00101",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00101"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 101,
+      "expected_answer": "Hana Pere Almeida discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00120",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00120"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 120,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-00121",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00121"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 121,
+      "expected_answer": "Mira Wren Abebe",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00121",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00121"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 121,
+      "expected_answer": "Mira Wren Abebe discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00140",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00140"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 140,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00141",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00141"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 141,
+      "expected_answer": "Leif Rin Berhe discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-00144",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-00144"
+      ],
+      "irrelevant_uids": [
+        "m-00148"
+      ],
+      "min_index": 148,
+      "expected_answer": "instrument maker at Orrin Optics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00160",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00160"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 160,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-00161",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00161"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 161,
+      "expected_answer": "Elena Ell Chen",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00161",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00161"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 161,
+      "expected_answer": "Elena Ell Chen discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00180",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00180"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 180,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00181",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00181"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 181,
+      "expected_answer": "Hugo Pere Almeida discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-00192",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-00192"
+      ],
+      "irrelevant_uids": [
+        "m-00196"
+      ],
+      "min_index": 196,
+      "expected_answer": "metallurgist at Verdia Transit",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00200",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00200"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 200,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-00201",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00201"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 201,
+      "expected_answer": "Soren Wren Abebe",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00201",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00201"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 201,
+      "expected_answer": "Soren Wren Abebe discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00220",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00220"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 220,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00221",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00221"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 221,
+      "expected_answer": "Hana Rin Berhe discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00240",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00240"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 240,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-00241",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00241"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 241,
+      "expected_answer": "Mira Ell Chen 060",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00241",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00241"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 241,
+      "expected_answer": "Mira Ell Chen 060 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-00240",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-00240"
+      ],
+      "irrelevant_uids": [
+        "m-00244"
+      ],
+      "min_index": 244,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00260",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00260"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 260,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00261",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00261"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 261,
+      "expected_answer": "Leif Pere Almeida 065 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00280",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00280"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 280,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-00281",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00281"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 281,
+      "expected_answer": "Elena Wren Abebe 070",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00281",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00281"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 281,
+      "expected_answer": "Elena Wren Abebe 070 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-00288",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-00288"
+      ],
+      "irrelevant_uids": [
+        "m-00292"
+      ],
+      "min_index": 292,
+      "expected_answer": "ceramicist at Diallo Timber",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00300",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00300"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 300,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00301",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00301"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 301,
+      "expected_answer": "Hugo Rin Berhe 075 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00320",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00320"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 320,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-00321",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00321"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 321,
+      "expected_answer": "Soren Ell Chen 080",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00321",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00321"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 321,
+      "expected_answer": "Soren Ell Chen 080 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-00336",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-00336"
+      ],
+      "irrelevant_uids": [
+        "m-00340"
+      ],
+      "min_index": 340,
+      "expected_answer": "conservator at Quay Cartography",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00340",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00340"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 340,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00341",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00341"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 341,
+      "expected_answer": "Hana Pere Almeida 085 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00360",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00360"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 360,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-00361",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00361"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 361,
+      "expected_answer": "Mira Wren Abebe 090",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00361",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00361"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 361,
+      "expected_answer": "Mira Wren Abebe 090 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00380",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00380"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 380,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00381",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00381"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 381,
+      "expected_answer": "Leif Rin Berhe 095 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-00384",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-00384"
+      ],
+      "irrelevant_uids": [
+        "m-00388"
+      ],
+      "min_index": 388,
+      "expected_answer": "instrument maker at Orrin Optics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00400",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00400"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 400,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-00401",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00401"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 401,
+      "expected_answer": "Elena Ell Chen 100",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00401",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00401"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 401,
+      "expected_answer": "Elena Ell Chen 100 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00420",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00420"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 420,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00421",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00421"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 421,
+      "expected_answer": "Hugo Pere Almeida 105 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-00432",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-00432"
+      ],
+      "irrelevant_uids": [
+        "m-00436"
+      ],
+      "min_index": 436,
+      "expected_answer": "metallurgist at Verdia Transit",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00440",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00440"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 440,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-00441",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00441"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 441,
+      "expected_answer": "Soren Wren Abebe 110",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00441",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00441"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 441,
+      "expected_answer": "Soren Wren Abebe 110 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00460",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00460"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 460,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00461",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00461"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 461,
+      "expected_answer": "Hana Rin Berhe 115 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00480",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00480"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 480,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-00481",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00481"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 481,
+      "expected_answer": "Mira Ell Chen 120",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00481",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00481"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 481,
+      "expected_answer": "Mira Ell Chen 120 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-00480",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-00480"
+      ],
+      "irrelevant_uids": [
+        "m-00484"
+      ],
+      "min_index": 484,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00500",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00500"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 500,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00501",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00501"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 501,
+      "expected_answer": "Leif Pere Almeida 125 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00520",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00520"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 520,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-00521",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00521"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 521,
+      "expected_answer": "Elena Wren Abebe 130",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00521",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00521"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 521,
+      "expected_answer": "Elena Wren Abebe 130 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-00528",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-00528"
+      ],
+      "irrelevant_uids": [
+        "m-00532"
+      ],
+      "min_index": 532,
+      "expected_answer": "ceramicist at Diallo Timber",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00540",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00540"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 540,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00541",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00541"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 541,
+      "expected_answer": "Hugo Rin Berhe 135 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00560",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00560"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 560,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-00561",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00561"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 561,
+      "expected_answer": "Soren Ell Chen 140",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00561",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00561"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 561,
+      "expected_answer": "Soren Ell Chen 140 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-00576",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-00576"
+      ],
+      "irrelevant_uids": [
+        "m-00580"
+      ],
+      "min_index": 580,
+      "expected_answer": "conservator at Quay Cartography",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00580",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00580"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 580,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00581",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00581"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 581,
+      "expected_answer": "Hana Pere Almeida 145 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00600",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00600"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 600,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-00601",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00601"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 601,
+      "expected_answer": "Mira Wren Abebe 150",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00601",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00601"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 601,
+      "expected_answer": "Mira Wren Abebe 150 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00620",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00620"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 620,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00621",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00621"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 621,
+      "expected_answer": "Leif Rin Berhe 155 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-00624",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-00624"
+      ],
+      "irrelevant_uids": [
+        "m-00628"
+      ],
+      "min_index": 628,
+      "expected_answer": "instrument maker at Orrin Optics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00640",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00640"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 640,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-00641",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00641"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 641,
+      "expected_answer": "Elena Ell Chen 160",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00641",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00641"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 641,
+      "expected_answer": "Elena Ell Chen 160 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00660",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00660"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 660,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00661",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00661"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 661,
+      "expected_answer": "Hugo Pere Almeida 165 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-00672",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-00672"
+      ],
+      "irrelevant_uids": [
+        "m-00676"
+      ],
+      "min_index": 676,
+      "expected_answer": "metallurgist at Verdia Transit",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00680",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00680"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 680,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-00681",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00681"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 681,
+      "expected_answer": "Soren Wren Abebe 170",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00681",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00681"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 681,
+      "expected_answer": "Soren Wren Abebe 170 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00700",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00700"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 700,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00701",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00701"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 701,
+      "expected_answer": "Hana Rin Berhe 175 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00720",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00720"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 720,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-00721",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00721"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 721,
+      "expected_answer": "Mira Ell Chen 180",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00721",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00721"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 721,
+      "expected_answer": "Mira Ell Chen 180 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-00720",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-00720"
+      ],
+      "irrelevant_uids": [
+        "m-00724"
+      ],
+      "min_index": 724,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00740",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00740"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 740,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00741",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00741"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 741,
+      "expected_answer": "Leif Pere Almeida 185 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00760",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00760"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 760,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-00761",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00761"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 761,
+      "expected_answer": "Elena Wren Abebe 190",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00761",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00761"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 761,
+      "expected_answer": "Elena Wren Abebe 190 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-00768",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-00768"
+      ],
+      "irrelevant_uids": [
+        "m-00772"
+      ],
+      "min_index": 772,
+      "expected_answer": "ceramicist at Diallo Timber",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-00780",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00780"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 780,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-00781",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-00781"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 781,
+      "expected_answer": "Hugo Rin Berhe 195 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-00800",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00800"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 800,
+      "expected_answer": "Port Kell",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-00808",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00808"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 808,
+      "expected_answer": "Orrin Reach",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-00816",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00816"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 816,
+      "expected_answer": "Amber Ridge",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-00824",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00824"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 824,
+      "expected_answer": "Twin Harbors",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-00832",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00832"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 832,
+      "expected_answer": "South Lumen",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-00840",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00840"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 840,
+      "expected_answer": "Gray Fen",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-00848",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00848"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 848,
+      "expected_answer": "Kestrel Bay",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-00856",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00856"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 856,
+      "expected_answer": "Solstice Quay",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-00864",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00864"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 864,
+      "expected_answer": "Iron Hollow",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-00872",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00872"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 872,
+      "expected_answer": "Upper Mandrel",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-00880",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00880"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 880,
+      "expected_answer": "Cape Verdia",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-00888",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00888"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 888,
+      "expected_answer": "Red Orchard",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-00896",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-00896"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 896,
+      "expected_answer": "Dalmere",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00900",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00900",
+        "m-00901"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 901,
+      "expected_answer": "conflicting 1972 vs 1978",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00902",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00902",
+        "m-00903"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 903,
+      "expected_answer": "conflicting 1973 vs 1979",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00904",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00904",
+        "m-00905"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 905,
+      "expected_answer": "conflicting 1974 vs 1980",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00906",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00906",
+        "m-00907"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 907,
+      "expected_answer": "conflicting 1975 vs 1981",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00908",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00908",
+        "m-00909"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 909,
+      "expected_answer": "conflicting 1976 vs 1982",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00910",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00910",
+        "m-00911"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 911,
+      "expected_answer": "conflicting 1977 vs 1983",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00912",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00912",
+        "m-00913"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 913,
+      "expected_answer": "conflicting 1978 vs 1984",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00914",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00914",
+        "m-00915"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 915,
+      "expected_answer": "conflicting 1979 vs 1985",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00916",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00916",
+        "m-00917"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 917,
+      "expected_answer": "conflicting 1972 vs 1978",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00918",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00918",
+        "m-00919"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 919,
+      "expected_answer": "conflicting 1973 vs 1979",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00920",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00920",
+        "m-00921"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 921,
+      "expected_answer": "conflicting 1974 vs 1980",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00922",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00922",
+        "m-00923"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 923,
+      "expected_answer": "conflicting 1975 vs 1981",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00924",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00924",
+        "m-00925"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 925,
+      "expected_answer": "conflicting 1976 vs 1982",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00926",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00926",
+        "m-00927"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 927,
+      "expected_answer": "conflicting 1977 vs 1983",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00928",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00928",
+        "m-00929"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 929,
+      "expected_answer": "conflicting 1978 vs 1984",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00930",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00930",
+        "m-00931"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 931,
+      "expected_answer": "conflicting 1979 vs 1985",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00932",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00932",
+        "m-00933"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 933,
+      "expected_answer": "conflicting 1972 vs 1978",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00934",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00934",
+        "m-00935"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 935,
+      "expected_answer": "conflicting 1973 vs 1979",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00936",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00936",
+        "m-00937"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 937,
+      "expected_answer": "conflicting 1974 vs 1980",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00938",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00938",
+        "m-00939"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 939,
+      "expected_answer": "conflicting 1975 vs 1981",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00940",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00940",
+        "m-00941"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 941,
+      "expected_answer": "conflicting 1976 vs 1982",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00942",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00942",
+        "m-00943"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 943,
+      "expected_answer": "conflicting 1977 vs 1983",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00944",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00944",
+        "m-00945"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 945,
+      "expected_answer": "conflicting 1978 vs 1984",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00946",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00946",
+        "m-00947"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 947,
+      "expected_answer": "conflicting 1979 vs 1985",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-00948",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-00948",
+        "m-00949"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 949,
+      "expected_answer": "conflicting 1972 vs 1978",
+      "needs_update": false
+    },
+    {
+      "qid": "q-sup-00950",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00950"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 950,
+      "expected_answer": "Cape Verdia",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00951",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00951"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 951,
+      "expected_answer": "Dalmere",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00952",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00952"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 952,
+      "expected_answer": "New Saffron",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00953",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00953"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 953,
+      "expected_answer": "Orrin Reach",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00954",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00954"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 954,
+      "expected_answer": "Twin Harbors",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00955",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00955"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 955,
+      "expected_answer": "Gray Fen",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00956",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00956"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 956,
+      "expected_answer": "Solstice Quay",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00957",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00957"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 957,
+      "expected_answer": "Upper Mandrel",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00958",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00958"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 958,
+      "expected_answer": "Red Orchard",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00959",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00959"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 959,
+      "expected_answer": "Lake Ivo",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00960",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00960"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 960,
+      "expected_answer": "Port Kell",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00961",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00961"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 961,
+      "expected_answer": "Amber Ridge",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00962",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00962"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 962,
+      "expected_answer": "South Lumen",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00963",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00963"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 963,
+      "expected_answer": "Kestrel Bay",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00964",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00964"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 964,
+      "expected_answer": "Iron Hollow",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00965",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00965"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 965,
+      "expected_answer": "Cape Verdia",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00966",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00966"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 966,
+      "expected_answer": "Dalmere",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00967",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00967"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 967,
+      "expected_answer": "New Saffron",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00968",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00968"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 968,
+      "expected_answer": "Orrin Reach",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00969",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00969"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 969,
+      "expected_answer": "Twin Harbors",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00970",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00970"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 970,
+      "expected_answer": "Gray Fen",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00971",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00971"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 971,
+      "expected_answer": "Solstice Quay",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00972",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00972"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 972,
+      "expected_answer": "Upper Mandrel",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00973",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00973"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 973,
+      "expected_answer": "Red Orchard",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00974",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00974"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 974,
+      "expected_answer": "Lake Ivo",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00975",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00975"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 975,
+      "expected_answer": "Port Kell",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00976",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00976"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 976,
+      "expected_answer": "Amber Ridge",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00977",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00977"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 977,
+      "expected_answer": "South Lumen",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00978",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00978"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 978,
+      "expected_answer": "Kestrel Bay",
+      "needs_update": true
+    },
+    {
+      "qid": "q-sup-00979",
+      "type": "supersession",
+      "relevant_uids": [
+        "m-00979"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 979,
+      "expected_answer": "Iron Hollow",
+      "needs_update": true
+    },
+    {
+      "qid": "q-hop-00980",
+      "type": "multihop",
+      "relevant_uids": [
+        "m-00980",
+        "m-00981"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 981,
+      "expected_answer": "Kelland",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hop-00982",
+      "type": "multihop",
+      "relevant_uids": [
+        "m-00982",
+        "m-00983"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 983,
+      "expected_answer": "Verdia",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hop-00984",
+      "type": "multihop",
+      "relevant_uids": [
+        "m-00984",
+        "m-00985"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 985,
+      "expected_answer": "Orrania",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hop-00986",
+      "type": "multihop",
+      "relevant_uids": [
+        "m-00986",
+        "m-00987"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 987,
+      "expected_answer": "Fenmark",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hop-00988",
+      "type": "multihop",
+      "relevant_uids": [
+        "m-00988",
+        "m-00989"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 989,
+      "expected_answer": "Ivolia",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hop-00990",
+      "type": "multihop",
+      "relevant_uids": [
+        "m-00990",
+        "m-00991"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 991,
+      "expected_answer": "Mandrelia",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hop-00992",
+      "type": "multihop",
+      "relevant_uids": [
+        "m-00992",
+        "m-00993"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 993,
+      "expected_answer": "Saffria",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hop-00994",
+      "type": "multihop",
+      "relevant_uids": [
+        "m-00994",
+        "m-00995"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 995,
+      "expected_answer": "Ridgewald",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hop-00996",
+      "type": "multihop",
+      "relevant_uids": [
+        "m-00996",
+        "m-00997"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 997,
+      "expected_answer": "Kelland",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hop-00998",
+      "type": "multihop",
+      "relevant_uids": [
+        "m-00998",
+        "m-00999"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 999,
+      "expected_answer": "Verdia",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01000",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01000"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1000,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-01001",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01001"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1001,
+      "expected_answer": "Soren Ell Chen 200",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01001",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01001"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1001,
+      "expected_answer": "Soren Ell Chen 200 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-01016",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-01016"
+      ],
+      "irrelevant_uids": [
+        "m-01020"
+      ],
+      "min_index": 1020,
+      "expected_answer": "conservator at Quay Cartography",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01020",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01020"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1020,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01021",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01021"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1021,
+      "expected_answer": "Hana Pere Almeida 205 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01040",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01040"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1040,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-01041",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01041"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1041,
+      "expected_answer": "Mira Wren Abebe 210",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01041",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01041"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1041,
+      "expected_answer": "Mira Wren Abebe 210 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01060",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01060"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1060,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01061",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01061"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1061,
+      "expected_answer": "Leif Rin Berhe 215 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-01064",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-01064"
+      ],
+      "irrelevant_uids": [
+        "m-01068"
+      ],
+      "min_index": 1068,
+      "expected_answer": "instrument maker at Orrin Optics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01080",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01080"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1080,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-01081",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01081"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1081,
+      "expected_answer": "Elena Ell Chen 220",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01081",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01081"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1081,
+      "expected_answer": "Elena Ell Chen 220 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01100",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01100"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1100,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01101",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01101"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1101,
+      "expected_answer": "Hugo Pere Almeida 225 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-01112",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-01112"
+      ],
+      "irrelevant_uids": [
+        "m-01116"
+      ],
+      "min_index": 1116,
+      "expected_answer": "metallurgist at Verdia Transit",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01120",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01120"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1120,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-01121",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01121"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1121,
+      "expected_answer": "Soren Wren Abebe 230",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01121",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01121"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1121,
+      "expected_answer": "Soren Wren Abebe 230 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01140",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01140"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1140,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01141",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01141"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1141,
+      "expected_answer": "Hana Rin Berhe 235 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01160",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01160"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1160,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-01161",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01161"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1161,
+      "expected_answer": "Mira Ell Chen 240",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01161",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01161"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1161,
+      "expected_answer": "Mira Ell Chen 240 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-01160",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-01160"
+      ],
+      "irrelevant_uids": [
+        "m-01164"
+      ],
+      "min_index": 1164,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01180",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01180"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1180,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01181",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01181"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1181,
+      "expected_answer": "Leif Pere Almeida 245 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01200",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01200"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1200,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-01201",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01201"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1201,
+      "expected_answer": "Elena Wren Abebe 250",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01201",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01201"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1201,
+      "expected_answer": "Elena Wren Abebe 250 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-01208",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-01208"
+      ],
+      "irrelevant_uids": [
+        "m-01212"
+      ],
+      "min_index": 1212,
+      "expected_answer": "ceramicist at Diallo Timber",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01220",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01220"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1220,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01221",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01221"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1221,
+      "expected_answer": "Hugo Rin Berhe 255 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01240",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01240"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1240,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-01241",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01241"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1241,
+      "expected_answer": "Soren Ell Chen 260",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01241",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01241"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1241,
+      "expected_answer": "Soren Ell Chen 260 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-01256",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-01256"
+      ],
+      "irrelevant_uids": [
+        "m-01260"
+      ],
+      "min_index": 1260,
+      "expected_answer": "conservator at Quay Cartography",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01260",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01260"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1260,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01261",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01261"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1261,
+      "expected_answer": "Hana Pere Almeida 265 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01280",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01280"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1280,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-01281",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01281"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1281,
+      "expected_answer": "Mira Wren Abebe 270",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01281",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01281"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1281,
+      "expected_answer": "Mira Wren Abebe 270 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01300",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01300"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1300,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01301",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01301"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1301,
+      "expected_answer": "Leif Rin Berhe 275 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-01304",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-01304"
+      ],
+      "irrelevant_uids": [
+        "m-01308"
+      ],
+      "min_index": 1308,
+      "expected_answer": "instrument maker at Orrin Optics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01320",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01320"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1320,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-01321",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01321"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1321,
+      "expected_answer": "Elena Ell Chen 280",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01321",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01321"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1321,
+      "expected_answer": "Elena Ell Chen 280 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01340",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01340"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1340,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01341",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01341"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1341,
+      "expected_answer": "Hugo Pere Almeida 285 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-01352",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-01352"
+      ],
+      "irrelevant_uids": [
+        "m-01356"
+      ],
+      "min_index": 1356,
+      "expected_answer": "metallurgist at Verdia Transit",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01360",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01360"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1360,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-01361",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01361"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1361,
+      "expected_answer": "Soren Wren Abebe 290",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01361",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01361"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1361,
+      "expected_answer": "Soren Wren Abebe 290 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01380",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01380"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1380,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01381",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01381"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1381,
+      "expected_answer": "Hana Rin Berhe 295 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01400",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01400"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1400,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-01401",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01401"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1401,
+      "expected_answer": "Mira Ell Chen 300",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01401",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01401"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1401,
+      "expected_answer": "Mira Ell Chen 300 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-01400",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-01400"
+      ],
+      "irrelevant_uids": [
+        "m-01404"
+      ],
+      "min_index": 1404,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01420",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01420"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1420,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01421",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01421"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1421,
+      "expected_answer": "Leif Pere Almeida 305 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01440",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01440"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1440,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-01441",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01441"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1441,
+      "expected_answer": "Elena Wren Abebe 310",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01441",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01441"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1441,
+      "expected_answer": "Elena Wren Abebe 310 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-01448",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-01448"
+      ],
+      "irrelevant_uids": [
+        "m-01452"
+      ],
+      "min_index": 1452,
+      "expected_answer": "ceramicist at Diallo Timber",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01460",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01460"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1460,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01461",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01461"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1461,
+      "expected_answer": "Hugo Rin Berhe 315 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01480",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01480"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1480,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-01481",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01481"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1481,
+      "expected_answer": "Soren Ell Chen 320",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01481",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01481"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1481,
+      "expected_answer": "Soren Ell Chen 320 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-01496",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-01496"
+      ],
+      "irrelevant_uids": [
+        "m-01500"
+      ],
+      "min_index": 1500,
+      "expected_answer": "conservator at Quay Cartography",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01500",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01500"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1500,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01501",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01501"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1501,
+      "expected_answer": "Hana Pere Almeida 325 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01520",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01520"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1520,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-01521",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01521"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1521,
+      "expected_answer": "Mira Wren Abebe 330",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01521",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01521"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1521,
+      "expected_answer": "Mira Wren Abebe 330 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01540",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01540"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1540,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01541",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01541"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1541,
+      "expected_answer": "Leif Rin Berhe 335 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-01544",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-01544"
+      ],
+      "irrelevant_uids": [
+        "m-01548"
+      ],
+      "min_index": 1548,
+      "expected_answer": "instrument maker at Orrin Optics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01560",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01560"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1560,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-01561",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01561"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1561,
+      "expected_answer": "Elena Ell Chen 340",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01561",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01561"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1561,
+      "expected_answer": "Elena Ell Chen 340 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01580",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01580"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1580,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01581",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01581"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1581,
+      "expected_answer": "Hugo Pere Almeida 345 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-01592",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-01592"
+      ],
+      "irrelevant_uids": [
+        "m-01596"
+      ],
+      "min_index": 1596,
+      "expected_answer": "metallurgist at Verdia Transit",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01600",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01600"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1600,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-01601",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01601"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1601,
+      "expected_answer": "Soren Wren Abebe 350",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01601",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01601"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1601,
+      "expected_answer": "Soren Wren Abebe 350 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01620",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01620"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1620,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01621",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01621"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1621,
+      "expected_answer": "Hana Rin Berhe 355 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01640",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01640"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1640,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-01641",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01641"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1641,
+      "expected_answer": "Mira Ell Chen 360",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01641",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01641"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1641,
+      "expected_answer": "Mira Ell Chen 360 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-01640",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-01640"
+      ],
+      "irrelevant_uids": [
+        "m-01644"
+      ],
+      "min_index": 1644,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01660",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01660"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1660,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01661",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01661"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1661,
+      "expected_answer": "Leif Pere Almeida 365 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01680",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01680"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1680,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-01681",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01681"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1681,
+      "expected_answer": "Elena Wren Abebe 370",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01681",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01681"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1681,
+      "expected_answer": "Elena Wren Abebe 370 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-01688",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-01688"
+      ],
+      "irrelevant_uids": [
+        "m-01692"
+      ],
+      "min_index": 1692,
+      "expected_answer": "ceramicist at Diallo Timber",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01700",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01700"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1700,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01701",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01701"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1701,
+      "expected_answer": "Hugo Rin Berhe 375 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01720",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01720"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1720,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-01721",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01721"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1721,
+      "expected_answer": "Soren Ell Chen 380",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01721",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01721"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1721,
+      "expected_answer": "Soren Ell Chen 380 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-01736",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-01736"
+      ],
+      "irrelevant_uids": [
+        "m-01740"
+      ],
+      "min_index": 1740,
+      "expected_answer": "conservator at Quay Cartography",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01740",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01740"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1740,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01741",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01741"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1741,
+      "expected_answer": "Hana Pere Almeida 385 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01760",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01760"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1760,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-01761",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01761"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1761,
+      "expected_answer": "Mira Wren Abebe 390",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01761",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01761"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1761,
+      "expected_answer": "Mira Wren Abebe 390 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-01780",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01780"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1780,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-01781",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-01781"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1781,
+      "expected_answer": "Leif Rin Berhe 395 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-01784",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-01784"
+      ],
+      "irrelevant_uids": [
+        "m-01788"
+      ],
+      "min_index": 1788,
+      "expected_answer": "instrument maker at Orrin Optics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-01800",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01800"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1800,
+      "expected_answer": "Gray Fen",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-01808",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01808"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1808,
+      "expected_answer": "Kestrel Bay",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-01816",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01816"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1816,
+      "expected_answer": "Solstice Quay",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-01824",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01824"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1824,
+      "expected_answer": "Iron Hollow",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-01832",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01832"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1832,
+      "expected_answer": "Upper Mandrel",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-01840",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01840"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1840,
+      "expected_answer": "Cape Verdia",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-01848",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01848"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1848,
+      "expected_answer": "Red Orchard",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-01856",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01856"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1856,
+      "expected_answer": "Dalmere",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-01864",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01864"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1864,
+      "expected_answer": "Lake Ivo",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-01872",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01872"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1872,
+      "expected_answer": "New Saffron",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-01880",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01880"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1880,
+      "expected_answer": "Port Kell",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-01888",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01888"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1888,
+      "expected_answer": "Orrin Reach",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-01896",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-01896"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1896,
+      "expected_answer": "Amber Ridge",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01900",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01900",
+        "m-01901"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1901,
+      "expected_answer": "conflicting 1972 vs 1978",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01902",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01902",
+        "m-01903"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1903,
+      "expected_answer": "conflicting 1973 vs 1979",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01904",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01904",
+        "m-01905"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1905,
+      "expected_answer": "conflicting 1974 vs 1980",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01906",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01906",
+        "m-01907"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1907,
+      "expected_answer": "conflicting 1975 vs 1981",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01908",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01908",
+        "m-01909"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1909,
+      "expected_answer": "conflicting 1976 vs 1982",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01910",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01910",
+        "m-01911"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1911,
+      "expected_answer": "conflicting 1977 vs 1983",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01912",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01912",
+        "m-01913"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1913,
+      "expected_answer": "conflicting 1978 vs 1984",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01914",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01914",
+        "m-01915"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1915,
+      "expected_answer": "conflicting 1979 vs 1985",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01916",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01916",
+        "m-01917"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1917,
+      "expected_answer": "conflicting 1972 vs 1978",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01918",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01918",
+        "m-01919"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1919,
+      "expected_answer": "conflicting 1973 vs 1979",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01920",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01920",
+        "m-01921"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1921,
+      "expected_answer": "conflicting 1974 vs 1980",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01922",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01922",
+        "m-01923"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1923,
+      "expected_answer": "conflicting 1975 vs 1981",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01924",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01924",
+        "m-01925"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1925,
+      "expected_answer": "conflicting 1976 vs 1982",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01926",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01926",
+        "m-01927"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1927,
+      "expected_answer": "conflicting 1977 vs 1983",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01928",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01928",
+        "m-01929"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1929,
+      "expected_answer": "conflicting 1978 vs 1984",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01930",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01930",
+        "m-01931"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1931,
+      "expected_answer": "conflicting 1979 vs 1985",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01932",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01932",
+        "m-01933"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1933,
+      "expected_answer": "conflicting 1972 vs 1978",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01934",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01934",
+        "m-01935"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1935,
+      "expected_answer": "conflicting 1973 vs 1979",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01936",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01936",
+        "m-01937"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1937,
+      "expected_answer": "conflicting 1974 vs 1980",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01938",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01938",
+        "m-01939"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1939,
+      "expected_answer": "conflicting 1975 vs 1981",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01940",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01940",
+        "m-01941"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1941,
+      "expected_answer": "conflicting 1976 vs 1982",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01942",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01942",
+        "m-01943"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1943,
+      "expected_answer": "conflicting 1977 vs 1983",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01944",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01944",
+        "m-01945"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1945,
+      "expected_answer": "conflicting 1978 vs 1984",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01946",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01946",
+        "m-01947"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1947,
+      "expected_answer": "conflicting 1979 vs 1985",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-01948",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-01948",
+        "m-01949"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1949,
+      "expected_answer": "conflicting 1972 vs 1978",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-01950",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-00000",
+        "m-01950"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1950,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-01951",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-00001",
+        "m-01951"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1951,
+      "expected_answer": "Kell-ice isotope in 1998",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-01952",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-00002",
+        "m-01952"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1952,
+      "expected_answer": "Ell Lane, Port Kell",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-01953",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-00003",
+        "m-01953"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1953,
+      "expected_answer": "Basin Merit in 2015",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-01954",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-00004",
+        "m-01954"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1954,
+      "expected_answer": "cartographer at Kestrel Hydronics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-01955",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-00005",
+        "m-01955"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1955,
+      "expected_answer": "amber-ridge fault line in 1999",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-01956",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-00006",
+        "m-01956"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1956,
+      "expected_answer": "Mar Lane, Amber Ridge",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-01957",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-00007",
+        "m-01957"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1957,
+      "expected_answer": "Harbor Lantern in 2016",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-01958",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-00008",
+        "m-01958"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1958,
+      "expected_answer": "archivist at Mandrel Foundry",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-01959",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-00009",
+        "m-01959"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1959,
+      "expected_answer": "lumen moth census in 2000",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-01960",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-00010",
+        "m-01960"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1960,
+      "expected_answer": "Sol Lane, South Lumen",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-01961",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-00011",
+        "m-01961"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1961,
+      "expected_answer": "Fen Field Medal in 2017",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-01962",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-00012",
+        "m-01962"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1962,
+      "expected_answer": "metallurgist at Verdia Transit",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-01963",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-00013",
+        "m-01963"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1963,
+      "expected_answer": "hollow-grain rust in 2001",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-01964",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-00014",
+        "m-01964"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1964,
+      "expected_answer": "Venn Lane, Kestrel Bay",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-01965",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-00015",
+        "m-01965"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1965,
+      "expected_answer": "Quay Chart Prize in 2018",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-01966",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-00016",
+        "m-01966"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1966,
+      "expected_answer": "botanist at Lumen Archives",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-01967",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-00017",
+        "m-01967"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1967,
+      "expected_answer": "verdia tide table in 2002",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-01968",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-00018",
+        "m-01968"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1968,
+      "expected_answer": "Kade Lane, Iron Hollow",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-01969",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-00019",
+        "m-01969"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1969,
+      "expected_answer": "Ridge Service Star in 2019",
+      "needs_update": false
+    },
+    {
+      "qid": "q-uni-01970",
+      "type": "unicode",
+      "relevant_uids": [
+        "m-01970"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1970,
+      "expected_answer": "José García (1)",
+      "needs_update": false
+    },
+    {
+      "qid": "q-uni-01973",
+      "type": "unicode",
+      "relevant_uids": [
+        "m-01973"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1973,
+      "expected_answer": "Zoë Müller (4)",
+      "needs_update": false
+    },
+    {
+      "qid": "q-uni-01976",
+      "type": "unicode",
+      "relevant_uids": [
+        "m-01976"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1976,
+      "expected_answer": "田中 美咲 (7)",
+      "needs_update": false
+    },
+    {
+      "qid": "q-uni-01979",
+      "type": "unicode",
+      "relevant_uids": [
+        "m-01979"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1979,
+      "expected_answer": "François Côté (10)",
+      "needs_update": false
+    },
+    {
+      "qid": "q-uni-01982",
+      "type": "unicode",
+      "relevant_uids": [
+        "m-01982"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1982,
+      "expected_answer": "محمد علي (13)",
+      "needs_update": false
+    },
+    {
+      "qid": "q-uni-01985",
+      "type": "unicode",
+      "relevant_uids": [
+        "m-01985"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1985,
+      "expected_answer": "José García (16)",
+      "needs_update": false
+    },
+    {
+      "qid": "q-uni-01988",
+      "type": "unicode",
+      "relevant_uids": [
+        "m-01988"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1988,
+      "expected_answer": "Zoë Müller (19)",
+      "needs_update": false
+    },
+    {
+      "qid": "q-uni-01991",
+      "type": "unicode",
+      "relevant_uids": [
+        "m-01991"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1991,
+      "expected_answer": "田中 美咲 (22)",
+      "needs_update": false
+    },
+    {
+      "qid": "q-uni-01994",
+      "type": "unicode",
+      "relevant_uids": [
+        "m-01994"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1994,
+      "expected_answer": "François Côté (25)",
+      "needs_update": false
+    },
+    {
+      "qid": "q-uni-01997",
+      "type": "unicode",
+      "relevant_uids": [
+        "m-01997"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 1997,
+      "expected_answer": "محمد علي (28)",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-02000",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02000"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2000,
+      "expected_answer": "TOK02000491A",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-02025",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02025"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2025,
+      "expected_answer": "TOK02025AE93",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-02050",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02050"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2050,
+      "expected_answer": "TOK02050141C",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-02075",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02075"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2075,
+      "expected_answer": "TOK0207562C6",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-02100",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02100"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2100,
+      "expected_answer": "TOK02100D938",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-02125",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02125"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2125,
+      "expected_answer": "TOK021252C72",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-02150",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02150"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2150,
+      "expected_answer": "TOK021503BD2",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-02175",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02175"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2175,
+      "expected_answer": "TOK021753C43",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-02200",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02200"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2200,
+      "expected_answer": "TOK0220041B2",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-02225",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02225"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2225,
+      "expected_answer": "TOK022258BF0",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-02250",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02250"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2250,
+      "expected_answer": "TOK02250F19F",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-02275",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02275"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2275,
+      "expected_answer": "TOK022757AE9",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-02300",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02300"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2300,
+      "expected_answer": "TOK023006E20",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-02325",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02325"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2325,
+      "expected_answer": "TOK0232546B9",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-02350",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02350"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2350,
+      "expected_answer": "TOK02350FA13",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-02375",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02375"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2375,
+      "expected_answer": "TOK02375F0E7",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-02400",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02400"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2400,
+      "expected_answer": "TOK024000685",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-02425",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02425"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2425,
+      "expected_answer": "TOK0242571C3",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-02450",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02450"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2450,
+      "expected_answer": "TOK02450BF97",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-02475",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02475"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2475,
+      "expected_answer": "TOK02475FEFA",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02500",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02500"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2500,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-02501",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02501"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2501,
+      "expected_answer": "Elena Ell Chen 400",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02501",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02501"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2501,
+      "expected_answer": "Elena Ell Chen 400 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02520",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02520"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2520,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02521",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02521"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2521,
+      "expected_answer": "Hugo Pere Almeida 405 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-02532",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-02532"
+      ],
+      "irrelevant_uids": [
+        "m-02536"
+      ],
+      "min_index": 2536,
+      "expected_answer": "metallurgist at Verdia Transit",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02540",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02540"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2540,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-02541",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02541"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2541,
+      "expected_answer": "Soren Wren Abebe 410",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02541",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02541"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2541,
+      "expected_answer": "Soren Wren Abebe 410 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02560",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02560"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2560,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02561",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02561"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2561,
+      "expected_answer": "Hana Rin Berhe 415 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02580",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02580"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2580,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-02581",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02581"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2581,
+      "expected_answer": "Mira Ell Chen 420",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02581",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02581"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2581,
+      "expected_answer": "Mira Ell Chen 420 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-02580",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-02580"
+      ],
+      "irrelevant_uids": [
+        "m-02584"
+      ],
+      "min_index": 2584,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02600",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02600"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2600,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02601",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02601"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2601,
+      "expected_answer": "Leif Pere Almeida 425 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02620",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02620"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2620,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-02621",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02621"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2621,
+      "expected_answer": "Elena Wren Abebe 430",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02621",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02621"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2621,
+      "expected_answer": "Elena Wren Abebe 430 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-02628",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-02628"
+      ],
+      "irrelevant_uids": [
+        "m-02632"
+      ],
+      "min_index": 2632,
+      "expected_answer": "ceramicist at Diallo Timber",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02640",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02640"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2640,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02641",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02641"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2641,
+      "expected_answer": "Hugo Rin Berhe 435 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02660",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02660"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2660,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-02661",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02661"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2661,
+      "expected_answer": "Soren Ell Chen 440",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02661",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02661"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2661,
+      "expected_answer": "Soren Ell Chen 440 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-02676",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-02676"
+      ],
+      "irrelevant_uids": [
+        "m-02680"
+      ],
+      "min_index": 2680,
+      "expected_answer": "conservator at Quay Cartography",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02680",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02680"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2680,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02681",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02681"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2681,
+      "expected_answer": "Hana Pere Almeida 445 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02700",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02700"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2700,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-02701",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02701"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2701,
+      "expected_answer": "Mira Wren Abebe 450",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02701",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02701"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2701,
+      "expected_answer": "Mira Wren Abebe 450 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02720",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02720"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2720,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02721",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02721"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2721,
+      "expected_answer": "Leif Rin Berhe 455 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-02724",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-02724"
+      ],
+      "irrelevant_uids": [
+        "m-02728"
+      ],
+      "min_index": 2728,
+      "expected_answer": "instrument maker at Orrin Optics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02740",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02740"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2740,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-02741",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02741"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2741,
+      "expected_answer": "Elena Ell Chen 460",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02741",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02741"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2741,
+      "expected_answer": "Elena Ell Chen 460 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02760",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02760"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2760,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02761",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02761"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2761,
+      "expected_answer": "Hugo Pere Almeida 465 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-02772",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-02772"
+      ],
+      "irrelevant_uids": [
+        "m-02776"
+      ],
+      "min_index": 2776,
+      "expected_answer": "metallurgist at Verdia Transit",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02780",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02780"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2780,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-02781",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02781"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2781,
+      "expected_answer": "Soren Wren Abebe 470",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02781",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02781"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2781,
+      "expected_answer": "Soren Wren Abebe 470 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02800",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02800"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2800,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02801",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02801"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2801,
+      "expected_answer": "Hana Rin Berhe 475 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02820",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02820"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2820,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-02821",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02821"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2821,
+      "expected_answer": "Mira Ell Chen 480",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02821",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02821"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2821,
+      "expected_answer": "Mira Ell Chen 480 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-02820",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-02820"
+      ],
+      "irrelevant_uids": [
+        "m-02824"
+      ],
+      "min_index": 2824,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02840",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02840"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2840,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02841",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02841"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2841,
+      "expected_answer": "Leif Pere Almeida 485 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02860",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02860"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2860,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-02861",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02861"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2861,
+      "expected_answer": "Elena Wren Abebe 490",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02861",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02861"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2861,
+      "expected_answer": "Elena Wren Abebe 490 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-02868",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-02868"
+      ],
+      "irrelevant_uids": [
+        "m-02872"
+      ],
+      "min_index": 2872,
+      "expected_answer": "ceramicist at Diallo Timber",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02880",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02880"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2880,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02881",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02881"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2881,
+      "expected_answer": "Hugo Rin Berhe 495 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02900",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02900"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2900,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-02901",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02901"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2901,
+      "expected_answer": "Soren Ell Chen 500",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02901",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02901"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2901,
+      "expected_answer": "Soren Ell Chen 500 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-02916",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-02916"
+      ],
+      "irrelevant_uids": [
+        "m-02920"
+      ],
+      "min_index": 2920,
+      "expected_answer": "conservator at Quay Cartography",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02920",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02920"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2920,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02921",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02921"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2921,
+      "expected_answer": "Hana Pere Almeida 505 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02940",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02940"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2940,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-02941",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02941"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2941,
+      "expected_answer": "Mira Wren Abebe 510",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02941",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02941"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2941,
+      "expected_answer": "Mira Wren Abebe 510 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02960",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02960"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2960,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02961",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02961"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2961,
+      "expected_answer": "Leif Rin Berhe 515 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-02964",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-02964"
+      ],
+      "irrelevant_uids": [
+        "m-02968"
+      ],
+      "min_index": 2968,
+      "expected_answer": "instrument maker at Orrin Optics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-02980",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02980"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2980,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-02981",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-02981"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2981,
+      "expected_answer": "Elena Ell Chen 520",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-02981",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-02981"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 2981,
+      "expected_answer": "Elena Ell Chen 520 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03000",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03000"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3000,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03001",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03001"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3001,
+      "expected_answer": "Hugo Pere Almeida 525 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-03012",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-03012"
+      ],
+      "irrelevant_uids": [
+        "m-03016"
+      ],
+      "min_index": 3016,
+      "expected_answer": "metallurgist at Verdia Transit",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03020",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03020"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3020,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-03021",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03021"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3021,
+      "expected_answer": "Soren Wren Abebe 530",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03021",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03021"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3021,
+      "expected_answer": "Soren Wren Abebe 530 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03040",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03040"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3040,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03041",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03041"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3041,
+      "expected_answer": "Hana Rin Berhe 535 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03060",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03060"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3060,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-03061",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03061"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3061,
+      "expected_answer": "Mira Ell Chen 540",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03061",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03061"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3061,
+      "expected_answer": "Mira Ell Chen 540 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-03060",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-03060"
+      ],
+      "irrelevant_uids": [
+        "m-03064"
+      ],
+      "min_index": 3064,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03080",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03080"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3080,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03081",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03081"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3081,
+      "expected_answer": "Leif Pere Almeida 545 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03100",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03100"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3100,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-03101",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03101"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3101,
+      "expected_answer": "Elena Wren Abebe 550",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03101",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03101"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3101,
+      "expected_answer": "Elena Wren Abebe 550 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-03108",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-03108"
+      ],
+      "irrelevant_uids": [
+        "m-03112"
+      ],
+      "min_index": 3112,
+      "expected_answer": "ceramicist at Diallo Timber",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03120",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03120"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3120,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03121",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03121"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3121,
+      "expected_answer": "Hugo Rin Berhe 555 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03140",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03140"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3140,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-03141",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03141"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3141,
+      "expected_answer": "Soren Ell Chen 560",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03141",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03141"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3141,
+      "expected_answer": "Soren Ell Chen 560 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-03156",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-03156"
+      ],
+      "irrelevant_uids": [
+        "m-03160"
+      ],
+      "min_index": 3160,
+      "expected_answer": "conservator at Quay Cartography",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03160",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03160"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3160,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03161",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03161"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3161,
+      "expected_answer": "Hana Pere Almeida 565 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03180",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03180"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3180,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-03181",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03181"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3181,
+      "expected_answer": "Mira Wren Abebe 570",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03181",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03181"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3181,
+      "expected_answer": "Mira Wren Abebe 570 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03200",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03200"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3200,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03201",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03201"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3201,
+      "expected_answer": "Leif Rin Berhe 575 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-03204",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-03204"
+      ],
+      "irrelevant_uids": [
+        "m-03208"
+      ],
+      "min_index": 3208,
+      "expected_answer": "instrument maker at Orrin Optics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03220",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03220"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3220,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-03221",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03221"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3221,
+      "expected_answer": "Elena Ell Chen 580",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03221",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03221"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3221,
+      "expected_answer": "Elena Ell Chen 580 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03240",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03240"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3240,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03241",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03241"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3241,
+      "expected_answer": "Hugo Pere Almeida 585 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-03252",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-03252"
+      ],
+      "irrelevant_uids": [
+        "m-03256"
+      ],
+      "min_index": 3256,
+      "expected_answer": "metallurgist at Verdia Transit",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03260",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03260"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3260,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-03261",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03261"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3261,
+      "expected_answer": "Soren Wren Abebe 590",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03261",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03261"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3261,
+      "expected_answer": "Soren Wren Abebe 590 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03280",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03280"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3280,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03281",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03281"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3281,
+      "expected_answer": "Hana Rin Berhe 595 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03300",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03300"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3300,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-03301",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03301"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3301,
+      "expected_answer": "Mira Ell Chen 600",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03301",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03301"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3301,
+      "expected_answer": "Mira Ell Chen 600 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-03300",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-03300"
+      ],
+      "irrelevant_uids": [
+        "m-03304"
+      ],
+      "min_index": 3304,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03320",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03320"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3320,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03321",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03321"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3321,
+      "expected_answer": "Leif Pere Almeida 605 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03340",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03340"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3340,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-03341",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03341"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3341,
+      "expected_answer": "Elena Wren Abebe 610",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03341",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03341"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3341,
+      "expected_answer": "Elena Wren Abebe 610 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-03348",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-03348"
+      ],
+      "irrelevant_uids": [
+        "m-03352"
+      ],
+      "min_index": 3352,
+      "expected_answer": "ceramicist at Diallo Timber",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03360",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03360"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3360,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03361",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03361"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3361,
+      "expected_answer": "Hugo Rin Berhe 615 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03380",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03380"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3380,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-03381",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03381"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3381,
+      "expected_answer": "Soren Ell Chen 620",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03381",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03381"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3381,
+      "expected_answer": "Soren Ell Chen 620 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-03396",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-03396"
+      ],
+      "irrelevant_uids": [
+        "m-03400"
+      ],
+      "min_index": 3400,
+      "expected_answer": "conservator at Quay Cartography",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03400",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03400"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3400,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03401",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03401"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3401,
+      "expected_answer": "Hana Pere Almeida 625 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03420",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03420"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3420,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-03421",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03421"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3421,
+      "expected_answer": "Mira Wren Abebe 630",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03421",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03421"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3421,
+      "expected_answer": "Mira Wren Abebe 630 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03440",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03440"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3440,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03441",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03441"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3441,
+      "expected_answer": "Leif Rin Berhe 635 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-03444",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-03444"
+      ],
+      "irrelevant_uids": [
+        "m-03448"
+      ],
+      "min_index": 3448,
+      "expected_answer": "instrument maker at Orrin Optics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03460",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03460"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3460,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-03461",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03461"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3461,
+      "expected_answer": "Elena Ell Chen 640",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03461",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03461"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3461,
+      "expected_answer": "Elena Ell Chen 640 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03480",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03480"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3480,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03481",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03481"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3481,
+      "expected_answer": "Hugo Pere Almeida 645 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-03492",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-03492"
+      ],
+      "irrelevant_uids": [
+        "m-03496"
+      ],
+      "min_index": 3496,
+      "expected_answer": "metallurgist at Verdia Transit",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03500",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03500"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3500,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-03501",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03501"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3501,
+      "expected_answer": "Soren Wren Abebe 650",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03501",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03501"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3501,
+      "expected_answer": "Soren Wren Abebe 650 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03520",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03520"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3520,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03521",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03521"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3521,
+      "expected_answer": "Hana Rin Berhe 655 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03540",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03540"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3540,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-03541",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03541"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3541,
+      "expected_answer": "Mira Ell Chen 660",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03541",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03541"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3541,
+      "expected_answer": "Mira Ell Chen 660 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-03540",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-03540"
+      ],
+      "irrelevant_uids": [
+        "m-03544"
+      ],
+      "min_index": 3544,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03560",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03560"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3560,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03561",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03561"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3561,
+      "expected_answer": "Leif Pere Almeida 665 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03580",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03580"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3580,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-03581",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03581"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3581,
+      "expected_answer": "Elena Wren Abebe 670",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03581",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03581"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3581,
+      "expected_answer": "Elena Wren Abebe 670 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-03588",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-03588"
+      ],
+      "irrelevant_uids": [
+        "m-03592"
+      ],
+      "min_index": 3592,
+      "expected_answer": "ceramicist at Diallo Timber",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03600",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03600"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3600,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03601",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03601"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3601,
+      "expected_answer": "Hugo Rin Berhe 675 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03620",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03620"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3620,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-03621",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03621"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3621,
+      "expected_answer": "Soren Ell Chen 680",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03621",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03621"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3621,
+      "expected_answer": "Soren Ell Chen 680 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-03636",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-03636"
+      ],
+      "irrelevant_uids": [
+        "m-03640"
+      ],
+      "min_index": 3640,
+      "expected_answer": "conservator at Quay Cartography",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03640",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03640"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3640,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03641",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03641"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3641,
+      "expected_answer": "Hana Pere Almeida 685 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03660",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03660"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3660,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-disc-03661",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03661"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3661,
+      "expected_answer": "Mira Wren Abebe 690",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03661",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03661"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3661,
+      "expected_answer": "Mira Wren Abebe 690 discovered the Kell-ice isotope",
+      "needs_update": false
+    },
+    {
+      "qid": "q-para-03680",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03680"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3680,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-exact-03681",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-03681"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3681,
+      "expected_answer": "Leif Rin Berhe 695 discovered the orrin lens alloy",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dist-03684",
+      "type": "distractor",
+      "relevant_uids": [
+        "m-03684"
+      ],
+      "irrelevant_uids": [
+        "m-03688"
+      ],
+      "min_index": 3688,
+      "expected_answer": "instrument maker at Orrin Optics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03700",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03700"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3700,
+      "expected_answer": "Cape Verdia",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03708",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03708"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3708,
+      "expected_answer": "Red Orchard",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03716",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03716"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3716,
+      "expected_answer": "Dalmere",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03724",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03724"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3724,
+      "expected_answer": "Lake Ivo",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03732",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03732"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3732,
+      "expected_answer": "New Saffron",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03740",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03740"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3740,
+      "expected_answer": "Port Kell",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03748",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03748"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3748,
+      "expected_answer": "Orrin Reach",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03756",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03756"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3756,
+      "expected_answer": "Amber Ridge",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03764",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03764"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3764,
+      "expected_answer": "Twin Harbors",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03772",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03772"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3772,
+      "expected_answer": "South Lumen",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03780",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03780"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3780,
+      "expected_answer": "Gray Fen",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03788",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03788"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3788,
+      "expected_answer": "Kestrel Bay",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03796",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03796"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3796,
+      "expected_answer": "Solstice Quay",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03804",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03804"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3804,
+      "expected_answer": "Iron Hollow",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03812",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03812"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3812,
+      "expected_answer": "Upper Mandrel",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03820",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03820"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3820,
+      "expected_answer": "Cape Verdia",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03828",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03828"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3828,
+      "expected_answer": "Red Orchard",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03836",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03836"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3836,
+      "expected_answer": "Dalmere",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03844",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03844"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3844,
+      "expected_answer": "Lake Ivo",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03852",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03852"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3852,
+      "expected_answer": "New Saffron",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03860",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03860"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3860,
+      "expected_answer": "Port Kell",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03868",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03868"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3868,
+      "expected_answer": "Orrin Reach",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03876",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03876"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3876,
+      "expected_answer": "Amber Ridge",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03884",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03884"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3884,
+      "expected_answer": "Twin Harbors",
+      "needs_update": false
+    },
+    {
+      "qid": "q-hq-03892",
+      "type": "paraphrase",
+      "relevant_uids": [
+        "m-03892"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3892,
+      "expected_answer": "South Lumen",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03900",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03900",
+        "m-03901"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3901,
+      "expected_answer": "conflicting 1972 vs 1978",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03902",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03902",
+        "m-03903"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3903,
+      "expected_answer": "conflicting 1973 vs 1979",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03904",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03904",
+        "m-03905"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3905,
+      "expected_answer": "conflicting 1974 vs 1980",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03906",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03906",
+        "m-03907"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3907,
+      "expected_answer": "conflicting 1975 vs 1981",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03908",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03908",
+        "m-03909"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3909,
+      "expected_answer": "conflicting 1976 vs 1982",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03910",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03910",
+        "m-03911"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3911,
+      "expected_answer": "conflicting 1977 vs 1983",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03912",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03912",
+        "m-03913"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3913,
+      "expected_answer": "conflicting 1978 vs 1984",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03914",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03914",
+        "m-03915"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3915,
+      "expected_answer": "conflicting 1979 vs 1985",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03916",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03916",
+        "m-03917"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3917,
+      "expected_answer": "conflicting 1972 vs 1978",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03918",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03918",
+        "m-03919"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3919,
+      "expected_answer": "conflicting 1973 vs 1979",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03920",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03920",
+        "m-03921"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3921,
+      "expected_answer": "conflicting 1974 vs 1980",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03922",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03922",
+        "m-03923"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3923,
+      "expected_answer": "conflicting 1975 vs 1981",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03924",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03924",
+        "m-03925"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3925,
+      "expected_answer": "conflicting 1976 vs 1982",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03926",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03926",
+        "m-03927"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3927,
+      "expected_answer": "conflicting 1977 vs 1983",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03928",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03928",
+        "m-03929"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3929,
+      "expected_answer": "conflicting 1978 vs 1984",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03930",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03930",
+        "m-03931"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3931,
+      "expected_answer": "conflicting 1979 vs 1985",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03932",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03932",
+        "m-03933"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3933,
+      "expected_answer": "conflicting 1972 vs 1978",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03934",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03934",
+        "m-03935"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3935,
+      "expected_answer": "conflicting 1973 vs 1979",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03936",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03936",
+        "m-03937"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3937,
+      "expected_answer": "conflicting 1974 vs 1980",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03938",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03938",
+        "m-03939"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3939,
+      "expected_answer": "conflicting 1975 vs 1981",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03940",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03940",
+        "m-03941"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3941,
+      "expected_answer": "conflicting 1976 vs 1982",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03942",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03942",
+        "m-03943"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3943,
+      "expected_answer": "conflicting 1977 vs 1983",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03944",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03944",
+        "m-03945"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3945,
+      "expected_answer": "conflicting 1978 vs 1984",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03946",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03946",
+        "m-03947"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3947,
+      "expected_answer": "conflicting 1979 vs 1985",
+      "needs_update": false
+    },
+    {
+      "qid": "q-cfl-03948",
+      "type": "conflict",
+      "relevant_uids": [
+        "m-03948",
+        "m-03949"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3949,
+      "expected_answer": "conflicting 1972 vs 1978",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03950",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01000",
+        "m-03950"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3950,
+      "expected_answer": "navigator at Hollow Grain Co",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03951",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01001",
+        "m-03951"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3951,
+      "expected_answer": "Kell-ice isotope in 1998",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03952",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01002",
+        "m-03952"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3952,
+      "expected_answer": "Ell Lane, Cape Verdia",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03953",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01003",
+        "m-03953"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3953,
+      "expected_answer": "Basin Merit in 2015",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03954",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01004",
+        "m-03954"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3954,
+      "expected_answer": "instrument maker at Orrin Optics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03955",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01005",
+        "m-03955"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3955,
+      "expected_answer": "amber-ridge fault line in 1999",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03956",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01006",
+        "m-03956"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3956,
+      "expected_answer": "Mar Lane, Dalmere",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03957",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01007",
+        "m-03957"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3957,
+      "expected_answer": "Harbor Lantern in 2016",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03958",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01008",
+        "m-03958"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3958,
+      "expected_answer": "epidemiologist at Fen Biosurvey",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03959",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01009",
+        "m-03959"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3959,
+      "expected_answer": "lumen moth census in 2000",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03960",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01010",
+        "m-03960"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3960,
+      "expected_answer": "Sol Lane, New Saffron",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03961",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01011",
+        "m-03961"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3961,
+      "expected_answer": "Fen Field Medal in 2017",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03962",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01012",
+        "m-03962"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3962,
+      "expected_answer": "bridge engineer at Ridge Atomics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03963",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01013",
+        "m-03963"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3963,
+      "expected_answer": "hollow-grain rust in 2001",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03964",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01014",
+        "m-03964"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3964,
+      "expected_answer": "Venn Lane, Orrin Reach",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03965",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01015",
+        "m-03965"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3965,
+      "expected_answer": "Quay Chart Prize in 2018",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03966",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01016",
+        "m-03966"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3966,
+      "expected_answer": "conservator at Quay Cartography",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03967",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01017",
+        "m-03967"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3967,
+      "expected_answer": "verdia tide table in 2002",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03968",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01018",
+        "m-03968"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3968,
+      "expected_answer": "Kade Lane, Twin Harbors",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03969",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01019",
+        "m-03969"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3969,
+      "expected_answer": "Ridge Service Star in 2019",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03970",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01020",
+        "m-03970"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3970,
+      "expected_answer": "glaciologist at Ivo Ceramics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03971",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01021",
+        "m-03971"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3971,
+      "expected_answer": "orrin lens alloy in 2003",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03972",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01022",
+        "m-03972"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3972,
+      "expected_answer": "Rin Lane, Gray Fen",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03973",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01023",
+        "m-03973"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3973,
+      "expected_answer": "Cypress Leaf in 2020",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03974",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01024",
+        "m-03974"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3974,
+      "expected_answer": "signal officer at Santos Cypress",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03975",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01025",
+        "m-03975"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3975,
+      "expected_answer": "fen peat horizon in 2004",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03976",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01026",
+        "m-03976"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3976,
+      "expected_answer": "Tess Lane, Solstice Quay",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03977",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01027",
+        "m-03977"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3977,
+      "expected_answer": "Current Ribbon in 2021",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03978",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01028",
+        "m-03978"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3978,
+      "expected_answer": "ceramicist at Diallo Timber",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03979",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01029",
+        "m-03979"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3979,
+      "expected_answer": "ivo kiln glaze in 2005",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03980",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01030",
+        "m-03980"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3980,
+      "expected_answer": "Olin Lane, Upper Mandrel",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03981",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01031",
+        "m-03981"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3981,
+      "expected_answer": "Windworks Palm in 2022",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03982",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01032",
+        "m-03982"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3982,
+      "expected_answer": "arborist at Novak Current",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03983",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01033",
+        "m-03983"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3983,
+      "expected_answer": "saffron dye bind in 2006",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03984",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01034",
+        "m-03984"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3984,
+      "expected_answer": "Pax Lane, Red Orchard",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03985",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01035",
+        "m-03985"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3985,
+      "expected_answer": "Basin Merit in 2023",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03986",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01036",
+        "m-03986"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3986,
+      "expected_answer": "windwright at Sato Windworks",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03987",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01037",
+        "m-03987"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3987,
+      "expected_answer": "mandrel quench cycle in 2007",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03988",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01038",
+        "m-03988"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3988,
+      "expected_answer": "Shai Lane, Lake Ivo",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03989",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01039",
+        "m-03989"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3989,
+      "expected_answer": "Harbor Lantern in 2024",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03990",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01040",
+        "m-03990"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3990,
+      "expected_answer": "hydrochemist at Aurora Basin Lab",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03991",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01041",
+        "m-03991"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3991,
+      "expected_answer": "Kell-ice isotope in 2008",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03992",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01042",
+        "m-03992"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3992,
+      "expected_answer": "Wren Lane, Port Kell",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03993",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01043",
+        "m-03993"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3993,
+      "expected_answer": "Fen Field Medal in 2015",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03994",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01044",
+        "m-03994"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3994,
+      "expected_answer": "cartographer at Kestrel Hydronics",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03995",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01045",
+        "m-03995"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3995,
+      "expected_answer": "amber-ridge fault line in 2009",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03996",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01046",
+        "m-03996"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3996,
+      "expected_answer": "Nuri Lane, Amber Ridge",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03997",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01047",
+        "m-03997"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3997,
+      "expected_answer": "Quay Chart Prize in 2016",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03998",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01048",
+        "m-03998"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3998,
+      "expected_answer": "archivist at Mandrel Foundry",
+      "needs_update": false
+    },
+    {
+      "qid": "q-dup-03999",
+      "type": "near_duplicate",
+      "relevant_uids": [
+        "m-01049",
+        "m-03999"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 3999,
+      "expected_answer": "lumen moth census in 2010",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04000",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04000"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4000,
+      "expected_answer": "TOK040006F4A",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04025",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04025"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4025,
+      "expected_answer": "TOK04025901C",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04050",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04050"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4050,
+      "expected_answer": "TOK04050D081",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04075",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04075"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4075,
+      "expected_answer": "TOK04075797A",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04100",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04100"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4100,
+      "expected_answer": "TOK0410009E7",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04125",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04125"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4125,
+      "expected_answer": "TOK0412526F0",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04150",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04150"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4150,
+      "expected_answer": "TOK04150E958",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04175",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04175"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4175,
+      "expected_answer": "TOK041754BC4",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04200",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04200"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4200,
+      "expected_answer": "TOK04200686F",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04225",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04225"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4225,
+      "expected_answer": "TOK042255D68",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04250",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04250"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4250,
+      "expected_answer": "TOK04250E1F1",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04275",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04275"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4275,
+      "expected_answer": "TOK0427566DC",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04300",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04300"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4300,
+      "expected_answer": "TOK04300405A",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04325",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04325"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4325,
+      "expected_answer": "TOK04325491A",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04350",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04350"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4350,
+      "expected_answer": "TOK0435038B7",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04375",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04375"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4375,
+      "expected_answer": "TOK04375CAC4",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04400",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04400"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4400,
+      "expected_answer": "TOK044004AC5",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04425",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04425"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4425,
+      "expected_answer": "TOK04425FC8D",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04450",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04450"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4450,
+      "expected_answer": "TOK044506D53",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04475",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04475"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4475,
+      "expected_answer": "TOK044754B7A",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04500",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04500"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4500,
+      "expected_answer": "TOK0450022F2",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04525",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04525"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4525,
+      "expected_answer": "TOK045255786",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04550",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04550"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4550,
+      "expected_answer": "TOK045507777",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04575",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04575"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4575,
+      "expected_answer": "TOK04575827A",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04600",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04600"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4600,
+      "expected_answer": "TOK046003718",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04625",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04625"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4625,
+      "expected_answer": "TOK04625F554",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04650",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04650"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4650,
+      "expected_answer": "TOK0465058C4",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04675",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04675"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4675,
+      "expected_answer": "TOK046752A81",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04700",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04700"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4700,
+      "expected_answer": "TOK0470083AE",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04725",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04725"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4725,
+      "expected_answer": "TOK0472518EC",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04750",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04750"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4750,
+      "expected_answer": "TOK047509075",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04775",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04775"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4775,
+      "expected_answer": "TOK047755F46",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04800",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04800"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4800,
+      "expected_answer": "TOK0480062B0",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04825",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04825"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4825,
+      "expected_answer": "TOK0482561C2",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04850",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04850"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4850,
+      "expected_answer": "TOK04850B44B",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04875",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04875"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4875,
+      "expected_answer": "TOK0487506F4",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04900",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04900"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4900,
+      "expected_answer": "TOK04900F16C",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04925",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04925"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4925,
+      "expected_answer": "TOK049252E2C",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04950",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04950"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4950,
+      "expected_answer": "TOK04950C032",
+      "needs_update": false
+    },
+    {
+      "qid": "q-fil-04975",
+      "type": "exact_token",
+      "relevant_uids": [
+        "m-04975"
+      ],
+      "irrelevant_uids": [],
+      "min_index": 4975,
+      "expected_answer": "TOK049755502",
+      "needs_update": false
+    }
+  ]
+}
