@@ -437,7 +437,9 @@ class EmberMCP:
             result=issue(self.db,actor,ttl_seconds=args.get('ttl_seconds',3600),namespaces=args.get('namespaces'),
                          session_id=args.get('session_id'),span_sessions=args.get('span_sessions',True),observer_target=args.get('observer_target'),
                          lobby_scope_id=args.get('lobby_scope_id'),lobby_session_id=args.get('lobby_session_id'))
-            if base:result['visualization_url']=parsed.scheme+'://'+parsed.netloc+result['viewer_path']
+            if base:
+                result['visualization_url']=parsed.scheme+'://'+parsed.netloc+result['viewer_path']
+                result['viewer_url']=result['visualization_url']
             return _text(result)
         if name == "ember_visualizer_access":
             from ..integration.visualizer_access import issue, revoke
@@ -455,6 +457,7 @@ class EmberMCP:
             result = issue(self.db,args['namespace'],actor,ttl_seconds=args.get('ttl_seconds',900),session_id=args.get('session_id'))
             if base:
                 result['viewer_url']=parsed.scheme+'://'+parsed.netloc+result['viewer_path']
+                result['visualization_url']=result['viewer_url']
             return _text(result)
         if name == "ember_usefulness_update":
             from ..integration.usefulness_service import update

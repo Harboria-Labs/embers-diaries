@@ -125,7 +125,7 @@ def test_mcp_can_delegate_existing_lobby_scope(tmp_path):
     assert not result.get('isError'), result
     grant = json.loads(result['content'][0]['text'])
     assert grant['lobby_scope_id'] == scope
-    assert grant['visualization_url'].startswith('http://localhost:8000/visualizer?mode=observer#observe=')
+    assert grant['visualization_url'].startswith('http://localhost:8000/observe#code=')
 
 
 def test_snapshot_cursor_and_rows_share_one_read_transaction(tmp_path, monkeypatch):

@@ -602,7 +602,7 @@ TOOLS.extend([
 
 
 TOOLS.append({"name":"ember_visualizer_access",
- "description":"Create a temporary read-only visualizer code/link for the user without sharing agent credentials, or revoke a previously issued view. Grants authorize exactly one namespace, expire in 15 minutes by default, and cannot call mutation tools. Return code and viewer_url/viewer_path to the user. Supply server_url (the existing server origin) for a complete link, or configure EMBER_PUBLIC_URL.",
+ "description":"Create a temporary read-only code and one unified observation link (/observe), or revoke a previously issued view. ember_visualize returns that same page. This grant authorizes exactly one namespace, expires in 15 minutes by default, and cannot call mutation tools. Return code and viewer_url/viewer_path to the user. Supply server_url (the existing server origin) for a complete link, or configure EMBER_PUBLIC_URL.",
  "inputSchema":{"type":"object","properties":{
   "action":{"type":"string","enum":["create","revoke"],"default":"create"},
   "namespace":{"type":"string"},"ttl_seconds":{"type":"integer","minimum":60,"maximum":3600,"default":900},
@@ -611,7 +611,7 @@ TOOLS.append({"name":"ember_visualizer_access",
 
 
 TOOLS.append({"name":"ember_visualize",
- "description":"Create a read-only Research Observer link following MY observable Ember activity across namespaces and sessions. No namespace required. Self-only delegation; cannot observe another agent. Does not invoke retrieval or learning. Return visualization_url/viewer_path and code to the intended human. Scope defaults to future activity in namespaces I can currently read, spanning sessions. Namespace View remains available separately through ember_visualizer_access.",
+ "description":"Create a read-only link to the unified observation page (/observe) following MY observable Ember activity across namespaces and sessions. ember_visualizer_access returns that same page; this grant is self-only agent activity and cannot observe another agent. No namespace required. Does not invoke retrieval or learning. Return visualization_url/viewer_path and code to the intended human. Scope defaults to future activity in namespaces I can currently read, spanning sessions.",
  "inputSchema":{"type":"object","properties":{
   "action":{"type":"string","enum":["create","revoke"],"default":"create"},
   "observer_target":{"type":"string","description":"If supplied, must equal authenticated caller."},

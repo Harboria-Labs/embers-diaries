@@ -309,7 +309,7 @@ def test_browser_fetches_send_ngrok_header_and_sse_uses_fetch():
     root = Path("embers/api")
     for name in (
         "status_monitor.js", "observer_transport.js", "lobby_observer.js",
-        "observer.html", "visualizer.html", "research_settings.html", "control.js",
+        "observer.html", "visualizer.html", "observe.html", "research_settings.html", "control.js",
     ):
         text = (root / name).read_text(encoding="utf-8")
         assert "ngrok-skip-browser-warning" in text, name

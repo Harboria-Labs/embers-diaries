@@ -39,12 +39,17 @@ def issue(db, namespace, actor, *, ttl_seconds=900, session_id=None):
     db._writer.write(EmberRecord(id=rid,namespace=namespace,record_type=RecordType.RAW,data=data,
         written_by=actor,agent_id=actor,retrieval_candidate=False,training_candidate=False))
     return {'code':code,'grant_id':rid,'namespace':namespace,'expires_at':data['expires_at'],
-            'scope':'visualizer:read','viewer_path':'/visualizer#view='+code,
+            'scope':'visualizer:read','viewer_path':'/observe#code='+code,
             'note':'Temporary read-only access to this namespace. Share only with the intended viewer.'}
 
 
 def verify(db, code, namespace=None):
-    rid=grant_id(code)
+    return verify_id(db, grant_id(code), namespace)
+
+
+def verify_id(db, rid, namespace=None):
+    if not isinstance(rid, str) or not rid.startswith(PREFIX):
+        raise PermissionError('Invalid or expired viewing code')
     record=db._store.read(rid)
     if (record is None or record.record_type!=RecordType.RAW or not record.verify_integrity()
         or record.data.get('kind')!='visualizer-access.v1' or record.data.get('scope')!='visualizer:read'
@@ -70,4 +75,6 @@ def revoke(db, rid, actor):
             db._writer.write(EmberRecord(id=rid+'-revoked',namespace=record.namespace,record_type=RecordType.RAW,
                 data={'kind':'visualizer-access-revocation.v1','grant_id':rid,'revoked_at':time.time()},
                 written_by=actor,agent_id=actor,retrieval_candidate=False,training_candidate=False))
+    from .observation_session import invalidate_grant
+    invalidate_grant(db, rid)
     return {'grant_id':rid,'revoked':True}
