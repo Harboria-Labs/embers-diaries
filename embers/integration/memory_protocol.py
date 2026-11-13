@@ -260,6 +260,24 @@ class MemoryProtocol:
 
         _merge(vector_results)
         _merge(text_results)
+        # A full question's BM25 hit for a unique code can still lose to a
+        # crowd of vector neighbors: each list is stretched to 1.0, then
+        # multiplied by confidence, so a slightly newer near-match sorts
+        # first. An exact rare token has to outrank that whole channel.
+        # Normalized scores are at most 1, so the +1 floor does it. Queries
+        # without a mixed letter/digit code (paraphrases) add nothing.
+        for rid, rarity in self.db._fulltext_index.rare_identifier_hits(
+                query, ns, limit=top_k):
+            existing = candidates.get(rid)
+            if existing is not None:
+                record = existing[0]
+                base = existing[1]
+            else:
+                record = self.db._reader.get(rid, track_access=False)
+                if record is None or record.namespace != ns:
+                    continue
+                base = 0.0
+            candidates[rid] = (record, base + 1.0 + rarity)
 
         ranked = sorted(candidates.values(), key=lambda pair: pair[1], reverse=True)
 

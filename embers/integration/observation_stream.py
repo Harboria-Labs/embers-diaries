@@ -64,6 +64,17 @@ def public_payload(value):
     return value
 
 
+# Don't split a fast snapshot with a keepalive. An established stream that
+# is stuck behind the write lock still heartbeats at least this often, which
+# is inside the client's 45s idle timeout.
+_STALL_HEARTBEAT = 0.25
+
+
+def _consume_task(task):
+    if not task.cancelled():
+        task.exception()
+
+
 def frame(event, data, revision=None):
     prefix = f'id: {revision}\n' if revision is not None else ''
     return prefix + 'event: ' + event + '\ndata: ' + json.dumps(public_payload(data), ensure_ascii=False, separators=(',', ':')) + '\n\n'
@@ -91,7 +102,18 @@ async def stream(db, namespace, actor, after, authorize, disconnected, *, interv
             ledger = journal(db, namespace)
             pending = ledger.events(actor=actor, after=cursor, limit=1)
             if pending or not previous:
-                current = snapshot(db, namespace, actor, after=cursor, limit=20, observations=True)
+                # Snapshot takes the store lock. A batch write holds that lock,
+                # so wait on a worker and keep the event loop free to heartbeat.
+                task = asyncio.create_task(asyncio.to_thread(
+                    snapshot, db, namespace, actor, after=cursor, limit=20, observations=True))
+                task.add_done_callback(_consume_task)
+                while not task.done():
+                    await asyncio.wait({task}, timeout=max(interval, _STALL_HEARTBEAT))
+                    if task.done():
+                        break
+                    if previous:
+                        yield ': heartbeat\n\n'
+                current = task.result()
                 if cursor > current['revision']:
                     yield frame('reset', {'reason':'cursor_ahead_of_journal'})
                     return

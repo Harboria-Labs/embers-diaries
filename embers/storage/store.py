@@ -12,6 +12,7 @@ Directory layout:
 
 import os
 import json
+import random
 import threading
 import uuid
 from contextvars import ContextVar
@@ -190,6 +191,11 @@ class PhysicalStore:
         self.root.mkdir(parents=True, exist_ok=True)
         self.records_dir = self.root / "records"
         self.meta_dir    = self.root / "meta"
+        # (ids, directory mtime_ns). The mtime is a stamp we set, not the
+        # kernel's coarse wall clock: a create or unlink moves it off the
+        # stamp, so a deleted file cannot stay in the cache.
+        self._id_cache = None
+        self._id_scans = 0
 
         # EmberDB.connect() can be called more than once for the same store.
         # A per-instance lock protects only one handle, so two handles could
@@ -300,6 +306,7 @@ class PhysicalStore:
                     json.dumps(record_dict, ensure_ascii=False,
                                separators=(",", ":")).encode("utf-8"),
                     raw, encode_index(meta))
+                self._note_record_ids([record.id])
                 return record.id
 
             # Step 1: Log to WAL (PENDING)
@@ -313,6 +320,7 @@ class PhysicalStore:
 
             # Step 4: Update record count in meta
             self._increment_record_count()
+            self._note_record_ids([record.id])
 
             return record.id
 
@@ -349,6 +357,7 @@ class PhysicalStore:
             _write_record_batch(
                 str(self.root), wal_ids, now, now, record_ids,
                 data_jsons, list(group.raws), encode_index(meta))
+            self._note_record_ids(record_ids)
         except Exception as exc:
             # Admission runs before the epoch moves. A quota refusal with no
             # record files is safe to retry one record at a time. Any file
@@ -466,10 +475,64 @@ class PhysicalStore:
 
     def all_ids(self) -> list[str]:
         """Return all record IDs in the store."""
-        return [
+        with self._lock:
+            return list(self._all_ids_locked())
+
+    def _all_ids_locked(self) -> list[str]:
+        try:
+            mtime = self.records_dir.stat().st_mtime_ns
+        except OSError:
+            self._id_cache = None
+            return [
+                f.stem for f in self.records_dir.iterdir()
+                if f.suffix == ".ember"
+            ]
+        cached = self._id_cache
+        if cached is not None and cached[1] == mtime:
+            return cached[0]
+        self._id_scans += 1
+        ids = [
             f.stem for f in self.records_dir.iterdir()
             if f.suffix == ".ember"
         ]
+        # A file created during the scan changes mtime; don't publish a
+        # partial list under the new timestamp.
+        try:
+            mtime_after = self.records_dir.stat().st_mtime_ns
+        except OSError:
+            self._id_cache = None
+            return ids
+        if mtime_after == mtime:
+            self._publish_id_cache(ids)
+        return ids
+
+    def _publish_id_cache(self, ids: list[str]) -> None:
+        """Remember ids under a directory mtime only this process would set.
+
+        Wall-clock directory mtime on this filesystem stays still across a
+        burst of creates and deletes, so a cache keyed by that clock kept
+        serving an id after its file was removed. An explicit stamp changes
+        on the next create or unlink, which drops the cache.
+        """
+        stamp = random.getrandbits(63) or 1
+        try:
+            os.utime(self.records_dir, ns=(stamp, stamp))
+            got = self.records_dir.stat().st_mtime_ns
+        except OSError:
+            self._id_cache = None
+            return
+        self._id_cache = (ids, stamp) if got == stamp else None
+
+    def _note_record_ids(self, record_ids: list[str]) -> None:
+        """Keep the id cache aligned with files this process just created."""
+        cached = self._id_cache
+        if cached is None:
+            return
+        known = cached[0]
+        for record_id in record_ids:
+            if record_id not in known:
+                known.append(record_id)
+        self._publish_id_cache(known)
 
     def record_count(self) -> int:
         return sum(1 for f in self.records_dir.iterdir() if f.suffix == ".ember")

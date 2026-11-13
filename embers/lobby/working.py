@@ -385,10 +385,40 @@ def _view(row, *, evidence=False):
             "updated_at": row["updated"], "expires_at": row["expires"], **payload}
 
 
-def submit(db, scope_id, session_id, actor, data):
+_SUBMIT_SHAPE = (
+    "Required JSON: {session_id, client_submission_id (string, 1-128 characters), "
+    "share: true, kind: finding|failure|question|outcome, claim (nonempty string), "
+    "uncertainty?: unverified|observed|contradicted|resolved}. "
+    "title, body and type are not accepted."
+)
+
+
+def _submission_problems(data):
+    problems = []
     key = data.get("client_submission_id")
     if not isinstance(key, str) or not 1 <= len(key) <= 128:
-        raise WorkingError("client_submission_id required")
+        problems.append("client_submission_id required (string, 1-128 characters)")
+    if data.get("share") is not True:
+        problems.append("share must be true")
+    if data.get("kind") not in KINDS:
+        problems.append("kind must be one of finding, failure, question, outcome")
+    uncertainty = data.get("uncertainty", "unverified")
+    if uncertainty not in UNCERTAINTY:
+        problems.append("uncertainty must be one of unverified, observed, contradicted, resolved")
+    claim = data.get("claim")
+    if not isinstance(claim, str) or not claim.strip():
+        problems.append("claim must be a nonempty string")
+    ignored = [name for name in ("title", "body", "type") if name in data]
+    if ignored:
+        problems.append("unsupported fields " + ", ".join(ignored))
+    return problems
+
+
+def submit(db, scope_id, session_id, actor, data):
+    problems = _submission_problems(data)
+    if problems:
+        raise WorkingError("; ".join(problems) + ". " + _SUBMIT_SHAPE)
+    key = data.get("client_submission_id")
     payload = _payload(data, actor, session_id)
     digest = hashlib.sha256(json.dumps(data, sort_keys=True, default=str).encode()).hexdigest()
     payload["_submission_digest"] = digest

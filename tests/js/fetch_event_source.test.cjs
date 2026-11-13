@@ -7,7 +7,7 @@ const {ReadableStream} = require('node:stream/web');
 
 const source = fs.readFileSync('embers/api/observer_transport.js', 'utf8');
 
-function load(chunks, {status = 200, fail = false} = {}) {
+function load(chunks, {status = 200, fail = false, url = '/v1/observer/stream?x=1'} = {}) {
   const requests = [];
   const events = [];
   const errors = [];
@@ -31,9 +31,12 @@ function load(chunks, {status = 200, fail = false} = {}) {
     AbortController,
     TextDecoder,
     ReadableStream,
+    URLSearchParams,
+    setTimeout,
+    clearTimeout,
   };
   vm.runInNewContext(source, sandbox);
-  const sourceStream = new sandbox.window.EmberFetchEventSource('/v1/observer/stream?x=1');
+  const sourceStream = new sandbox.window.EmberFetchEventSource(url);
   sourceStream.addEventListener('ready', event => events.push(['ready', event]));
   sourceStream.addEventListener('observer', event => events.push(['observer', event]));
   sourceStream.onopen = () => opens.push('open');
@@ -77,4 +80,12 @@ test('http failure reports onerror and does not open', async () => {
   await flush();
   assert.deepEqual(loaded.opens, []);
   assert.match(loaded.errors[0], /SSE HTTP 401/);
+  loaded.sourceStream.close();
+});
+
+test('resume sends Last-Event-ID from the after cursor', async () => {
+  const loaded = load([': ping\n\n'], {url: '/v1/visualizer-stream/bench?after=4'});
+  await flush();
+  assert.equal(loaded.requests[0].options.headers['Last-Event-ID'], '4');
+  loaded.sourceStream.close();
 });

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+
 from fastapi import APIRouter, Header, HTTPException, Query
 from fastapi.responses import JSONResponse
 
@@ -157,7 +159,9 @@ async def memory_write(
     from . import _get_db
     db = _get_db()
     agent = require_agent(db, x_ember_agent_id, x_ember_token)
-    return _commit_memory(db, agent, body)
+    # Writes fsync and update indexes. Run them off the event loop so an
+    # open Namespace View stream can keep sending heartbeats.
+    return await asyncio.to_thread(_commit_memory, db, agent, body)
 
 
 @router.post("/memory/write-batch")
@@ -193,7 +197,8 @@ async def memory_write_batch(
                 item["session_id"], result["id"], changed_by=agent.agent_id)
 
     try:
-        return run_write_batch(
+        return await asyncio.to_thread(
+            run_write_batch,
             db, records, atomic=atomic, limit=limit,
             write_item=write_item, measure_item=measure_item,
             commit_measured=commit_measured, after_commit=after_commit,
@@ -276,7 +281,11 @@ async def memory_update(
     agent = require_agent(db, x_ember_agent_id, x_ember_token)
     expected_hash = body.get("expected_hash")
     if not expected_hash:
-        raise HTTPException(400, "expected_hash required")
+        raise HTTPException(
+            400,
+            "expected_hash required; read content_hash from "
+            "GET /v1/memory/read/{record_id}",
+        )
     data = body.get("data")
     if not isinstance(data, dict):
         raise HTTPException(400, "data must be an object")

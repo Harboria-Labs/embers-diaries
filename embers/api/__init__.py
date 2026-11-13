@@ -361,6 +361,7 @@ def _serialize_record(record: EmberRecord) -> dict:
         "is_active": record.is_active, "is_current": record.is_current,
         "supersedes": record.supersedes, "superseded_by": record.superseded_by,
         "annotations_count": len(record.annotations),
+        "content_hash": record.content_hash,
     }
     if record.record_type in (RecordType.DOCUMENT, RecordType.NODE):
         result["epistemic"] = public_epistemic_summary(record)

@@ -278,7 +278,16 @@ def _snapshot(db, namespace, actor, *, after=0, limit=100, request_id=None, sess
         for key in ('events','reports','experiences','states','nodes','edges'):
             if output[key]: output[key].pop();break
         else: raise ValueError('snapshot metadata exceeds budget')
-    output['next_after'] = output['events'][-1]['revision'] if output['events'] else state['revision']
+    if output['events']:
+        output['next_after'] = output['events'][-1]['revision']
+    elif observations:
+        # The observation cursor and the FUR revision are different counters.
+        # An empty catch-up must stay on the cursor the client already has.
+        # Jumping to the FUR head makes an open view treat it as a missing
+        # page and sit in RECONNECTING until someone reloads.
+        output['next_after'] = after
+    else:
+        output['next_after'] = state['revision']
     if events and not output['events']:
         event = events[0]
         output['events'] = [{k:event[k] for k in ('id','action','revision','created_at','request_id','namespace','actor')}]

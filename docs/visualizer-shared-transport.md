@@ -44,7 +44,7 @@ one. The fix below removes ambiguity and tests every entry URL.
 
 Both view shells now load the same fingerprinted resource:
 
-`/v1/observer/transport.js?v=9771843068bdc4ad9b638245e335ce02ffec5c367fa67d9736914134f272c57b`
+`/v1/observer/transport.js?v=b1a25b019e63d61a09201bae219280e0245d8831b638e4030e6da9ca5011492e`
 
 Source file: `embers/api/observer_transport.js`, class `EmberObserverTransport`.
 Version: `shared-transport-v4`. Both pages use browser SRI and no-cache/no-store
@@ -54,14 +54,21 @@ transport implementation was added. The old namespace fetch/body-reader loop
 was removed.
 
 `shared-transport-v4` transport SHA-256 is
-`9771843068bdc4ad9b638245e335ce02ffec5c367fa67d9736914134f272c57b`.
+`b1a25b019e63d61a09201bae219280e0245d8831b638e4030e6da9ca5011492e`.
 It reads the live stream with `EmberFetchEventSource`
 (`fetch` plus a small SSE parser) instead of `EventSource`. A free ngrok
 tunnel returns an HTML interstitial unless the request sends
 `ngrok-skip-browser-warning: true`, and `EventSource` cannot set headers.
 The reader is closed only when the transport owner calls `close()`. A healthy
 body is not aborted on a short timer; the existing 45 second liveness timer
-still treats a silent stream as dead. Lobby SSE uses the same class when the
+still treats a silent stream as dead. If the body drops, the class retries
+with backoff (1s, 2s, 4s, then 8s) and sends `Last-Event-ID` from the last
+frame, or from the `after` query when no frame has arrived yet. That retry
+also rewrites `after` so the resumed URL matches the header. The transport
+owner closes the class before scheduling its own reconnect, so only one of
+those paths connects. A journal gap, a missing event page, an invalid
+revision, or an omitted snapshot pulls a fresh snapshot and then resumes
+from the cursor that snapshot confirms. Lobby SSE uses the same class when the
 transport script has loaded, and falls back to `EventSource` in tests that
 stub that constructor. Snapshot and exchange requests send the same header.
 
