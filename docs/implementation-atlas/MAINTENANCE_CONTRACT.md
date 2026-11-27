@@ -1,0 +1,133 @@
+# Atlas maintenance contract
+
+This workflow is mandatory for subsequent Ember research and implementation tasks. The Atlas is an evidence register, not permission to change behavior. The canonical [Production × Research Map](../consolidated-release-report.md#production--research-map) remains in `docs/consolidated-release-report.md`; update it in its own place when the workflow calls for it. Keep research, implementation/production, and live-validation status separate.
+
+## Before research
+
+1. Consult this Atlas, especially [coverage](COVERAGE_REGISTER.md), [source inventory](SOURCE_INVENTORY.md), [component map](COMPONENT_MAP.md), and relevant execution paths.
+2. Identify affected components, public interfaces, existing capabilities, owners and dependencies. Review bodies/tests where coverage is partial or symbol-only.
+3. Compare the proposed question or mechanism with implemented behavior and frozen research contracts. Record whether an existing capability may already solve it; do not infer absence from a name or a document.
+
+## After research
+
+1. Update confirmed findings, limitations, evidence grades and exact source/test references in the relevant Atlas pages. Record whether existing capabilities already solve the problem, need integration work, or leave a proven gap.
+2. Update the canonical Production × Research Map with separate research, implementation/production and live-validation status. Preserve prior evidence and uncertainty.
+3. Record the Atlas impact, including an explicit “no Atlas change required” with rationale if no page changes. A task is not complete until this review has happened.
+
+## Before implementation
+
+1. Recheck the current Atlas source version, coverage register, affected implementation bodies and frozen research contract. Resolve drift before treating an old claim as current.
+2. Identify every interface, guarantee, dependency, persistence format, authorization rule, recovery rule and test surface affected by the proposed change.
+3. Prepare a concrete change and validation plan, then **require user approval for implementation changes**. Research or documentation authorization alone does not authorize implementation.
+
+## After implementation
+
+1. Reconcile Atlas descriptions with the modified source, including execution paths, capability status, gaps, ownership and the coverage register.
+2. Record exact corresponding tests, what ran, what passed/failed, and what remains unverified. Separate static inspection, isolated execution and live validation.
+3. Update the canonical Production × Research Map without collapsing its three status columns.
+4. Append a source-version entry and record the Atlas-impact review. Do not mark the implementation task complete until that review is recorded, even if the outcome is “no Atlas change required.”
+
+## Source-version tracking
+
+The initial Atlas is a **working-tree** snapshot of branch `codex/ember-split-feedback-candidate04`, HEAD `f183346547cd210f58ca0a6b23df91a56be22b66`, inspected 2026-10-15. HEAD alone does not identify every reviewed byte: `embers/api/research_dashboard.js` and the canonical map were already modified, and `tests/test_research_dashboard_layout.js` and research artifacts were untracked. The initial audit did not record their byte hashes, so it cannot retrospectively certify their exact baseline contents. The Atlas itself is untracked. Current hashes below identify those three files only **at this follow-up**, not at the initial audit.
+
+| Entry | Source identity and limits | Atlas evidence |
+|---|---|---|
+| V1 baseline, 2026-10-15 | Branch and HEAD above; working tree dirty; 115 source/asset rows and 61 test paths enumerated; inspection depth now corrected in the coverage register | Initial nine Atlas pages; no code execution or live verification |
+| V1 acceptance follow-up, 2026-10-15 | Same HEAD; no Ember source change made by this task. Current SHA-256: `embers/api/research_dashboard.js` `BAA8D1B445245E5F3F6BA1E03D024EFB72BC203B127C8A5B9114F5B0C8D42D90`; `docs/consolidated-release-report.md` `F30CEB81FC182A64C723056436A0738F3EA8961FFDB91D3D1668A082B6771816`; `tests/test_research_dashboard_layout.js` `5B33B6777689D60D13CC72E573EA61A8AC3DBE470CD648B01C2D309106C7CB05` | Coverage and workflow clarification only; existing Track 7 findings retained; no tests/live checks |
+| Focused Track 7 design research, 2026-10-15 | Same branch and HEAD `f183346547cd210f58ca0a6b23df91a56be22b66`. Relevant Python/Rust source and tests remained at HEAD; preexisting dirty `embers/api/research_dashboard.js` SHA-256 `BAA8D1B445245E5F3F6BA1E03D024EFB72BC203B127C8A5B9114F5B0C8D42D90` was not used as Track 7 proof. Canonical map was preexisting dirty and updated for research status only; final SHA-256 `2650F202B72B7D4BF8905B40153B23F86917A2D63BA96B2E2B02C7C9D16D0F47`. Untracked Atlas/research artifacts remained outside HEAD. | Appended focused coverage/evidence and unimplemented designs; updated cross-check/gaps/README and map. Static inspection only; no tests, build, store or live validation. Prior V1 evidence remains tied to its earlier snapshot. |
+| Existing-mechanism reconciliation, 2026-10-15 | Same branch and HEAD `f183346547cd210f58ca0a6b23df91a56be22b66`; relevant implementation/test files remained at HEAD. Preexisting dirty dashboard JS remained SHA-256 `BAA8D1B445245E5F3F6BA1E03D024EFB72BC203B127C8A5B9114F5B0C8D42D90`. Canonical map, already dirty before this task, now SHA-256 `C77277D8750C13A7AF81428BBE4E56416C2E794C5F993D144327672813E5757B` after research-only update. `features update` is the current local file but its status notes are based on older `b38bf36`; no exact hash for that specification was recorded. | Appended `08_EXISTING_MECHANISM_RECONCILIATION.md`; corrected Atlas component/status/cross-check/gaps/evidence/coverage/execution-paths/history/README and canonical map. Earlier design entries remain historical alternatives. Static source/test-assertion inspection only; no tests, build, benchmark, store, service or live validation. |
+| Seven-upgrade roadmap contract, 2026-10-15 | Same branch and HEAD `f183346547cd210f58ca0a6b23df91a56be22b66`; no Ember implementation or test file changed. Preexisting dirty dashboard JS stayed SHA-256 `BAA8D1B445245E5F3F6BA1E03D024EFB72BC203B127C8A5B9114F5B0C8D42D90`. Local `features update` SHA-256 `C51C9F51D727036272C789A484538842D86B9DE84B5921EE4AFD5378D3D54DB6`; its old status notes remain historical. Canonical map was preexisting dirty and is now SHA-256 `8C1405BF6BAE0A9D39F8AE78B7DF9948098BEC0B70E3D1ACA9D1BADD9683E5D7` after research-only append. | Added roadmap `09`, regression matrix `10`, decision record `11`; updated Atlas README, coverage, component map, cross-check, gaps, feature status, validation and map. The seven upgrades are planned/unimplemented. Focused source and assertion inspection only; no tests, builds, benchmarks, stores, services or live validation. Earlier evidence and source-version rows remain attached to their own snapshots. |
+| Batch 1 local implementation, 2026-10-16 | Same branch and HEAD `f183346547cd210f58ca0a6b23df91a56be22b66`; new dirty source: `embers/db.py` SHA-256 `76318052B864C2701C4FD53D5B4FAFED7E40A2C2145D257C1CB20C06A021D2A9`, `engine/writer.py` `55249979455D5D7431D52AC22E74E9F7D3280759860887F208AC7832DB9C4926`, `index/master.py` `4443A653F8A9C536F24EC71E998496F940BC25F248E930199A73FAAA6F790F82`, `storage/store.py` `46B0AA11E0A4B13A054DB62FAE16923D383A9E92FE34C692F81CECD285762EBF`, native `rust/ember_core/src/lib.rs` `7D039BDE3D66125EDDCE43B21DF5D8EA6ACDC4BE65A115D823744E56871B3AD8`; new untracked `tests/test_track7_batch1.py` SHA-256 `E0D5EB59DB4DF889339CD3E57740F77DFEA37FAF2FA580BCEB2D1D9383AF5598`. Preexisting dirty dashboard JS unchanged at `BAA8D1B445245E5F3F6BA1E03D024EFB72BC203B127C8A5B9114F5B0C8D42D90`; canonical map now `3B9997F2551AB3DEFEC7F6268AB42D921F6AC8C7DD2078D08CF8E9BF18889234`. Installed `_native.cp313-win_amd64.pyd` remained `452CC6D246C96311DDFE590F38947B6D386D39D4CF38F9650319E3833C6C19A5`. | Added `12_BATCH1_IMPLEMENTATION_EVIDENCE.md`, roadmap addendum; updated Atlas README, component map, paths, status, gaps, coverage and validation plus canonical map implementation column. Baseline 97 passed; post-change 115 passed/1 expected skip installed compatibility, 116 staged native; final focus 73 passed/1 skip installed, 74 staged; staged native direct transaction/sidecar assertions 2 passed. Staged Cargo release build succeeded. Isolated tests only; no live/deployed claim. Batches 2–4 unchanged. |
+
+For every subsequent change, **append** a new entry rather than replacing either row. Record date, branch, full HEAD, dirty/untracked affected paths (and hashes when exact working-tree contents matter), changed source paths, affected Atlas pages, evidence grade, tests executed and live-validation status. Keep earlier claims tied to their original snapshot. Mark a claim superseded with a link to the new entry; do not silently rewrite historical evidence. If source changes without a commit, identify the exact dirty paths/hashes. If a claim is unchanged after a new source version, say what was rechecked. The latest entry is the current applicability boundary, not proof that every module was re-audited.
+
+## Track 7 invariants retained
+
+Agent-accessible memory version history exists; ELLA event history is a different journal. ELLA reuses state within an operation but replays between operations. Conflict-specific lookup exists and currently reads unrelated namespace records. Master-index completeness cannot be assumed from a nonempty snapshot. Lobby has a process-local board. These findings remain source-backed in [memory history](MEMORY_HISTORY_AND_LINEAGE.md), [cross-check](TRACK7_CROSSCHECK.md), and [gaps](GAPS_AND_OVERLAPS.md); this contract proposes no replacement.
+
+| Targeted API security correction and test-branch consolidation, 2026-10-16 | Branch codex/ember-split-feedback-candidate04, pre-commit HEAD f183346547cd210f58ca0a6b23df91a56be22b66. Batch 1 source from the preceding row was preserved; security changes affected embers/api/feedback_routes.py, embers/api/session_gate.py and tests/test_api_security.py. The working tree also held unrelated dirty dashboard/research artifacts. | Scoped Atlas/API evidence and Production x Research Map update. Isolated baseline 46 passed; post-edit API security 18 passed. Additional reruns stopped after disk exhaustion; no deployed/native-binary/live claim. |
+
+| Resumed validation before local commit, 2026-10-16 | Same branch and pre-commit HEAD f183346547cd210f58ca0a6b23df91a56be22b66. Batch 1 runtime/test hashes rechecked against the preceding row; installed native SHA-256 452CC6D246C96311DDFE590F38947B6D386D39D4CF38F9650319E3833C6C19A5. No live source/store/native mutation. | Focused installed-native run 128 passed/2 skipped; final security 20 passed; MCP HTTP/lobby parity 14 passed. Isolated stores only. Test branch consolidation records these results; Batches 2-4 remain pending. |
+
+## Consolidated source reference (2026-10-16)
+
+Implementation/evidence commit: 44e52c554de79fa2bbddb1fe43ca65866225d87a on codex/ember-split-feedback-candidate04. It contains the Batch 1 source and tests, targeted API authorization changes, Atlas, roadmap, map, and curated research evidence. The installed native binary remains SHA-256 452CC6D246C96311DDFE590F38947B6D386D39D4CF38F9650319E3833C6C19A5. Uncommitted dashboard, live/isolated stores, native staging/rollback assets, old test fixtures and logs were excluded. This reference supplements the pre-commit working-tree rows above; it does not replace their evidence. No remote push or live validation occurred.
+
+## Batch 2 source-version and Atlas-impact entry — 2026-10-17
+
+Branch codex/ember-split-feedback-candidate04; pre-commit HEAD 510910b9e9374e700bf2e4d62b6ebc2b77bf201c. Affected dirty source: embers/engine/promotion.py, embers/db.py, embers/api/v1.py, embers/mcp/server.py. Affected tests: new tests/test_track7_batch2.py and corrected tests/test_research_observer.py. Affected documentation: this Atlas, 09/10/11 roadmap artifacts, 13_BATCH2_IMPLEMENTATION_EVIDENCE.md and the canonical map. Existing unrelated dirty dashboard JS and untracked stores/research artifacts were excluded. Installed native SHA-256 452CC6D246C96311DDFE590F38947B6D386D39D4CF38F9650319E3833C6C19A5 remained unchanged. Baseline 66 passed; final focused isolated run 126 passed, 0 failed, 0 skipped. No live or production validation. This entry appends to earlier snapshots; it does not overwrite their evidence. Atlas impact reviewed: README, coverage, component map, paths, feature status, gaps and validation references updated. Batches 3-4 remain pending.
+
+Batch 2 post-commit source-version extension, 2026-10-17: first implementation/evidence commit b52a16e654db7d921c09f28b743a91118c955bde. Follow-up dirty path before the next local commit: tests/test_track7_batch2.py, plus Atlas/roadmap/evidence/map entries for focused FUR/LADC and spawned-process results. No runtime source or native change after b52a16e; no live validation. Atlas impact reviewed again; the earlier source-version and test rows remain historical.
+## Batch 3 source-version and Atlas-impact entry — 2026-10-17
+
+Branch `codex/ember-split-feedback-candidate04`; pre-commit HEAD `8a7e3c1a89875dc5497edac00ce2d76550bc4fbb`. Changed source: `embers/maintenance.py`, `embers/api/feedback_routes.py`, `embers/mcp/feedback_surface.py`; new tests: `tests/test_track7_batch3.py`. Existing unrelated dirty `embers/api/research_dashboard.js` and untracked live/research data were excluded. Loaded native binary SHA-256 `452cc6d246c96311ddfe590f38947b6d386d39d4cf38f9650319e3833c6c19a5`, unchanged. Baseline 45 passed; post-edit targeted runs 24, 97/2 skipped, 71 and 125 passed. Atlas impact reviewed: README, coverage, component/path maps, feature status, gaps, validation references, this source-version history and canonical Production × Research Map. See `track7_atlas_design_20261015/14_BATCH3_IMPLEMENTATION_EVIDENCE.md`. This entry is local candidate implementation evidence, not production/live certification; Batch 4 remains pending. Earlier rows remain historical evidence.
+
+## Batch 4 source-version and Atlas-impact entry — 2026-10-17
+
+Branch `codex/ember-split-feedback-candidate04`; pre-commit HEAD `9996611d12ec101bcd50a0518fb4f9a8ba42037d`. Changed source: `embers/cognitive/epistemic.py` and Batch 3 audit marker in `embers/maintenance.py`; new test/harness: `tests/test_track7_batch4.py`, `track7_atlas_design_20261015/bench_batch4.py`. Native module SHA-256 `452cc6d246c96311ddfe590f38947b6d386d39d4cf38f9650319e3833c6c19a5` unchanged. Pre-edit baseline 60 passed; post-edit focused groups 14, 84, 137/2 skipped and 121 passed (the 121-test group preceded one final Batch 4 case, separately passed in the 14-test rerun). Atlas impact reviewed: README, component/path maps, coverage, feature status, gaps, memory-history boundary, Track 7 cross-check, validation references, source-version history and canonical map. Earlier snapshot claims remain historical; Batch 4 is local isolated-test evidence, not live/production certification. Unrelated dirty dashboard and untracked stores/research artifacts were excluded.
+
+## Phase 5 validation source-version entry — 2026-10-17
+
+Branch `codex/ember-split-feedback-candidate04`, pre-checkpoint HEAD `dbbbaf2`; runtime source and installed native binary unchanged. New validation files: `tests/test_track7_phase5.py`, `track7_atlas_design_20261015/phase5_scale.py`, raw probe data and `16_PHASE5_VALIDATION_EVIDENCE.md`. Isolated selected groups: final Phase 5 file 4 passed; earlier broad group 309 passed/2 installed-native skips; extra recovery group 46 passed; separately staged source native 2 passed. The 50/150/300-memory operation-count and 305-record lifecycle probe completed. Per-query metadata hashing is inside the disclosed Batch 1 physical-I/O contract; no runtime correction. Atlas impact: coverage, validation references and this version entry; roadmap, regression matrix and canonical map updated. Existing dirty dashboard and unrelated untracked stores/research artifacts were excluded. No live deployment or production claim.
+
+## Track 7 milestone status entry — 2026-10-17
+
+Branch `codex/ember-split-feedback-candidate04`, pre-closure HEAD `fe0a001174fc53379a590330eed467dc58539760`. Documentation-only status update to Atlas feature status/README and canonical Production × Research Map. Four batch implementation checkpoints and Phase 5 local integrated validation are marked complete at the local/isolated milestone. All evidence, residual limits and historical rows are retained. No runtime source, tests, native binary, live service or store changed; no new Track 7 test cycle was run. Live-agent, production-scale, mixed-version and power-loss validation remain unverified. Unrelated working-tree files excluded.
+
+
+### Live Lobby Observatory completion follow-up — 2026-10-19
+
+Inspected Candidate 04 at `dcd898e`; changes remain on that branch. Existing storage/SSE/adapter/handoff mechanisms retained. The panel now reports safe evidence/contributor metadata and explicit uncertainty/handoff limits; fixes cover atomic read-only row/cursor snapshots, Last-Event-ID, serialized event-triggered refresh/recovery, local expiry, scope-close notifications and MCP Lobby delegation. **45 focused Python tests passed**, including seven client state-machine cases; standalone Node run also passed seven. Real isolated HTTP SSE/replay and cross-process wakeup ran. Browser access to the isolated server was refused, so visual/deployed validation remains open. No Track 7 validation or deployed changes. Full source, limits and operator startup instructions: [Live Lobby Observatory](../live-lobby-observatory.md).
+
+
+### Final focused harness-capture validation — 2026-10-19
+
+Inspected/pulled Candidate 04 at `b3159d052f3354d250f5bfdf7c48b0bc90a265d0`.
+**Automatic tool-result capture remains unproven**: current Stop adapter uploads a
+selected preexisting outbox file; this remote environment has no supported
+completed-tool hook integration or Codex CLI on PATH. Historical real CLI turns
+used harness-prepared evidence. Simulated adapter plus isolated REST/MCP/SSE,
+authorization, retry, read-only and client tests: **42 passed, 0 failed, 0 skipped**,
+one dependency warning. New assertions explicitly distinguish synthetic fixtures
+from execution receipts. Runtime source unchanged; no deployment/browser proof,
+no Track 7 work. Full source boundary, command and evidence grades:
+[final capture validation](../../paper/lobby_v2_final_capture_validation.md).
+
+
+## Track 7 finalization — 2026-10-19
+
+Inspected current Candidate 04 from `aec1a46ddfd76fe296c4a0190300654aa5608546`.
+All four existing batches are retained. Final validation found and corrected a
+Batch 2 compatibility defect: FAILURE derivations must remain eligible for the
+existing evidence-gated failure-to-lesson pipeline. Internal RAW/PROPOSAL/EVIDENCE
+sources remain rejected; namespace/conflict/admission checks remain. Corrected one
+API test's cached-store isolation; no API authorization or research math changes.
+The earlier dated implementation/status rows remain historical evidence.
+
+Source, exact validation results, native binary identity, new regression cases,
+CPU measurements and operational limits are recorded in
+[finalization evidence](../../track7_atlas_design_20261015/17_FINALIZATION_EVIDENCE.md).
+Fingerprint CPU was measured at 1k/10k/100k metadata rows; it is not constant total
+query cost. Production scale, real power loss, deployed mixed-version writers,
+live-agent operation and immediate historical-journal tamper detection are not
+certified. This is isolated implementation/regression closure, not deployment.
+
+Final resumed run, 2026-10-20: **896 Python tests passed, no failures/skips;
+16 Rust tests passed, no failures/ignored tests**. One Python dependency warning.
+Raw outputs are retained with the finalization evidence.
+
+
+## Control Center safe foundation — 2026-10-20
+
+Baseline Candidate 04 `6d325c0eaf5a2fe7e8c89d6b5c51781a1a2ba8bb` inspected.
+Added separate read-only Control Center with validated startup route, existing
+agent/namespace authorization and research settings/proposal/conflict readers.
+No human role exists: administrative configuration and review writes deliberately
+return 403. Runtime staging/restart detection remains unavailable; no privileged
+default or observer write authority introduced. See [scope and dependency](../control-center.md).
+Focused configuration, control, promotion and observer regression group: 65 passed,
+one dependency warning. Browser/deployment validation not performed. Track 7 and
+Lobby preserved. Source: `embers/api/control.py`, HTML/JS/CSS, `embers/config.py`,
+normal API registration; tests: `tests/test_control_center.py`. This is partial
+administrative completion, blocked on an approved operator authorization model.

@@ -1,0 +1,25 @@
+{
+  "url_host": "igloo-flaring-subpar.ngrok-free.dev",
+  "n": 8,
+  "ok": 8,
+  "latency": {
+    "n": 8,
+    "min": 90.145,
+    "max": 166.183,
+    "mean": 108.543375,
+    "p50": 99.51,
+    "p95": 166.183,
+    "p99": 166.183
+  },
+  "statuses": [
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200
+  ],
+  "note": "Tunnel blips ~1 min at a time. These numbers are reported separately and are not mixed into localhost results."
+}

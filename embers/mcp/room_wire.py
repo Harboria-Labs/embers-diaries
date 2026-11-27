@@ -54,6 +54,10 @@ def _patch_schema() -> None:
             )
             props["memory_type"] = _WRITE_TYPE
             props["room"] = _WRITE_ROOM
+        elif name == "ember_write_batch":
+            item_props = props.get("records", {}).get("items", {}).get("properties", {})
+            item_props["memory_type"] = _WRITE_TYPE
+            item_props["room"] = _WRITE_ROOM
         elif name == "ember_recall":
             props["room"] = _RECALL_ROOM
 
@@ -62,12 +66,15 @@ def _patch_call() -> None:
     orig = server.EmberMCP._call
 
     def _call(self, name: str, args: dict):
-        if name == "ember_write":
+        if name in ("ember_write", "ember_write_batch"):
             remember = self.protocol.remember
 
             def wrapped(content, *a, **kw):
-                kw.setdefault("memory_type", args.get("memory_type", "unscoped"))
-                kw.setdefault("room", args.get("room", "unscoped"))
+                source = args
+                if name == "ember_write_batch":
+                    source = server.batch_item_args.get() or {}
+                kw.setdefault("memory_type", source.get("memory_type", "unscoped"))
+                kw.setdefault("room", source.get("room", "unscoped"))
                 return remember(content, *a, **kw)
 
             self.protocol.remember = wrapped

@@ -1,0 +1,22 @@
+{
+  "run_id": "run-20261113-161001",
+  "started_at_wat": "2026-11-13 16:10:01 WAT",
+  "started_at": "2026-11-13T16:10:01.299+01:00",
+  "host": "grok-bot-vm-191077381",
+  "base_url": "http://localhost:9200",
+  "target": "ember-rest",
+  "scale": 5000,
+  "checkpoints": [
+    1000,
+    2500,
+    5000
+  ],
+  "concurrency": 1,
+  "batch_size": 100,
+  "namespaces": {
+    "scale": "bench-2026-11-13-20261113-161001-scale",
+    "features": "bench-2026-11-13-20261113-161001-features"
+  },
+  "git_sha_base": "f05ed04",
+  "note": "Live Ember. Writes only to bench-* . Grok/memories never written."
+}

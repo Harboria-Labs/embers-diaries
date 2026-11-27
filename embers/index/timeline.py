@@ -1,3 +1,4 @@
+from embers._native import atomic_replace as _quota_atomic_replace
 """
 Ember's Diaries — Timeline Index
 Time-series index for fast time-range queries.
@@ -49,7 +50,7 @@ class TimelineIndex:
                 }
             }
             index_file = self._path / "timelines.json"
-            index_file.write_bytes(encode_index(data))
+            _quota_atomic_replace(str(index_file), encode_index(data))
 
     # ── Index operations ──────────────────────────────────────────────────────
 
@@ -60,6 +61,16 @@ class TimelineIndex:
             entry = (timestamp, record_id)
             # Binary insert to maintain sorted order
             bisect.insort(timeline, entry)
+
+    def remove(self, record_id: str, namespace: str | None = None) -> None:
+        """Drop one record from the in-memory timeline. Does not persist."""
+        with self._lock:
+            namespaces = [namespace] if namespace else list(self._timelines)
+            for name in namespaces:
+                timeline = self._timelines.get(name)
+                if timeline:
+                    self._timelines[name] = [
+                        entry for entry in timeline if entry[1] != record_id]
 
     # ── Queries ───────────────────────────────────────────────────────────────
 

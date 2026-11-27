@@ -1,0 +1,8 @@
+case,event_count,operation,index,wall_ms,cpu_ms,free_before,free_after,store_bytes,journal_bytes,wal_bytes,observation_bytes,record_count,rss_bytes,load_ms,read_ms,verify_ms,native_ms,native_reduce_ms,store_write_ms,observation_append_ms,reads,verifications,native_reduces,error
+0,0,claim_create,0,59.5572,15.625,341495808,341491712,8151,0,3733,0,2,,0.0,1.8686,0.3199,0.0,0.0,53.7465,0.0,1,1,0,
+0,0,evidence_attach,1,88.9757,15.625,341491712,341479424,11988,0,5662,0,3,,0.0,6.1461,0.7654,0.0,0.0,59.6426,0.0,3,3,0,
+0,0,evidence_attach,2,88.994,46.875,341479424,341467136,15757,0,7591,0,4,,0.0,2.3123,0.4345,0.0,0.0,58.67,0.0,3,3,0,
+0,0,evidence_attach,3,138.4454,0.0,341463040,341454848,19526,0,9520,0,5,,0.0,3.5493,0.666,0.0,0.0,63.1952,0.0,3,3,0,
+0,0,evidence_attach,4,130.6183,15.625,341454848,341417984,23295,0,11449,0,6,,0.0,4.7701,0.663,0.0,0.0,83.4642,0.0,3,3,0,
+0,0,evidence_attach,5,157.8175,31.25,341417984,341426176,27064,0,13378,0,7,,0.0,4.4641,0.7202,0.0,0.0,106.7329,0.0,3,3,0,
+1,1,append,1,366.1904,125.0,341426176,341430272,36683,4304,18693,0,8,,0.4343,203.0824,17.6647,1.8114,0.3646,79.9108,0.0,62,66,1,PermissionError: Access is denied. (os error 5)

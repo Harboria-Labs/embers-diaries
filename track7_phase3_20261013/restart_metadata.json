@@ -1,0 +1,32 @@
+{
+  "case": "persisted_stale_type_metadata_after_restart",
+  "reference": {
+    "kind": "value",
+    "value": [
+      {
+        "conflict_id": "86bd78c4-9a1c-44ce-9227-ad8d388fdf87",
+        "memory_a": "8fa2c1bd-c566-45d1-ad03-1ca494d6c4d2",
+        "memory_b": "a6b44745-2f94-4beb-82de-769a4b4956c2",
+        "conflict_type": "semantic",
+        "detected_at": "2026-10-13T18:58:36.037153",
+        "detected_by": "research",
+        "status": "open",
+        "resolution": "",
+        "winner_id": "",
+        "note": "",
+        "pair_fingerprint": "590ad2c502d6ac439d35d1d7af022936f85e161dea2c01b389161946b92a8cc2",
+        "namespace": "restart",
+        "tags": [],
+        "record_id": "86bd78c4-9a1c-44ce-9227-ad8d388fdf87",
+        "record_version": 1,
+        "record_content_hash": "99f3fcc4d37a60a654fa80561c1eaabd18c59a7e434ebf1e59de6d0adb9ba30a"
+      }
+    ]
+  },
+  "candidate": {
+    "kind": "value",
+    "value": []
+  },
+  "equal": false,
+  "index_path": "C:\\Users\\LENOVO PC\\PROJECTS\\Harboria Labs\\embers_diaries\\track7_phase3_20261013\\store_run_20261013_03\\indexes\\master.json"
+}

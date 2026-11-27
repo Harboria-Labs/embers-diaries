@@ -1,0 +1,135 @@
+{
+  "tests": [
+    {
+      "name": "empty_query",
+      "ok": false,
+      "status": 400,
+      "latency_ms": 3.109,
+      "error": null,
+      "detail": "query required",
+      "body_keys": [
+        "detail"
+      ]
+    },
+    {
+      "name": "missing_content",
+      "ok": false,
+      "status": 400,
+      "latency_ms": 2.735,
+      "error": null,
+      "detail": "content required",
+      "body_keys": [
+        "detail"
+      ]
+    },
+    {
+      "name": "malformed_json",
+      "ok": false,
+      "status": 422,
+      "latency_ms": 2.072,
+      "error": null,
+      "detail": [
+        {
+          "type": "json_invalid",
+          "loc": [
+            "body",
+            1
+          ],
+          "msg": "JSON decode error",
+          "input": {},
+          "ctx": {
+            "error": "Expecting property name enclosed in double quotes"
+          }
+        }
+      ],
+      "body_keys": [
+        "detail"
+      ]
+    },
+    {
+      "name": "batch_101",
+      "ok": false,
+      "status": 400,
+      "latency_ms": 2.714,
+      "error": null,
+      "detail": "batch exceeds max_write_batch (100); received 101",
+      "body_keys": [
+        "detail"
+      ]
+    },
+    {
+      "name": "nonexistent_read",
+      "ok": false,
+      "status": 404,
+      "latency_ms": 2.514,
+      "error": null,
+      "detail": "Record not found",
+      "body_keys": [
+        "detail"
+      ]
+    },
+    {
+      "name": "nonexistent_feedback",
+      "ok": false,
+      "status": 400,
+      "latency_ms": 2.393,
+      "error": null,
+      "detail": "explicit feedback fields require schema_version=2",
+      "body_keys": [
+        "detail"
+      ]
+    },
+    {
+      "name": "unicode_write",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 220.993,
+      "error": null,
+      "ids": [
+        "444f9445-0e6c-40f4-98fd-9ceefe0e04d4"
+      ],
+      "detail": null,
+      "body_keys": [
+        "id",
+        "agent_id"
+      ]
+    },
+    {
+      "name": "unicode_recall",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 248.201,
+      "error": null,
+      "ids": [],
+      "detail": null,
+      "body_keys": [
+        "query",
+        "memories"
+      ]
+    },
+    {
+      "name": "very_long_content",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 239.165,
+      "error": null,
+      "detail": null,
+      "body_keys": [
+        "id",
+        "agent_id"
+      ]
+    },
+    {
+      "name": "oversized_2mb",
+      "ok": true,
+      "status": 200,
+      "latency_ms": 205.251,
+      "error": null,
+      "detail": null,
+      "body_keys": [
+        "id",
+        "agent_id"
+      ]
+    }
+  ]
+}

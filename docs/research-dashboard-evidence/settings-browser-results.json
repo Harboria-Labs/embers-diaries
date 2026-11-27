@@ -1,0 +1,12 @@
+{
+  "offline": true,
+  "observer_zero_api_calls": true,
+  "reader_zero_posts": true,
+  "revision_history": true,
+  "details": true,
+  "themes": true,
+  "screen_fit": true,
+  "editor_validation": true,
+  "credential_change_clears_authority": true,
+  "browser_errors": []
+}

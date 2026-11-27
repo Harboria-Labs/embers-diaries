@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "status": 200,
+  "bench_existing": [],
+  "protected_present": false,
+  "protected_names": [],
+  "other_namespace_count": 0,
+  "total_listed": 0,
+  "will_use": [
+    "bench-2026-11-13-20261113-161001-scale",
+    "bench-2026-11-13-20261113-161001-features"
+  ],
+  "note": "Non-bench namespace names other than the known protected 'memories' are not listed here."
+}

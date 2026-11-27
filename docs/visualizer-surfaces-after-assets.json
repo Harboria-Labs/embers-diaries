@@ -1,0 +1,64 @@
+[
+  {
+    "path": "/visualizer",
+    "status": 200,
+    "sha256": "ddc4545f646f448a6b8704b4b150d1532a73394e7d635e7adea732d2888867b3",
+    "headers": {
+      "cache-control": "no-store, no-cache, must-revalidate, no-transform",
+      "x-ember-observer-build": "sha256:9b3a1c9d3a9f5ba9dae41234295f2a131d9786954d195f9b742e28ba070d113f",
+      "x-ember-transport-sha256": "b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0",
+      "x-ember-transport-version": "shared-transport-v3 / sha256:b7f69d4f0640",
+      "referrer-policy": "no-referrer",
+      "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'",
+      "content-length": "61759",
+      "content-type": "text/html; charset=utf-8",
+      "vary": "Origin"
+    }
+  },
+  {
+    "path": "/visualizer?mode=observer",
+    "status": 200,
+    "sha256": "fc38198d371d46ea35bb5a13e68596cf26a6e1e090d0065de07665a8c8500e17",
+    "headers": {
+      "cache-control": "no-store, no-cache, must-revalidate, no-transform",
+      "x-ember-observer-build": "sha256:9b3a1c9d3a9f5ba9dae41234295f2a131d9786954d195f9b742e28ba070d113f",
+      "x-ember-transport-sha256": "b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0",
+      "x-ember-transport-version": "shared-transport-v3 / sha256:b7f69d4f0640",
+      "referrer-policy": "no-referrer",
+      "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'",
+      "content-length": "20139",
+      "content-type": "text/html; charset=utf-8",
+      "vary": "Origin"
+    }
+  },
+  {
+    "path": "/observer",
+    "status": 200,
+    "sha256": "fc38198d371d46ea35bb5a13e68596cf26a6e1e090d0065de07665a8c8500e17",
+    "headers": {
+      "cache-control": "no-store, no-cache, must-revalidate, no-transform",
+      "x-ember-observer-build": "sha256:9b3a1c9d3a9f5ba9dae41234295f2a131d9786954d195f9b742e28ba070d113f",
+      "x-ember-transport-sha256": "b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0",
+      "x-ember-transport-version": "shared-transport-v3 / sha256:b7f69d4f0640",
+      "referrer-policy": "no-referrer",
+      "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'",
+      "content-length": "20139",
+      "content-type": "text/html; charset=utf-8",
+      "vary": "Origin"
+    }
+  },
+  {
+    "path": "/v1/observer/transport.js",
+    "status": 200,
+    "sha256": "b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0",
+    "headers": {
+      "cache-control": "no-store, no-cache, must-revalidate, no-transform",
+      "x-ember-observer-build": "sha256:9b3a1c9d3a9f5ba9dae41234295f2a131d9786954d195f9b742e28ba070d113f",
+      "x-ember-transport-sha256": "b7f69d4f06405b066fee1e65e673100665d771131e13de58e7b03b1e2f0593c0",
+      "x-ember-transport-version": "shared-transport-v3 / sha256:b7f69d4f0640",
+      "content-length": "8471",
+      "content-type": "application/javascript",
+      "vary": "Origin"
+    }
+  }
+]

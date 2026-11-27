@@ -1,0 +1,60 @@
+{
+  "baseline_commit": "9f94c5a01d4d0ca843cfdb3a322df5968671935f",
+  "baseline_js_sha256": "6b6d262295d56d9f71546a6b79f6eeb0f0caded00fc242c5b9cd28cf1e4274e9",
+  "requests": [
+    {
+      "url": "https://weasel-master-currently.ngrok-free.app/observer",
+      "at_utc": "2026-09-30T15:39:52.658096+00:00",
+      "http_status": 404,
+      "curl_exit": 0,
+      "curl_error": "",
+      "headers": "HTTP/1.1 200 OK\ndate: Wed, 30 Sep 2026 15:39:52 GMT\n\nHTTP/1.1 404 Not Found\nConnection: close\nContent-Type: text/html\nNgrok-Error-Code: ERR_NGROK_3200\nReferrer-Policy: no-referrer\nDate: Wed, 30 Sep 2026 15:39:52 GMT\nTransfer-Encoding: chunked\n",
+      "ngrok_errors": [
+        "ERR_NGROK_3200"
+      ],
+      "response_body_sha256": "4fc3d5f99d5319ca3c18806453da32984a645acded22db1923c69484f37474a7",
+      "ember_observer_html": false
+    },
+    {
+      "url": "https://weasel-master-currently.ngrok-free.app/visualizer?mode=observer",
+      "at_utc": "2026-09-30T15:40:06.908703+00:00",
+      "http_status": 404,
+      "curl_exit": 0,
+      "curl_error": "",
+      "headers": "HTTP/1.1 200 OK\ndate: Wed, 30 Sep 2026 15:40:06 GMT\n\nHTTP/1.1 404 Not Found\nConnection: close\nContent-Type: text/html\nNgrok-Error-Code: ERR_NGROK_3200\nReferrer-Policy: no-referrer\nDate: Wed, 30 Sep 2026 15:40:06 GMT\nTransfer-Encoding: chunked\n",
+      "ngrok_errors": [
+        "ERR_NGROK_3200"
+      ],
+      "response_body_sha256": "4fc3d5f99d5319ca3c18806453da32984a645acded22db1923c69484f37474a7",
+      "ember_observer_html": false
+    },
+    {
+      "url": "https://weasel-master-currently.ngrok-free.app/v1/observer/transport.js",
+      "at_utc": "2026-09-30T15:40:16.130939+00:00",
+      "http_status": 404,
+      "curl_exit": 0,
+      "curl_error": "",
+      "headers": "HTTP/1.1 200 OK\ndate: Wed, 30 Sep 2026 15:40:15 GMT\n\nHTTP/1.1 404 Not Found\nConnection: close\nContent-Type: text/html\nNgrok-Error-Code: ERR_NGROK_3200\nReferrer-Policy: no-referrer\nDate: Wed, 30 Sep 2026 15:40:16 GMT\nTransfer-Encoding: chunked\n",
+      "ngrok_errors": [
+        "ERR_NGROK_3200"
+      ],
+      "response_body_sha256": "4fc3d5f99d5319ca3c18806453da32984a645acded22db1923c69484f37474a7",
+      "javascript_response": false
+    },
+    {
+      "url": "https://weasel-master-currently.ngrok-free.app/v1/observer/build",
+      "at_utc": "2026-09-30T15:40:24.038296+00:00",
+      "http_status": 404,
+      "curl_exit": 0,
+      "curl_error": "",
+      "headers": "HTTP/1.1 200 OK\ndate: Wed, 30 Sep 2026 15:40:23 GMT\n\nHTTP/1.1 404 Not Found\nConnection: close\nContent-Type: text/html\nNgrok-Error-Code: ERR_NGROK_3200\nReferrer-Policy: no-referrer\nDate: Wed, 30 Sep 2026 15:40:24 GMT\nTransfer-Encoding: chunked\n",
+      "ngrok_errors": [
+        "ERR_NGROK_3200"
+      ],
+      "response_body_sha256": "4fc3d5f99d5319ca3c18806453da32984a645acded22db1923c69484f37474a7"
+    }
+  ],
+  "deployed_js_sha256": null,
+  "conclusion": "BLOCKED: deployment identity not established",
+  "transport_validation": "NOT RUN: version gate only"
+}

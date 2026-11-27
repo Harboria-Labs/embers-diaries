@@ -1,5 +1,7 @@
 # Lobby design (Features 10 / 11 / 25 / 27; 26 deferred)
 
+Historical V1 board contract. The approved Lobby V2 principles and proposed source-first design are in [lobby_v2_architecture.md](lobby_v2_architecture.md), with a [gap matrix](lobby_v2_gap_matrix.md). V2 is frozen in principle and pending detailed design review and implementation; this V1 document remains evidence of current behavior.
+
 Status: implemented on main as a request/response board. Realtime (§26) deferred.
 Tool: `ember_lobby` actions `open | publish | corroborate | board | promote | close`.
 Posts are not Ember records. Room gate is default-deny. Off until `action=open`.

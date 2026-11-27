@@ -1,0 +1,75 @@
+{
+  "commit": "f183346547cd210f58ca0a6b23df91a56be22b66",
+  "store": "C:\\Users\\LENOVO PC\\PROJECTS\\Harboria Labs\\embers_diaries\\track7_phase3_20261013\\store_run_20261013_01",
+  "start_free": 546840576,
+  "end_free": 542822400,
+  "store_bytes": 395888,
+  "record_count": 215,
+  "cases": 20,
+  "equivalence_rows": 80,
+  "performance_rows": 240,
+  "mismatches": [
+    {
+      "case": "untagged_conflict",
+      "candidate": "tag_metadata"
+    },
+    {
+      "case": "stale_type_metadata",
+      "candidate": "type_metadata"
+    },
+    {
+      "case": "stale_type_metadata",
+      "candidate": "tag_metadata"
+    },
+    {
+      "case": "stale_type_metadata",
+      "candidate": "graph_gate"
+    }
+  ],
+  "all_equivalence_rows": 99,
+  "all_cases": 27,
+  "all_mismatches": [
+    {
+      "case": "untagged_conflict",
+      "candidate": "tag_metadata"
+    },
+    {
+      "case": "stale_type_metadata",
+      "candidate": "type_metadata"
+    },
+    {
+      "case": "stale_type_metadata",
+      "candidate": "tag_metadata"
+    },
+    {
+      "case": "stale_type_metadata",
+      "candidate": "graph_gate"
+    },
+    {
+      "case": "mapped_record_missing_graph_edge",
+      "candidate": "graph_gate"
+    },
+    {
+      "case": "restart_missing_graph_edge",
+      "candidate": "graph_gate"
+    },
+    {
+      "case": "unrelated_record_integrity_failure",
+      "candidate": "type_metadata"
+    },
+    {
+      "case": "unrelated_record_integrity_failure",
+      "candidate": "tag_metadata"
+    },
+    {
+      "case": "unrelated_record_integrity_failure",
+      "candidate": "graph_gate"
+    },
+    {
+      "case": "persisted_stale_type_metadata_after_restart",
+      "candidate": "type_metadata"
+    }
+  ],
+  "free_at_reporting": 89325568,
+  "disk_alert": "free space fell externally from about 543 MB to about 101 MB; optional profile preflight stopped"
+}

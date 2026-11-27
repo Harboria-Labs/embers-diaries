@@ -8,6 +8,19 @@ failure and retry intelligently, rather than a bare message string.
 from __future__ import annotations
 
 
+class BatchQuotaExceeded(OSError):
+    """Grouped admission refused the batch before any of its record files existed.
+
+    ``records`` are the staged records that were not durable. A best-effort
+    caller can write that list one record at a time. An atomic caller writes
+    none of them.
+    """
+
+    def __init__(self, records, message: str = ""):
+        self.records = list(records)
+        super().__init__(message or "storage.max_total_bytes exceeded")
+
+
 class StorageLimitError(Exception):
     """A configured storage quota rejected a write before it touched the WAL."""
 

@@ -166,3 +166,104 @@ def test_default_cors_does_not_grant_wildcard_access(client):
         "OPTIONS", "/records", headers={"Origin": "https://evil.example"},
     )
     assert response.headers.get("access-control-allow-origin") is None
+
+
+def test_maintenance_authorizes_every_namespace_before_running(client, monkeypatch):
+    import embers.api as api
+    import embers.api.feedback_routes as routes
+    from embers import AccessLevel
+
+    owner = _auth(client)
+    outsider = _auth(client)
+    private = "security_private"
+    api._db.create_namespace(private, access_level=AccessLevel.PRIVATE,
+                             owner=owner["X-Ember-Agent-Id"])
+    calls = []
+    monkeypatch.setattr(routes, "run_maintenance_cycle",
+                        lambda protocol, namespaces: calls.append(namespaces) or {"ok": True})
+
+    assert client.post("/v1/maintenance", headers=outsider,
+                       json={"namespaces": [private]}).status_code == 403
+    assert client.post("/v1/maintenance", headers=outsider,
+                       json={"namespaces": ["unregistered", private]}).status_code == 403
+    assert calls == []
+
+    allowed = client.post("/v1/maintenance", headers=owner,
+                          json={"namespaces": [private, "unregistered"]})
+    assert allowed.status_code == 200, allowed.text
+    assert calls == [[private, "unregistered"]]
+
+
+def test_maintenance_preserves_public_and_internal_acl(client, monkeypatch):
+    import embers.api as api
+    import embers.api.feedback_routes as routes
+    from embers import AccessLevel
+
+    owner = _auth(client)
+    outsider = _auth(client)
+    api._db.create_namespace("public_maintenance", access_level=AccessLevel.PUBLIC,
+                             owner=owner["X-Ember-Agent-Id"])
+    api._db.create_namespace("internal_maintenance", access_level=AccessLevel.INTERNAL,
+                             owner=owner["X-Ember-Agent-Id"])
+    calls = []
+    monkeypatch.setattr(routes, "run_maintenance_cycle",
+                        lambda protocol, namespaces: calls.append(namespaces) or {})
+
+    assert client.post("/v1/maintenance", headers=outsider,
+                       json={"namespaces": ["public_maintenance"]}).status_code == 200
+    assert client.post("/v1/maintenance", headers=outsider,
+                       json={"namespaces": ["internal_maintenance"]}).status_code == 403
+    assert client.post("/v1/maintenance", headers=owner,
+                       json={"namespaces": ["internal_maintenance"]}).status_code == 200
+    assert calls == [["public_maintenance"], ["internal_maintenance"]]
+
+
+@pytest.mark.parametrize("namespaces", ["security_private", "", [], [""], ["  "],
+                                         ["ok", None], [42], None])
+def test_maintenance_rejects_malformed_namespaces(client, monkeypatch, namespaces):
+    import embers.api.feedback_routes as routes
+
+    calls = []
+    monkeypatch.setattr(routes, "run_maintenance_cycle",
+                        lambda *args: calls.append(args))
+    response = client.post("/v1/maintenance", headers=_auth(client),
+                           json={"namespaces": namespaces})
+    assert response.status_code == 400, response.text
+    assert calls == []
+
+
+def test_token_and_session_must_match_before_observation_binding(client, monkeypatch):
+    import embers.api as api
+    from embers.integration import write_observation
+
+    first = _auth(client)
+    second = _auth(client)
+    started = client.post("/v1/sessions", headers=first, json={"task": "owned"})
+    assert started.status_code == 200, started.text
+    session_id = started.json()["session_id"]
+    bindings = []
+    monkeypatch.setattr(write_observation, "bind",
+                        lambda actor, session=None, request=None: bindings.append((actor, session)))
+
+    wrong = client.get("/namespaces", headers={**second, "X-Ember-Session-Id": session_id})
+    assert wrong.status_code == 403
+    assert bindings == []
+    unknown = client.get("/namespaces", headers={**first, "X-Ember-Session-Id": "missing"})
+    assert unknown.status_code == 401
+    assert bindings == []
+
+    own = client.get("/namespaces", headers={**first, "X-Ember-Session-Id": session_id})
+    assert own.status_code == 200, own.text
+    assert bindings == [(first["X-Ember-Agent-Id"], session_id)]
+    bindings.clear()
+    assert client.get("/namespaces", headers=first).status_code == 200
+    assert bindings == [(first["X-Ember-Agent-Id"], None)]
+    bindings.clear()
+    assert client.get("/namespaces", headers={"X-Ember-Session-Id": session_id}).status_code == 200
+    assert bindings == [(first["X-Ember-Agent-Id"], session_id)]
+
+    api._db.end_session(session_id)
+    bindings.clear()
+    inactive = client.get("/namespaces", headers={**first, "X-Ember-Session-Id": session_id})
+    assert inactive.status_code == 401
+    assert bindings == []

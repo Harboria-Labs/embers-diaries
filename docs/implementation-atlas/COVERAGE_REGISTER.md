@@ -1,0 +1,142 @@
+# Coverage register ? Atlas V1 acceptance
+
+This register records **review depth**, not feature quality or test success. ?Fully inspected? means the implementation body was read end to end in the initial audit; it does not mean all call paths, data variants, concurrency cases, or deployments are understood. ?Partially inspected? means selected functions/line windows and call sites were read. Every other inventory row received only a symbol/import/file-purpose scan. No test suite was executed. The companion [source inventory](SOURCE_INVENTORY.md) remains the per-file path and interface register.
+
+## Fully inspected bodies and traced paths (9)
+
+These source bodies were read end to end. ELLA and FUR read/apply, research recall/Pairing, observer journal/capability and server bootstrap/maintenance paths were traced across their callers. Tests and native implementation bodies were **not** fully audited, so these are static-source conclusions only.
+
+`embers/cognitive/epistemic.py`, `embers/cognitive/usefulness.py`, `embers/core/domain.py`, `embers/integration/consolidated.py`, `embers/integration/observation_journal.py`, `embers/integration/pairing.py`, `embers/integration/research_observer.py`, `embers/integration/server_memory.py`, `embers/maintenance.py`.
+
+## Partially inspected modules (24)
+
+Selected bodies, excerpts, route handlers, or call sites were inspected. Further review must cover the remaining functions and failure/concurrency paths before decisions touching their full responsibility.
+
+`embers/api/__init__.py`, `embers/api/observer_routes.py`, `embers/api/research_routes.py`, `embers/api/v1.py`, `embers/core/conflict.py`, `embers/core/evidence.py`, `embers/core/record.py`, `embers/db.py`, `embers/engine/reader.py`, `embers/engine/writer.py`, `embers/index/graph.py`, `embers/index/master.py`, `embers/integration/memory_protocol.py`, `embers/integration/observation_stream.py`, `embers/integration/write_observation.py`, `embers/mcp/server.py`, `embers/mcp/tools.py`, `embers/storage/store.py`, `rust/ember_core/src/domain/dynamics.rs`, `rust/ember_core/src/domain/ella.rs`, `rust/ember_core/src/domain/fur.rs`, `rust/ember_core/src/domain/mod.rs`, `rust/ember_core/src/domain/pairing.rs`, `rust/ember_core/src/lib.rs`.
+
+### Decision gates for partial areas
+
+| Area | What remains before an architectural decision |
+|---|---|
+| DB, writer, reader, store, indexes and native `lib.rs` | Read complete update/recovery/index callback code together; verify index checkpoint and nonempty stale-index behavior, failure ordering, concurrent handles and corrupt-record semantics. |
+| API/MCP routes and tools | Inspect every relevant handler and installed wrapper, request schema, authentication/ACL translation, response serialization and failure mapping for the proposed surface. |
+| Memory protocol and observer transport | Trace all output formats, access side effects, optional ELLA projection, cursor/reconnect and recovery branches; inspect targeted assertions. |
+| Rust research domain files | Read full ELLA/FUR/LADC/Pairing reducers and validation branches and map them to native/Python boundary tests before changing correctness claims. |
+
+## Symbol/inventory-only source (82)
+
+The following files were enumerated and scanned for top-level symbols/imports or asset identity. Their bodies were **not** reviewed enough to make component-level design claims. Before work in any of them, inspect the complete relevant body, its callers and tests, then update this register.
+
+`embers/__init__.py`, `embers/api/feedback_routes.py`, `embers/api/http_parity.py`, `embers/api/mcp_http.py`, `embers/api/observer.html`, `embers/api/observer_build.py`, `embers/api/observer_transport.js`, `embers/api/research_dashboard.css`, `embers/api/research_dashboard.js`, `embers/api/research_settings.html`, `embers/api/server_status.html`, `embers/api/session_gate.py`, `embers/api/status_monitor.js`, `embers/api/usefulness_routes.py`, `embers/api/visualizer.html`, `embers/api/visualizer_theme.css`, `embers/api_cli.py`, `embers/cognitive/__init__.py`, `embers/cognitive/consolidation.py`, `embers/cognitive/decay.py`, `embers/cognitive/episodic.py`, `embers/cognitive/feedback_durable.py`, `embers/cognitive/feedback_dynamics.py`, `embers/cognitive/feedback_replay.py`, `embers/cognitive/lifecycle.py`, `embers/cognitive/reflection.py`, `embers/config.py`, `embers/core/agent_view.py`, `embers/core/annotation.py`, `embers/core/edge.py`, `embers/core/errors.py`, `embers/core/failure.py`, `embers/core/feedback.py`, `embers/core/integrity.py`, `embers/core/primary_context.py`, `embers/core/proposal.py`, `embers/core/proposal_listing.py`, `embers/core/session.py`, `embers/core/types.py`, `embers/db_feedback.py`, `embers/engine/promotion.py`, `embers/engine/wal.py`, `embers/experimental_server.py`, `embers/identity/__init__.py`, `embers/identity/registry.py`, `embers/index/__init__.py`, `embers/index/fulltext.py`, `embers/index/timeline.py`, `embers/index/vector.py`, `embers/integration/__init__.py`, `embers/integration/candidate_recall.py`, `embers/integration/conflict_policy.py`, `embers/integration/conflict_protocol.py`, `embers/integration/context.py`, `embers/integration/embeddings.py`, `embers/integration/feedback_service.py`, `embers/integration/lifecycle_bind.py`, `embers/integration/orientation.py`, `embers/integration/research_schema.py`, `embers/integration/usefulness_service.py`, `embers/integration/visualizer_access.py`, `embers/lobby/__init__.py`, `embers/lobby/context.py`, `embers/lobby/store.py`, `embers/logging_config.py`, `embers/mcp/__init__.py`, `embers/mcp/__main__.py`, `embers/mcp/conflict_surface.py`, `embers/mcp/feedback_surface.py`, `embers/mcp/lobby_surface.py`, `embers/mcp/proposal_surface.py`, `embers/mcp/room_wire.py`, `embers/mcp/session_auth.py`, `embers/mcp/session_collab.py`, `embers/namespace/__init__.py`, `embers/namespace/manager.py`, `embers/query/__init__.py`, `embers/query/engine.py`, `embers/storage/format.py`, `rust/ember_core/src/domain/orientation.rs`, `rust/ember_core/src/quota.rs`, `rust/ember_core/tests/research_domain.rs`.
+
+## Tests and unreviewed/excluded material
+
+- All 61 `tests/test_*` paths were enumerated. Selected test names and references were scanned; assertion bodies were not comprehensively reviewed, and no tests were run. Before claiming a behavior ?tested,? inspect the exact assertions and run focused tests when the task permits. `rust/ember_core/tests/research_domain.rs` is listed in the source inventory but was not fully read or executed.
+- Browser assets in the symbol-only category were not rendered or exercised. Their current runtime behavior is unverified.
+- Generated binaries, native `target`, virtual environments, caches, stores, disposable benchmark data, and research media were excluded. `examples/`, `paper/`, packaging metadata, workflows and documents outside the named architecture/research references were not line-reviewed. They must be inspected if a future task depends on them.
+- Existing architecture and research reports were consulted as historical claims, not exhaustively audited as implementation proof. The loaded native extension, server, ngrok and deployed environment were not probed.
+
+## Use of this register
+
+An architectural decision about a partially inspected or symbol-only area requires a task-specific body review of affected files, complete interface/dependency tracing, exact test-assertion review, and explicit unverified gaps. Move a file between categories only with an appended source-version/evidence entry in [maintenance contract](MAINTENANCE_CONTRACT.md); retain the old snapshot record.
+
+## Focused Track 7 review added 2026-10-15
+
+This entry supplements, rather than reclassifies, the V1 file totals above. At HEAD `f183346547cd210f58ca0a6b23df91a56be22b66`, the **relevant bodies and call paths** in `embers/db.py:175-260,789-1014,1901-1909`, `embers/engine/reader.py:81-164`, `embers/engine/writer.py:64-259`, `embers/storage/store.py:83-290`, `embers/index/master.py:57-159`, `embers/index/graph.py`, `embers/api/session_gate.py`, `embers/api/feedback_routes.py:76-87`, `embers/integration/conflict_protocol.py`, `embers/cognitive/epistemic.py`, `embers/cognitive/usefulness.py`, `embers/maintenance.py`, `embers/integration/observation_journal.py`, `embers/core/integrity.py`, native `rust/ember_core/src/domain/ella.rs`, and native transaction/recovery functions in `rust/ember_core/src/lib.rs:641-738` were inspected for this design. The ELLA and maintenance Python bodies were already in V1's fully-read group; this review added focused caller, native and failure-path inspection. Relevant assertion bodies in `tests/test_conflict_engine.py`, `tests/test_conflict_interfaces.py`, `tests/test_ella.py`, `tests/test_indexes.py`, `tests/test_verify_integrity.py`, `tests/test_native_wal.py` and `tests/test_native_store.py` were selectively reviewed. **No tests were executed.** See `track7_atlas_design_20261015/01_IMPLEMENTATION_FINDINGS.md` and `06_TEST_AND_VALIDATION_PLAN.md`.
+
+Additional ELLA caller scan identified fresh ledger construction at `embers/api/research_routes.py:57-67`, `embers/mcp/server.py:299`, `embers/db.py:119` and observation replay at `embers/integration/observation_journal.py:75`; these are caller/symbol checks, not full route/module body reviews.
+
+## Existing-mechanism reconciliation review — 2026-10-15
+
+Task-specific full-body review added `embers/engine/promotion.py`, `embers/core/conflict.py`, `embers/integration/conflict_protocol.py`, `tests/test_promotion_engine.py`, `tests/test_write_audit.py`, `tests/test_concurrency.py` and `tests/test_native_versioning.py`. Relevant full functions/line windows were read in `embers/db.py:443-560,789-1000,1369-1630`, `embers/core/record.py:210-231`, `embers/engine/reader.py:69-113`, `embers/engine/writer.py:98-259`, `embers/storage/store.py:83-114,163-290`, `rust/ember_core/src/lib.rs:641-738,1016-1069`, `embers/cognitive/epistemic.py:25-302`, plus assertion bodies in `tests/test_conflict_interfaces.py`, `test_conflict_engine.py`, `test_native_wal.py`, `test_native_store.py`, `test_versioning_graph.py`, `test_v1_promotion.py` and `test_ella.py`. `features update` sections 1, 2, 6, 7, 12 and 30 and its historical status notes were consulted as specification, not runtime evidence. No test was run. Remaining coverage gaps include complete native crash-point enumeration, concurrent conflict/promotion tests, full public route authorization audit, and proof of any audit attestation boundary. Earlier coverage categories remain historical and are not silently upgraded for whole files after line-window inspection.
+
+Still incomplete for a source-change decision: every write entry point affecting index metadata; full native WAL/sidecar crash ordering and cross-process failure injection; full REST/MCP wrapper and error mapping audit; legacy unsealed-record policy; exact audit status/authorization surface; full test bodies and execution. No claim that the entire large `db.py`, `lib.rs`, API/MCP surface or tests was read end to end follows from this focused review. The implementation contract remains unfrozen.
+
+## Complete-upgrade planning review — 2026-10-15
+
+The seven-upgrade contract added task-specific function/caller review at the same HEAD for `embers/index/master.py` (load, persist, update and candidate metadata), `embers/db.py` (index callbacks/checkpoint, conflict map/lookup/status, `audit_write`, MasterIndex consumers), `embers/engine/writer.py` (write/update/deprecate callback order), `embers/engine/reader.py`, `embers/query/engine.py`, `embers/storage/store.py`, `embers/engine/promotion.py`, `embers/cognitive/epistemic.py`, `embers/maintenance.py`, `embers/api/feedback_routes.py`, `embers/api/session_gate.py`, `embers/namespace/manager.py`, `embers/integration/observation_journal.py`, and native WAL/sidecar/CAS functions in `rust/ember_core/src/lib.rs`. Focused assertion bodies and case names were checked in the tests cited by `track7_atlas_design_20261015/10_REGRESSION_AND_RECOVERY_MATRIX.md`. This is **not** whole-file certification for `db.py`, native `lib.rs`, all REST/MCP wrappers or all test modules. No behavior tests were executed.
+
+Before each approved batch, finish its remaining route/error mapping and affected write-entry review, run baseline assertions in isolated stores, and resolve policy questions recorded in `11_REUSE_AND_POLICY_DECISIONS.md`. In particular, source inspection has not proved real crash ordering at every sidecar/index boundary, legacy unsealed-record severity, audit review authorization, graph-only promotion policy, or warm-cache detection of old-event out-of-band tampering. The original V1 category totals above remain historical; the focused additions do not silently move entire modules into “fully inspected.”
+
+## Batch 1 implementation coverage — 2026-10-16
+
+Changed function bodies and direct callers were reviewed in `embers/storage/store.py` setup/recover/write/strict-read/epoch; `embers/engine/writer.py` prewrite/write/update/supersession/deprecation/callback; `embers/index/master.py` load/reset/persist/candidate/lineage; `embers/db.py` startup/reconcile/callback/checkpoint/conflict/deprecate; and native `rust/ember_core/src/lib.rs` atomic publication, WAL write/replay, supersession and module exports. Targeted assertion bodies were added in `tests/test_track7_batch1.py` and existing index, conflict, REST/MCP/ACL, concurrency, native WAL/store/versioning and version graph tests were executed. This is task-specific body/path coverage, not a full audit of every method in large modules or every transport route. See `12_BATCH1_IMPLEMENTATION_EVIDENCE.md` for exact pass counts. No tests used the live store. Real power-loss and mixed-version concurrent deployment remain unreviewed/untested; Batches 2–4 coverage is unchanged.
+
+## Targeted API security correction coverage (2026-10-16)
+
+Fully inspected for this change: embers/api/feedback_routes.py maintenance handler, embers/api/session_gate.py resolve_agent and header middleware, embers/api/v1.py require_namespace, embers/identity/registry.py token authentication, embers/maintenance.py cycle, and the direct namespace/session DB and test paths. Focused route tests in tests/test_api_security.py executed with isolated stores (18 passed). Existing namespace, feedback lifecycle and config groups passed as a 46-test pre-edit baseline. MCP maintenance remains a separate surface and was not changed or rerun after the disk-safety stop. This is not a full API/MCP authorization audit.
+
+Resumed focused execution added tests/test_mcp_session_auth.py, tests/test_conflict_interfaces.py, tests/test_conflict_engine.py, tests/test_indexes.py, tests/test_track7_batch1.py, tests/test_mcp_http_transport.py and tests/test_lobby_rest_mcp_parity.py to the validated path set. These runs do not certify every API/MCP route or a real power-loss recovery. PUBLIC/INTERNAL/PRIVATE maintenance ACL and session mismatch/no-binding cases are directly asserted in tests/test_api_security.py.
+
+## Batch 2 focused coverage — 2026-10-17
+
+Fully inspected changed bodies and direct calls: embers/engine/promotion.py route/gates/submit; embers/db.py proposal read, promote, reject, conflict lookup/status and evidence write; embers/api/v1.py proposal routes; embers/mcp/server.py proposal tools; direct namespace ACL and shared store lock behavior. Relevant assertion bodies in tests/test_promotion_engine.py, test_v1_promotion.py, test_mcp_server.py, test_conflict_engine.py, test_conflict_interfaces.py, test_ella.py, test_pairing_v1.py, test_research_observer.py and new test_track7_batch2.py were inspected and selected groups executed (final 126 passed). Rust was reused unchanged; no full native audit was done. Independent-process promotion races, real power loss, all observer/FUR/LADC cases and genuine human authorization remain unverified. Focused coverage does not change the initial inventory category totals.
+
+Batch 2 post-commit extension: tests/test_consolidated.py and tests/test_feedback_replay.py were executed as a focused FUR/LADC boundary group (29 passed). A spawned-process losing-resolution versus submission case was added to tests/test_track7_batch2.py; its isolated rerun passed 23 tests. This covers that independent-process interleaving only, not every concurrent or crash boundary. Source bodies and native identity are unchanged from the preceding Batch 2 entry.
+## Batch 3 focused coverage — 2026-10-17
+
+Fully inspected for this task: the changed `embers/maintenance.py` audit/report/recovery bodies, their `PhysicalStore`, MasterIndex, record codec/integrity, ACL and store-lock calls, plus changed REST `feedback_routes.py` and MCP `feedback_surface.py` handlers. The new `tests/test_track7_batch3.py` assertions and focused existing tests for integrity, write audit, config, security, index, conflict, promotion, MCP, observer, FUR/LADC, Pairing, memory history and ELLA were executed. See `14_BATCH3_IMPLEMENTATION_EVIDENCE.md` for exact groups and outcomes. This does not reclassify whole `db.py`, native Rust, all API/MCP routes, or every maintenance lifecycle path as fully inspected. Real power loss, production-scale scan behavior, corrupt-store API bootstrap, automatic scheduling authority and full cross-feature suite remain unverified.
+## Batch 4 focused coverage — 2026-10-17
+
+Fully inspected for this change: `embers/cognitive/epistemic.py` `load/project/read/apply`, native `ella_reduce` transition validation in `rust/ember_core/src/domain/ella.rs`, `PhysicalStore` lock/read/epoch/all-IDs, REST `research_routes.py`, MCP `server.py`, observer source synchronization and Batch 3 audit marker/report path. Focused assertion bodies in `test_ella.py`, `test_track7_batch1.py`–`test_track7_batch4.py`, index/conflict/security, consolidated FUR/LADC, Pairing, memory-history, promotion and observer tests were executed; exact results are in `15_BATCH4_IMPLEMENTATION_EVIDENCE.md`. This is task-specific path coverage, not a whole-file audit of large DB/native/API modules. Real power loss, mixed-version writers, live-agent behavior and production-scale performance remain unverified.
+
+## Phase 5 validation coverage — 2026-10-17
+
+New `tests/test_track7_phase5.py` exercises the write/recall/conflict/promotion/audit/ELLA chain, seeded physical-index and incremental/full-replay comparisons, and healthy/behind/explicit index fingerprint boundaries. Selected Batch 1–4, index, conflict, API/MCP, FUR/LADC, Pairing, history, promotion, observer, observation stream, concurrency and native recovery groups ran with isolated stores. The two installed-native skips were exercised with a separately staged compatible extension. The source trace was limited to `EmberDB.conflicts_for/conflict_records/_ensure_master_index_current/_reconcile_master_index`, `MasterIndex.get_type_ids/_candidate_fingerprint/persist`, and the Phase 5 probe. This is named-path execution coverage, not a new whole-source inspection or full repository suite. Exact files, results and limits: `track7_atlas_design_20261015/16_PHASE5_VALIDATION_EVIDENCE.md`.
+
+
+### Live Lobby Observatory completion follow-up — 2026-10-19
+
+Inspected Candidate 04 at `dcd898e`; changes remain on that branch. Existing storage/SSE/adapter/handoff mechanisms retained. The panel now reports safe evidence/contributor metadata and explicit uncertainty/handoff limits; fixes cover atomic read-only row/cursor snapshots, Last-Event-ID, serialized event-triggered refresh/recovery, local expiry, scope-close notifications and MCP Lobby delegation. **45 focused Python tests passed**, including seven client state-machine cases; standalone Node run also passed seven. Real isolated HTTP SSE/replay and cross-process wakeup ran. Browser access to the isolated server was refused, so visual/deployed validation remains open. No Track 7 validation or deployed changes. Full source, limits and operator startup instructions: [Live Lobby Observatory](../live-lobby-observatory.md).
+
+
+### Final focused harness-capture validation — 2026-10-19
+
+Inspected/pulled Candidate 04 at `b3159d052f3354d250f5bfdf7c48b0bc90a265d0`.
+**Automatic tool-result capture remains unproven**: current Stop adapter uploads a
+selected preexisting outbox file; this remote environment has no supported
+completed-tool hook integration or Codex CLI on PATH. Historical real CLI turns
+used harness-prepared evidence. Simulated adapter plus isolated REST/MCP/SSE,
+authorization, retry, read-only and client tests: **42 passed, 0 failed, 0 skipped**,
+one dependency warning. New assertions explicitly distinguish synthetic fixtures
+from execution receipts. Runtime source unchanged; no deployment/browser proof,
+no Track 7 work. Full source boundary, command and evidence grades:
+[final capture validation](../../paper/lobby_v2_final_capture_validation.md).
+
+
+## Track 7 finalization — 2026-10-19
+
+Inspected current Candidate 04 from `aec1a46ddfd76fe296c4a0190300654aa5608546`.
+All four existing batches are retained. Final validation found and corrected a
+Batch 2 compatibility defect: FAILURE derivations must remain eligible for the
+existing evidence-gated failure-to-lesson pipeline. Internal RAW/PROPOSAL/EVIDENCE
+sources remain rejected; namespace/conflict/admission checks remain. Corrected one
+API test's cached-store isolation; no API authorization or research math changes.
+The earlier dated implementation/status rows remain historical evidence.
+
+Source, exact validation results, native binary identity, new regression cases,
+CPU measurements and operational limits are recorded in
+[finalization evidence](../../track7_atlas_design_20261015/17_FINALIZATION_EVIDENCE.md).
+Fingerprint CPU was measured at 1k/10k/100k metadata rows; it is not constant total
+query cost. Production scale, real power loss, deployed mixed-version writers,
+live-agent operation and immediate historical-journal tamper detection are not
+certified. This is isolated implementation/regression closure, not deployment.
+
+Final resumed run, 2026-10-20: **896 Python tests passed, no failures/skips;
+16 Rust tests passed, no failures/ignored tests**. One Python dependency warning.
+Raw outputs are retained with the finalization evidence.
+
+
+## Control Center safe foundation — 2026-10-20
+
+Baseline Candidate 04 `6d325c0eaf5a2fe7e8c89d6b5c51781a1a2ba8bb` inspected.
+Added separate read-only Control Center with validated startup route, existing
+agent/namespace authorization and research settings/proposal/conflict readers.
+No human role exists: administrative configuration and review writes deliberately
+return 403. Runtime staging/restart detection remains unavailable; no privileged
+default or observer write authority introduced. See [scope and dependency](../control-center.md).
+Focused configuration, control, promotion and observer regression group: 65 passed,
+one dependency warning. Browser/deployment validation not performed. Track 7 and
+Lobby preserved. Source: `embers/api/control.py`, HTML/JS/CSS, `embers/config.py`,
+normal API registration; tests: `tests/test_control_center.py`. This is partial
+administrative completion, blocked on an approved operator authorization model.

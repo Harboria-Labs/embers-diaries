@@ -6,6 +6,9 @@ from .core.types import EdgeType, RecordType
 from .core.feedback import Feedback
 
 def give_feedback(self, memory_id: str, fb: Feedback) -> str:
+    fb.validate()
+    if fb.memory_id != memory_id:
+        raise ValueError("feedback memory_id must match the target")
     target = self._reader.get(memory_id, include_deprecated=True,
                               include_superseded=True)
     if target is None:
@@ -49,7 +52,19 @@ def get_feedback(self, feedback_id: str):
     return Feedback.from_dict(rec.data)
 
 
+def relevance_journal(self, **configuration):
+    """Explicitly configure SDK resolution; never accept policy from an untrusted caller."""
+    from .cognitive.feedback_durable import DurableRelevanceJournal
+    service = DurableRelevanceJournal(self, **configuration)
+    with self._writer.lock:
+        if not hasattr(self, "_relevance_services"):
+            self._relevance_services = {}
+        self._relevance_services[(configuration["namespace"], configuration["context_id"])] = service
+    return service
+
+
 def bind(EmberDB):
     EmberDB.give_feedback = give_feedback
     EmberDB.feedback_for = feedback_for
     EmberDB.get_feedback = get_feedback
+    EmberDB.relevance_journal = relevance_journal

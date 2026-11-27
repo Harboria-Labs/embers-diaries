@@ -1,0 +1,26 @@
+{
+  "phase": "before",
+  "proxy": "initial SSE delivered; subsequent chunks held, upstream remains open",
+  "stats": {
+    "transport": "SSE",
+    "connected": true,
+    "snapshot_gets": 2,
+    "pushed_events": 0,
+    "reconnect_count": 1,
+    "last_pushed": null,
+    "last_snapshot": "eyJvYnNlcnZlcl9pZCI6IjE1YTYyYmRhZjRhZGUwMzA4NTZhYTAxNTllY2FmZGIxYjY0NTZiODViM2FiMjdkMDdiY2ZjODg5MDlkMGM1ZTIiLCJzZWVuIjp7fX0"
+  },
+  "browser_abort_calls": [
+    {
+      "at": 10151.100000000093,
+      "reason": "undefined",
+      "stack": "Error\n    at AbortController.abort (<anonymous>:7:188)\n    at http://127.0.0.1:35141/visualizer?mode=observer:37:202"
+    },
+    {
+      "at": 10168.600000000093,
+      "reason": "undefined",
+      "stack": "Error\n    at AbortController.abort (<anonymous>:7:188)\n    at live (http://127.0.0.1:35141/visualizer?mode=observer:37:2493)"
+    }
+  ],
+  "snapshot_requests": 2
+}

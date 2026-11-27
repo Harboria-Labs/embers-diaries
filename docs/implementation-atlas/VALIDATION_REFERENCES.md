@@ -1,0 +1,110 @@
+# Validation references and evidence grade
+
+## Source and candidate test anchors
+
+The test paths below were identified from names and source references. Their assertion bodies were not comprehensively reviewed in the initial audit. Treat them as places to inspect, not as proof that the claimed behavior was tested or passed in this audit; see the [coverage register](COVERAGE_REGISTER.md).
+
+| Behavior claim | Source | Candidate tests to inspect |
+|---|---|---|
+| Record seal, immutable write, CAS/version chain | `embers/core/record.py:144-231`; `embers/engine/writer.py:78-273`; `embers/engine/reader.py:25-113`; `rust/ember_core/src/lib.rs:641-738,992-1125` | `tests/test_verify_integrity.py:55-171`; `tests/test_native_versioning.py:7-50`; `tests/test_versioning_graph.py:48-255` |
+| Index callbacks, rebuild and checkpoint | `embers/db.py:175-260,1901-1909`; `embers/index/master.py:57-159`; `embers/query/engine.py:47-205` | `tests/test_indexes.py:42-205`; `tests/test_index_and_embed.py` |
+| Ordinary recall and Pairing | `embers/integration/memory_protocol.py:183-317`; `embers/integration/pairing.py:7-55`; `rust/ember_core/src/domain/pairing.rs:4-33` | `tests/test_pairing_v1.py:40-334`; `tests/test_primary_context.py`; `tests/test_integration.py` |
+| Research activation/admission | `embers/integration/consolidated.py:52-147`; `rust/ember_core/src/domain/dynamics.rs:84-260` | `tests/test_consolidated.py`; `rust/ember_core/tests/research_domain.rs` |
+| FUR ledger and state | `embers/cognitive/usefulness.py:58-210`; `rust/ember_core/src/domain/fur.rs:101-270` | `tests/test_consolidated.py`; `tests/test_feedback_replay.py`; `tests/test_pairing_v1.py:87-120` |
+| ELLA event replay, correction, state and overlay | `embers/cognitive/epistemic.py:20-302`; `rust/ember_core/src/domain/ella.rs`; `embers/core/domain.py:11-65` | `tests/test_ella.py:34-873` (confirmation, correction, retry, conflict and API/MCP parity cases) |
+| Conflict authority and lookup | `embers/db.py:760-998`; `embers/core/conflict.py`; `embers/index/graph.py` | `tests/test_conflict_engine.py`; `tests/test_conflict_interfaces.py`; `tests/test_subject_conflict.py` |
+| REST/MCP history, auth and registration | `embers/api/v1.py:83-106,313-333`; `embers/mcp/server.py:155-180,374-394`; `embers/identity/registry.py:35-84` | `tests/test_v1_memory_read_api.py:55-204`; `tests/test_mcp_server.py:8-43,421-460`; `tests/test_agent_identity.py` |
+| Observer and write delivery | `embers/integration/observation_journal.py:18-104`; `embers/integration/research_observer.py:64-245`; `embers/integration/write_observation.py:55-135`; `embers/api/observer_routes.py:30-135` | `tests/test_research_observer.py`; `tests/test_observation_stream.py`; `tests/test_write_observation.py`; `tests/test_research_dashboard.py` |
+| Lobby/promotion | `embers/lobby/store.py:18-260`; `embers/mcp/lobby_surface.py:44-205`; `embers/api/v1.py:511-627` | `tests/test_lobby.py`; `tests/test_lobby_rest_mcp_parity.py`; `tests/test_v1_promotion.py` |
+
+## Evidence grade
+
+- **Verified by execution in this audit:** source enumeration/AST parsing, read-only Git state, disk free-space query, and checks that the nine documentation files exist. No behavior tests or live requests were executed.
+- **Supported by inspected source paths:** ELLA full replay, existing `conflicts_for`, the index rebuild condition, and selected execution paths and route/tool definitions. Inspection depth varies by file; see the coverage register. These paths do not establish behavior for every branch, failure mode or deployment.
+- **Historical execution evidence, not repeated here:** test reports in `docs/ella-v1-checkpoint.md`, `docs/pairing-matrix-v1.md`, and `track7_research_20261013/`, `track7_phase2_20261013/`, `track7_phase3_20261013/`. Phase 2 includes a real isolated persisted 50-report ELLA fixture with 1,929 ms last-five append median; it does not establish production latency. Their fixture, version and environment qualifications remain attached to their claims.
+- **Unverified:** exact currently loaded `_native` capabilities, current live API/MCP/browser behavior, production-scale ELLA latency, index metadata health in any existing store, cross-process lobby behavior and whole-store integrity. No source filename or historical test report is treated as proof of these.
+
+## Audit procedure and excluded artifacts
+
+The inventory enumerated 115 production/native/source-asset files and 61 `tests/test_*` files. Function and import scans covered all enumerated Python/Rust modules; body-level review varied by file as recorded in the coverage register. Test names/references, not full assertion bodies, were scanned. Generated native binaries, dependencies, caches, actual stores, disposable benchmark data and research evidence media were excluded. No broad test suite or persisted stress workload was run. The Atlas documents are the only intended working-tree additions.
+# Track 7 focused design evidence — 2026-10-15
+
+Static source inspection only; **no tests, builds, persisted benchmarks, store probes or live validation were run** for this design. Focused source anchors: conflict lookup/write/status `embers/db.py:789-1014`; metadata/load/persist `embers/index/master.py:57-159`; writer commit and callback `embers/engine/writer.py:64-259`; physical read/recovery `embers/storage/store.py:163-290`; native transaction/recovery `rust/ember_core/src/lib.rs:641-738`; ELLA load/project/apply `embers/cognitive/epistemic.py:25-302`; native state/reduce/project `rust/ember_core/src/domain/ella.rs:21-245`; maintenance `embers/maintenance.py`; scheduler `embers/api/session_gate.py:61-94`.
+
+Reviewed test assertion areas: `tests/test_conflict_engine.py:52-207`, `tests/test_conflict_interfaces.py:246-398`, `tests/test_ella.py:118-159,294-321,399-494,761-821`, `tests/test_indexes.py:180-200`, plus focused integrity/WAL/native-store tests. These are static references, not execution evidence. Proposed regressions and missing proof obligations are in `track7_atlas_design_20261015/06_TEST_AND_VALIDATION_PLAN.md`.
+
+## Reconciliation evidence — 2026-10-15
+
+Current source: native transaction/recovery `rust/ember_core/src/lib.rs:641-738`; native supersession/CAS `:1016-1069`; store lock/read/recovery `embers/storage/store.py:83-114,163-290`; memory CAS/version commit `embers/engine/writer.py:98-259`; read/history `embers/engine/reader.py:69-113`; `audit_write` `embers/db.py:443-560`; Promotion Engine `embers/engine/promotion.py:55-321`; conflict records/status `embers/db.py:789-1000`; ELLA `embers/cognitive/epistemic.py:25-302`. Exact assertion bodies inspected in `tests/test_concurrency.py`, `test_native_versioning.py`, `test_promotion_engine.py`, `test_write_audit.py`, and focused `test_conflict_interfaces.py`, `test_native_wal.py`, `test_versioning_graph.py`, `test_ella.py`. The `features update` checklist and sections 1/2/6/7/12/30 are historical specification/evidence based on older `b38bf36`; no test was executed for this reconciliation. See `track7_atlas_design_20261015/08_EXISTING_MECHANISM_RECONCILIATION.md`.
+
+## Seven-upgrade contract evidence — 2026-10-15
+
+The exact source-function and targeted-test references for each planned change are in `track7_atlas_design_20261015/09_COMPLETE_UPGRADE_ROADMAP.md`; the baseline/new/fault matrix is `10_REGRESSION_AND_RECOVERY_MATRIX.md`. The policy/evidence boundary is `11_REUSE_AND_POLICY_DECISIONS.md`. They extend static inspection at unchanged HEAD `f183346547cd210f58ca0a6b23df91a56be22b66`; **no listed new regression is executed or passed**, and no native/runtime parity was probed. Phase 2/3 timing and counterexamples retain their historical isolated-fixture status. Simulated exception tests, subprocess kill tests and real power-loss validation must be reported separately after implementation.
+
+## Batch 1 executed evidence — 2026-10-16
+
+- **Baseline before source edits:** 97 passed across `tests/test_indexes.py`, `test_conflict_engine.py`, `test_conflict_interfaces.py`, `test_concurrency.py`, `test_native_wal.py`, `test_native_store.py`, `test_native_versioning.py` and `test_versioning_graph.py` in unique temporary stores.
+- **After source edits:** installed-extension compatibility path: 115 passed, 1 expected skip; staged native build: 116 passed on the same focused groups plus `test_agent_conflict.py` and `test_track7_batch1.py`. After final candidate-seal/graph changes, index/conflict/REST/MCP/ACL focus: 73 passed, 1 expected skip installed; 74 passed staged. The staged native module was imported from a temporary package; the installed `.pyd` and running process were unchanged. `cargo build --release --offline` succeeded; no production rebuild/install occurred.
+- **Recovery evidence:** callback and native-call fault injection, malformed sidecar, stale nonempty/wrong-type legacy snapshot, independent handles/processes, WAL checkpoint, and killed child processes at mapping/status boundaries. Child exits 57/58 were verified and source reopened. These are process-crash and simulated-fault observations, **not** machine power-loss proof.
+- **I/O evidence:** `test_track7_batch1.py` observed 0 `all_ids()` directory enumerations and 3 physical reads for a healthy `conflicts_for` request with 20 unrelated same-namespace memories. A behind handle performed one explicit reconciliation scan after a write and after deprecation; repeated healthy lookup performed none. Candidate metadata sealing is an O(N) in-memory check. No persisted stress benchmark or live query was run.
+
+Full mechanism, risk and rollback: `track7_atlas_design_20261015/12_BATCH1_IMPLEMENTATION_EVIDENCE.md`.
+
+## Targeted API authorization correction (2026-10-16)
+
+Source: embers/api/feedback_routes.py run_maintenance validates and authorizes every namespace before run_maintenance_cycle; embers/api/v1.py require_namespace translates the existing ACL denial to HTTP 403. embers/api/session_gate.py resolve_agent validates active session ownership before write_observation.bind. Tests: tests/test_api_security.py covers unauthorized/private and mixed maintenance requests with no invocation, authorized request, malformed namespace inputs, token/session match, mismatch, unknown and inactive sessions, token-only and session-only compatibility. Execution: baseline command python -B -m pytest tests/test_api_security.py tests/test_namespace_access.py tests/test_feedback_lifecycle.py tests/test_config.py -q -p no:cacheprovider --basetemp .test_security_baseline_20261016: 46 passed. Post-edit command python -B -m pytest tests/test_api_security.py -q -p no:cacheprovider --basetemp .test_security_patch_20261016: 18 passed. Both used isolated stores. Further tests stopped when C: free space reached 0; no post-edit MCP or Batch 1 rerun claim. Earlier Batch 1 isolated evidence remains in track7_atlas_design_20261015/12_BATCH1_IMPLEMENTATION_EVIDENCE.md; no live validation.
+
+Final resumed isolated validation, same source snapshot and installed native hash 452CC6D246C96311DDFE590F38947B6D386D39D4CF38F9650319E3833C6C19A5: python -B -m pytest tests/test_api_security.py tests/test_namespace_access.py tests/test_feedback_lifecycle.py tests/test_config.py tests/test_mcp_session_auth.py tests/test_conflict_interfaces.py tests/test_conflict_engine.py tests/test_indexes.py tests/test_track7_batch1.py -q -p no:cacheprovider --basetemp .test_security_batch1_consolidation_20261016: 128 passed, 2 skipped (staged-native-only epoch assertions). After adding PUBLIC/INTERNAL and whitespace-list cases, tests/test_api_security.py: 20 passed. MCP HTTP and lobby REST/MCP parity: 14 passed, one dependency deprecation warning. No broad suite, live test, native rebuild, or deployment. Earlier disk interruption remains historical; available space was rechecked before resuming.
+
+## Batch 2 executed evidence — 2026-10-17
+
+Source anchors: embers/engine/promotion.py route, _automatic_gates, _route_consensus, _route_human, _route_hybrid, conflict_hold_reasons; embers/db.py promote, _promote_locked, reject, _reject_locked; embers/api/v1.py proposal routes; embers/mcp/server.py ember_promotion_route. Targeted tests: tests/test_track7_batch2.py plus existing promotion, REST/MCP, conflict, security, ELLA truth, Pairing and observer cases. Before edits 66 passed; final isolated command and result are recorded verbatim in track7_atlas_design_20261015/13_BATCH2_IMPLEMENTATION_EVIDENCE.md: 126 passed, 0 failed, 0 skipped. One earlier observer assertion was corrected for Batch 1's derived-index publication on reopen and rerun. Static inspection plus isolated execution support local behavior; no production/live or real power-loss conclusion follows.
+
+Batch 2 post-commit evidence: tests/test_consolidated.py plus tests/test_feedback_replay.py, 29 passed; tests/test_track7_batch2.py with a spawned-process resolution/submit case, 23 passed. Exact commands and limits are appended to 13_BATCH2_IMPLEMENTATION_EVIDENCE.md. These runs supplement, rather than replace, the earlier final 126-test group.
+## Batch 3 executed evidence — 2026-10-17
+
+Source: `embers/maintenance.py` audit/run/status/recovery; `embers/api/feedback_routes.py` audit routes; `embers/mcp/feedback_surface.py` audit tools and maintenance ACL. New assertions: `tests/test_track7_batch3.py` (24 passed). Baseline: 12 integrity/write-audit plus 33 security/config passed. Post-edit: 97 passed/2 skipped in integrity/security/index/Batch 1/conflict group; 71 passed in Batch 2/promotion/MCP/observer group; 125 passed in FUR/LADC/Pairing/memory-history/ELLA group. Exact command shape, native identity, fault evidence and limits: `track7_atlas_design_20261015/14_BATCH3_IMPLEMENTATION_EVIDENCE.md`. All stores were isolated; no live or real power-loss proof.
+## Batch 4 executed evidence — 2026-10-17
+
+Source: `embers/cognitive/epistemic.py` verified-state LRU/current/publish/full-load paths and `embers/maintenance.py` audit marker. New assertions: `tests/test_track7_batch4.py` (final 14 passed). Pre-edit ELLA/observer baseline: 60 passed. Post-edit ELLA/Batch 3/observer: 84 passed; Batch 1–3/index/conflict/security/MCP: 137 passed, 2 skipped; FUR/LADC/Pairing/memory-history/promotion/observer/Batch 4: 121 passed before the final extra cached-head test, which passed in the 14-test rerun. `bench_batch4.py` measured 5/10/20/40 event isolated fixtures, with one warm journal read and no native replay reductions per read. Exact test commands, physical-read counts, timings, process-fault evidence and limits: `track7_atlas_design_20261015/15_BATCH4_IMPLEMENTATION_EVIDENCE.md`. No live or power-loss validation.
+
+## Phase 5 executed evidence — 2026-10-17
+
+Final `tests/test_track7_phase5.py` passed 4; the earlier selected Batch 1–4/Phase 5 and cross-feature group passed 309 with 2 installed-native skips; the observation stream/concurrency/native recovery group passed 46. The two skipped tests passed on a separately staged compatible native build without changing the installed binary. `phase5_scale.py` measured 50/150/300 unrelated-memory tiers and cold/cross-process/explicit reconciliation in disposable stores, with raw JSON lines retained. Commands, physical-read and metadata/CPU/latency counts, native identity and limits: `track7_atlas_design_20261015/16_PHASE5_VALIDATION_EVIDENCE.md`. No live validation.
+
+
+### Final focused harness-capture validation — 2026-10-19
+
+Inspected/pulled Candidate 04 at `b3159d052f3354d250f5bfdf7c48b0bc90a265d0`.
+**Automatic tool-result capture remains unproven**: current Stop adapter uploads a
+selected preexisting outbox file; this remote environment has no supported
+completed-tool hook integration or Codex CLI on PATH. Historical real CLI turns
+used harness-prepared evidence. Simulated adapter plus isolated REST/MCP/SSE,
+authorization, retry, read-only and client tests: **42 passed, 0 failed, 0 skipped**,
+one dependency warning. New assertions explicitly distinguish synthetic fixtures
+from execution receipts. Runtime source unchanged; no deployment/browser proof,
+no Track 7 work. Full source boundary, command and evidence grades:
+[final capture validation](../../paper/lobby_v2_final_capture_validation.md).
+
+
+## Track 7 finalization — 2026-10-19
+
+Inspected current Candidate 04 from `aec1a46ddfd76fe296c4a0190300654aa5608546`.
+All four existing batches are retained. Final validation found and corrected a
+Batch 2 compatibility defect: FAILURE derivations must remain eligible for the
+existing evidence-gated failure-to-lesson pipeline. Internal RAW/PROPOSAL/EVIDENCE
+sources remain rejected; namespace/conflict/admission checks remain. Corrected one
+API test's cached-store isolation; no API authorization or research math changes.
+The earlier dated implementation/status rows remain historical evidence.
+
+Source, exact validation results, native binary identity, new regression cases,
+CPU measurements and operational limits are recorded in
+[finalization evidence](../../track7_atlas_design_20261015/17_FINALIZATION_EVIDENCE.md).
+Fingerprint CPU was measured at 1k/10k/100k metadata rows; it is not constant total
+query cost. Production scale, real power loss, deployed mixed-version writers,
+live-agent operation and immediate historical-journal tamper detection are not
+certified. This is isolated implementation/regression closure, not deployment.
+
+Final resumed run, 2026-10-20: **896 Python tests passed, no failures/skips;
+16 Rust tests passed, no failures/ignored tests**. One Python dependency warning.
+Raw outputs are retained with the finalization evidence.

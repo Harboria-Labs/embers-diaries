@@ -1,0 +1,124 @@
+/* Layout only. Loaded after each observation page so phones and desktops share one surface. */
+html:has(.workspace){overflow-x:hidden}
+body:has(.workspace){overflow-x:hidden;font-size:14px;line-height:1.45}
+body:has(.workspace) button,
+body:has(.workspace) select,
+body:has(.workspace) input,
+body:has(.workspace) summary{touch-action:manipulation}
+body:has(.workspace) [hidden]{display:none !important}
+body:has(.workspace) header{position:sticky;top:0;z-index:40;height:auto;min-height:56px;flex-wrap:wrap;align-items:center;row-gap:8px}
+body:has(.workspace) header button:not([hidden]),
+body:has(.workspace) .head-actions a,
+body:has(.workspace) .top-actions a,
+body:has(.workspace) .badge,
+body:has(.workspace) .connection{min-height:44px}
+body:has(.workspace) .head-actions a,
+body:has(.workspace) .top-actions a{display:inline-flex;align-items:center}
+body:has(.workspace) .tabs{flex-wrap:wrap}
+body:has(.workspace) .tabs button,
+body:has(.workspace) .filters button,
+body:has(.workspace) .filters input,
+body:has(.workspace) .stage-tools button,
+body:has(.workspace) .context-row,
+body:has(.workspace) .access button,
+body:has(.workspace) .access-card button,
+body:has(.workspace) .access-card input,
+body:has(.workspace) #code,
+body:has(.workspace) #viewCode{min-height:44px;font-size:16px}
+body:has(.workspace) .access,
+body:has(.workspace) .access-card{width:min(480px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto}
+body:has(.workspace) #transportPanel{width:min(420px,calc(100vw - 16px));max-height:calc(100dvh - 80px)}
+
+#researchDashboard{font-size:14px;line-height:1.45;max-width:1600px;width:100%;margin-inline:auto}
+#researchDashboard nav button,
+#researchDashboard .rd-tools button,
+#researchDashboard .rd-tools a,
+#researchDashboard .rd-head select,
+#researchDashboard .rd-bar button,
+#researchDashboard .rd-step{min-height:44px}
+#researchDashboard .rd-tools a{display:inline-flex;align-items:center}
+#researchDashboard .rd-graph,
+#researchDashboard .rd-matrix,
+#researchDashboard .rd-timeline{overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch}
+#researchDashboard .rd-graph svg{min-width:0;width:100%;height:auto}
+#researchDashboard .rd-matrix table{width:max-content;min-width:100%}
+#researchDashboard .rd-head{min-width:0}
+#researchDashboard .rd-head span,
+#researchDashboard .rd-bar small{overflow-wrap:anywhere;white-space:normal}
+
+@media(min-width:1100px){
+body:has(.workspace) .workspace{grid-template-columns:minmax(220px,260px) minmax(0,1fr) minmax(300px,380px)}
+body:has(.workspace) .activity strong{font-size:15px}
+#researchDashboard{grid-template-columns:200px minmax(0,1fr) 340px;gap:12px;padding:12px}
+#researchDashboard .rd-main{gap:12px}
+#researchDashboard h2{font-size:16px}
+}
+@media(min-width:1500px){
+#researchDashboard .rd-flow{grid-template-columns:repeat(4,minmax(0,1fr))}
+body:has(.workspace) .territories{grid-template-columns:repeat(auto-fit,minmax(360px,1fr))}
+}
+
+@media(max-width:800px){
+body:has(.workspace){height:auto;min-height:100dvh;overflow-y:auto}
+body:has(.workspace) header{padding:10px 12px}
+body:has(.workspace) header>div:first-child{max-width:none}
+body:has(.workspace) header h1{white-space:normal;overflow:visible;text-overflow:clip;font-size:16px}
+body:has(.workspace) .brand b{font-size:16px}
+body:has(.workspace) header small,
+body:has(.workspace) .brand p,
+body:has(.workspace) #expiryLabel,
+body:has(.workspace) #scope{display:none}
+body:has(.workspace) .top-actions,
+body:has(.workspace) .head-actions{width:100%;display:flex;flex-wrap:wrap;gap:8px}
+body:has(.workspace) .top-actions>*,
+body:has(.workspace) .head-actions>*{flex:1 1 calc(50% - 8px);min-width:0;font-size:14px}
+body:has(.workspace) .status,
+body:has(.workspace) .connection{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 10px;border:1px solid var(--line,#38516d);border-radius:8px}
+html[data-embed] #themeToggle,
+html[data-embed] header a,
+html[data-embed] #expiryLabel{display:none !important}
+body:has(.workspace) .activity,
+body:has(.workspace) .metrics{height:auto;grid-template-columns:1fr 1fr;padding:10px 12px;gap:8px}
+body:has(.workspace) .metric,
+body:has(.workspace) .metric:nth-child(n+5){display:grid;min-width:0;padding:10px}
+body:has(.workspace) .metric strong,
+body:has(.workspace) .activity strong{font-size:16px;white-space:normal;overflow-wrap:anywhere}
+body:has(.workspace) .metric span,
+body:has(.workspace) .label{font-size:11px;letter-spacing:.4px}
+body:has(.workspace) .filters{height:auto;overflow:visible;flex-wrap:wrap;padding:10px 12px;gap:8px}
+body:has(.workspace) .filters input,
+body:has(.workspace) .filters button{flex:1 1 calc(50% - 8px);width:auto;min-width:0;font-size:16px}
+body:has(.workspace) .workspace{display:flex;flex-direction:column;height:auto;min-height:70dvh;grid-template-columns:1fr}
+body:has(.workspace) .territory{display:flex;max-height:320px}
+body:has(.workspace) .stage{min-height:360px}
+body:has(.workspace) .right,
+body:has(.workspace) .inspector{display:flex;position:static;width:100%;height:auto;min-height:220px;top:auto;right:auto;bottom:auto;box-shadow:none}
+body:has(.workspace) .bottom{grid-template-columns:1fr}
+body:has(.workspace) .bottom canvas,
+body:has(.workspace) #trend{width:100%;height:160px}
+body:has(.workspace) .canvas-legend{font-size:12px;flex-wrap:wrap}
+body:has(.workspace) .event{font-size:13px;padding:10px}
+body:has(.workspace) .section-title,
+body:has(.workspace) .notice,
+body:has(.workspace) .panel-top h2{font-size:13px}
+body:has(.workspace) .stage-tools{position:static;max-width:100%;padding:8px;flex-wrap:wrap}
+body.rd-active{overflow:auto;height:auto}
+body.rd-spatial #researchDashboard{height:auto;display:flex;flex-direction:column}
+body.rd-spatial>.workspace{height:auto}
+#researchDashboard{display:flex;flex-direction:column;height:auto;overflow:visible;grid-template-columns:1fr;padding:8px;gap:8px}
+#researchDashboard nav{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;gap:8px;padding-bottom:4px}
+#researchDashboard nav button{flex:0 0 auto;padding:10px 14px;font-size:14px}
+#researchDashboard .rd-guidance{display:none}
+#researchDashboard .rd-head{flex-wrap:wrap;align-items:stretch}
+#researchDashboard .rd-head .rd-tools{width:100%;margin-left:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#researchDashboard .rd-head select{width:100%;font-size:16px}
+#researchDashboard .rd-main,
+#researchDashboard .rd-inspector,
+#researchDashboard .rd-timeline{grid-column:auto;grid-row:auto;max-height:none}
+#researchDashboard .rd-timeline{max-height:320px}
+#researchDashboard .rd-graph svg{min-width:680px;width:680px}
+#researchDashboard .rd-flow{grid-template-columns:1fr}
+#researchDashboard .rd-bar{align-items:flex-start}
+#lobbyFilters{display:flex;flex-wrap:wrap;gap:8px}
+#lobbyFilters input,#lobbyFilters select{min-height:44px;flex:1 1 140px;font-size:16px}
+}

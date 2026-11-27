@@ -1,0 +1,97 @@
+{
+  "targets": 30,
+  "applied": 30,
+  "failed": 0,
+  "failures_sample": [],
+  "recall_after": {
+    "overall": {
+      "n": 30,
+      "recall@1": 0.9333333333333333,
+      "recall@5": 0.9333333333333333,
+      "recall@10": 0.9333333333333333,
+      "mrr": 0.9333333333333333,
+      "latency": {
+        "n": 30,
+        "min": 633.945,
+        "max": 899.189,
+        "mean": 745.4093333333333,
+        "p50": 739.961,
+        "p95": 861.755,
+        "p99": 899.189
+      },
+      "errors": 0
+    },
+    "by_type": {
+      "supersession": {
+        "n": 30,
+        "recall@1": 0.9333333333333333,
+        "recall@5": 0.9333333333333333,
+        "recall@10": 0.9333333333333333,
+        "mrr": 0.9333333333333333,
+        "latency": {
+          "n": 30,
+          "min": 633.945,
+          "max": 899.189,
+          "mean": 745.4093333333333,
+          "p50": 739.961,
+          "p95": 861.755,
+          "p99": 899.189
+        },
+        "errors": 0
+      }
+    },
+    "n_scored": 30
+  },
+  "history_sample": [
+    {
+      "uid": "m-00950",
+      "current": "d755fd40-1bae-4c63-9519-ab5517cb7b45",
+      "old": "688639a8-fd31-462a-8b13-4a071e31fe34",
+      "ok": true,
+      "history_len": 1,
+      "history_ids_count": 1,
+      "old_in_history": false,
+      "latency_ms": 71.31
+    },
+    {
+      "uid": "m-00951",
+      "current": "fe2d4091-6b9d-4a72-97a1-9e69e7fd7529",
+      "old": "4ef50f7b-3824-4295-9357-beb79aa173d1",
+      "ok": true,
+      "history_len": 1,
+      "history_ids_count": 1,
+      "old_in_history": false,
+      "latency_ms": 20.989
+    },
+    {
+      "uid": "m-00952",
+      "current": "e718cc58-aa24-4af3-bb3c-123db6674369",
+      "old": "b77f2b34-9be3-4da1-8634-f7bbfe9d14d0",
+      "ok": true,
+      "history_len": 1,
+      "history_ids_count": 1,
+      "old_in_history": false,
+      "latency_ms": 19.685
+    },
+    {
+      "uid": "m-00953",
+      "current": "815b212b-42a9-45d6-a31f-eaaf464b8a34",
+      "old": "cca85124-cd20-44b7-a6a8-a6e6259a7236",
+      "ok": true,
+      "history_len": 1,
+      "history_ids_count": 1,
+      "old_in_history": false,
+      "latency_ms": 19.699
+    },
+    {
+      "uid": "m-00954",
+      "current": "bc55c055-cfd3-4160-8e1f-59e84a6a6f95",
+      "old": "d9a354cd-21e7-4fb7-98b5-605a6dcd71a0",
+      "ok": true,
+      "history_len": 1,
+      "history_ids_count": 1,
+      "old_in_history": false,
+      "latency_ms": 19.406
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+# Ember live benchmark — default configuration.
+# Override on the CLI: python -m benchmark.run --target ember-rest --scale 5000
+
+[run]
+base_url = "http://localhost:9200"
+mcp_url = "http://localhost:9200/mcp"
+# Optional tunnel; only a small separately-reported sample uses this.
+tunnel_url = "https://igloo-flaring-subpar.ngrok-free.dev"
+scale = 5000
+checkpoints = [1000, 2500, 5000]
+concurrency = 2
+batch_size = 100
+seed = 20261113
+health_samples = 7
+# Back off if /health p95 exceeds this many milliseconds, or 5x the baseline.
+health_p95_backoff_ms = 200
+request_timeout_s = 60
+batch_pause_s = 0.05
+phase_pause_s = 0.4
+
+[agent]
+name = "bench-ember-2026-11-13"
+provider = "benchmark-harness"
+model = "ember-bench-1"
+intruder_name = "bench-ember-intruder-2026-11-13"
+
+[namespaces]
+# Fresh names are chosen at run start as {prefix}-{stamp}-{role}.
+prefix = "bench-2026-11-13"
+
+[media]
+enabled = true
+viewport_width = 1600
+viewport_height = 1000
+auto_screenshot_s = 30
+auto_reload_s = 45
+visualizer_ttl_s = 3600
+observer_ttl_s = 14400
+ffmpeg_crf = 36

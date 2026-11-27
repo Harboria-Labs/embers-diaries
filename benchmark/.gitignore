@@ -1,0 +1,12 @@
+.secrets/
+*.credentials.json
+*credentials*
+*.token
+__pycache__/
+.venv/
+*.pyc
+**/media/raw-playwright/
+# recorder dump of every auto-frame (may be overwritten with leaky CSS-blur copies)
+results/_media_redacted/
+results/_run.stdout
+results/_post.stdout

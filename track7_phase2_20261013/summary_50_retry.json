@@ -1,0 +1,29 @@
+{
+  "commit": "f183346547cd210f58ca0a6b23df91a56be22b66",
+  "native_sha256": "452cc6d246c96311ddfe590f38947b6d386d39d4cf38f9650319e3833c6c19a5",
+  "python": "3.13.5",
+  "os": "Windows-10-10.0.19045-SP0",
+  "start_free": 340074496,
+  "end_free": 333926400,
+  "store": "C:\\Users\\LENOVO PC\\PROJECTS\\Harboria Labs\\embers_diaries\\track7_phase2_20261013\\store_run_20261013_03",
+  "journal_events": 51,
+  "journal_bytes": 1169040,
+  "wal_bytes": 1322924,
+  "observation_bytes": 1372160,
+  "store_bytes": 3877811,
+  "record_count": 58,
+  "reopen_state_equal": true,
+  "correction_verified": true,
+  "final_revision": 51,
+  "checkpoints": [
+    5,
+    10,
+    20,
+    30,
+    50
+  ],
+  "budget": {
+    "min_free": 300000000,
+    "max_experiment_bytes": 20000000
+  }
+}
